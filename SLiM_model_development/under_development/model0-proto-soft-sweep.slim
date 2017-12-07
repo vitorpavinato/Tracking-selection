@@ -1,0 +1,149 @@
+// Model 0 - Soft Sweep with no Linked Neutral sites;
+// Both neutral and benefitial mutations already exists in the population;
+
+// Neutral and Beneficial mutations start at generation 0;
+// Both have selection coefficients fixed throughout the simulation;
+// Neutral mutation has a fixed selection coefficient = 0 and can randomly arise in any chromossome;
+// Beneficial mutation, however, happens in a specific proportion in any position of the chromossome 2;
+// Three outputs are generated to check if the simulation is doing what it is supposed to do;
+// But the more important is the 10xN output, since it is after population reachs equilibrium;
+
+initialize() {
+	initializeMutationRate(1e-7); 	
+	initializeMutationType("m1", 0.5, "f", 0.0); // neutral
+	initializeMutationType("m2", 0.5, "f", 0.2); // benecitial
+	m1.color = "gray40";
+	m2.color = "green";
+	m1.colorSubstitution = "gray20";
+	m2.colorSubstitution = "darkgreen";
+	
+	initializeGenomicElementType("g1", m1, 1.0);
+	initializeGenomicElementType("g2", m1, 0.001);
+	initializeGenomicElementType("g3", c(m1,m2), c(1,0.0003)); // ~1 benecitial mutation
+	g1.color = "black";
+	g2.color = "orange";
+	g3.color = "black";
+	initializeGenomicElement(g1, 0, 49999);
+	initializeGenomicElement(g2, 50000, 50001);
+	initializeGenomicElement(g3, 50002, 99999);
+	
+	initializeRecombinationRate(c(1e-8, 0.5, 1e-8), c(49999, 50001, 99999));
+}
+
+1 {
+	sim.chromosome.colorSubstitution = "";
+	sim.addSubpop("p1", 1000); // we can increase the size of the population
+}
+
+//1N
+1000 late() {
+	m = sim.mutationsOfType(m1);
+	x = sortBy(unique(m), "position");
+	p = x.position / sim.chromosome.lastPosition;
+	positions = format("%.6f", p);
+	cat("Polymorphic Mutations in Generation 1 t=1000: " + "\n\n");
+	cat("Polymorphic Neutral mutations m1 in G1: " + size(x) + "\n");
+	cat("Positions of pNeutral mutations in G1: " + "\n" + paste(positions, " ") + "\n");
+	cat("Number of pNeutral mutations in Chr1: " + sum(p < 0.499995) + "\n");
+	cat("Number of pNeutral mutations in Chr2: " + sum(p > 0.500015) + "\n\n");
+	
+	m = sim.mutationsOfType(m2);
+	x = sortBy(unique(m), "position");
+	p = x.position / sim.chromosome.lastPosition;
+	positions = format("%.6f", p);
+	cat("Polymorphic Benecitial mutations m2 in G1: " + size(x) + "\n");
+	cat("Positions of pBenecitial mutations in G1: " + "\n" + paste(positions, " ") + "\n");
+	cat("Number of pBenecitial mutations in Chr1: " + sum(p < 0.499995) + "\n");
+	cat("Number of pBenecitial mutations in Chr2: " + sum(p > 0.500015) + "\n\n");
+	
+	f = sim.substitutions.mutationType;
+	n = sim.substitutions.mutationType == m1;
+	b = sim.substitutions.mutationType == m2;
+	y = sim.substitutions.position[n]/sim.chromosome.lastPosition;
+	z = sim.substitutions.position[b]/sim.chromosome.lastPosition;
+	cat("Fixed Mutations in Generation 1 t=1000: " + "\n\n");
+	cat("Number of Fixed mutations in G1: " + size(f) + "\n");
+	cat("fNeutral mutations in G1: " + sum(n) + "\n");
+	cat("Position of fNeutral mutations in G1: " + "\n" + paste(format("%.6f", y)) + "\n");
+	cat("fBenecitial mutations in G1: " + sum(b) + "\n");
+	cat("Position of fBeneficial mutations in G1: " + "\n" + paste(format("%.6f", z)) + "\n\n");
+}
+
+//5N
+5000 late() {
+	m = sim.mutationsOfType(m1);
+	x = sortBy(unique(m), "position");
+	p = x.position / sim.chromosome.lastPosition;
+	positions = format("%.6f", p);
+	cat("Polymorphic Mutations in Generation 2 t=5000: " + "\n\n");
+	cat("Polymorphic Neutral mutations m1 in G2: " + size(x) + "\n");
+	cat("Positions of pNeutral mutations in G2: " + "\n" + paste(positions, " ") + "\n");
+	cat("Number of pNeutral mutations in Chr1: " + sum(p < 0.499995) + "\n");
+	cat("Number of pNeutral mutations in Chr2: " + sum(p > 0.500015) + "\n\n");
+	
+	m = sim.mutationsOfType(m2);
+	x = sortBy(unique(m), "position");
+	p = x.position / sim.chromosome.lastPosition;
+	positions = format("%.6f", p);
+	cat("Benefitial mutations m2 in G2: " + size(x) + "\n");
+	cat("Positions of pBeneficial mutations in G2: " + "\n" + paste(positions, " ") + "\n");
+	cat("Number of pBeneficial mutations in Chr1: " + sum(p < 0.499995) + "\n");
+	cat("Number of pBeneficial mutations in Chr2: " + sum(p > 0.500015) + "\n\n");
+	
+	f = sim.substitutions.mutationType;
+	n = sim.substitutions.mutationType == m1;
+	b = sim.substitutions.mutationType == m2;
+	y = sim.substitutions.position[n]/sim.chromosome.lastPosition;
+	z = sim.substitutions.position[b]/sim.chromosome.lastPosition;
+	cat("Fixed Mutations in Generation 2 t=5000: " + "\n\n");
+	cat("Number of Fixed mutations in G2: " + size(f) + "\n");
+	cat("fNeutral mutations in G2: " + sum(n) + "\n");
+	cat("Position of fNeutral mutations in G2: " + "\n" + paste(format("%.6f", y)) + "\n");
+	cat("fBenefitial mutations in G2: " + sum(b) + "\n");
+	cat("Position of fBeneficial mutations in G2: " + "\n" + paste(format("%.6f", z)) + "\n\n");	
+
+}
+
+//10N
+10000 late() {
+	m = sim.mutationsOfType(m1);
+	x = sortBy(unique(m), "position");
+	p = x.position / sim.chromosome.lastPosition;
+	positions = format("%.6f", p);
+	cat("Polymorphic Mutations in Generation 3 t=10000: " + "\n\n");
+	cat("Polymorphic Neutral mutations m1 in G3: " + size(x) + "\n");
+	cat("Positions of pNeutral mutations in G3: " + "\n" + paste(positions, " ") + "\n");
+	cat("Number of pNeutral mutations in Chr1: " + sum(p < 0.499995) + "\n");
+	cat("Number of pNeutral mutations in Chr2: " + sum(p > 0.500015) + "\n\n");
+	
+	m = sim.mutationsOfType(m2);
+	x = sortBy(unique(m), "position");
+	p = x.position / sim.chromosome.lastPosition;
+	positions = format("%.6f", p);
+	cat("Benefitial mutations m2 in G3: " + size(x) + "\n");
+	cat("Positions of pBeneficial mutations in G3: " + "\n" + paste(positions, " ") + "\n");
+	cat("Number of pBeneficial mutations in Chr1: " + sum(p < 0.499995) + "\n");
+	cat("Number of pBeneficial mutations in Chr2: " + sum(p > 0.500015) + "\n\n");
+	
+	f = sim.substitutions.mutationType;
+	n = sim.substitutions.mutationType == m1;
+	b = sim.substitutions.mutationType == m2;
+	y = sim.substitutions.position[n]/sim.chromosome.lastPosition;
+	z = sim.substitutions.position[b]/sim.chromosome.lastPosition;
+	cat("Fixed Mutations in Generation 3 t=10000: " + "\n\n");
+	cat("Number of Fixed mutations in G3: " + size(f) + "\n");
+	cat("fNeutral mutations in G3: " + sum(n) + "\n");
+	cat("Position of fNeutral mutations in G3: " + "\n" + paste(format("%.6f", y)) + "\n");
+	cat("fBenefitial mutations in G3: " + sum(b) + "\n");
+	cat("Position of fBeneficial mutations in G3: " + "\n" + paste(format("%.6f", z)) + "\n\n");	
+	
+	s = sim.substitutions.selectionCoeff[b];
+	o = sim.substitutions.originGeneration[b];
+	e = sim.substitutions.fixationGeneration[b];
+	cat("position " + paste(format("%.4f", z)) + "\n");
+	cat("selCoeff " + paste(format("%.4f", s)) + "\n");
+	cat("fixatOrg " + paste(o) + "\n");
+	cat("fixatEnd " + paste(e) + "\n");
+	
+	sim.simulationFinished();
+}
