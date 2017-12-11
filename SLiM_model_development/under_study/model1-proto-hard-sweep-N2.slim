@@ -35,13 +35,13 @@ initialize() {
 	if (dnovo.countOfMutationsOfType(m2) == 0)
 		 dnovo.addNewDrawnMutation(m2, 0);
 	
-	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 	m2.convertToSubstitution = F; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 }
 
-10009 late(){								 // This is n - Ne //
+10009 late(){								 												 
+	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //
+	sim.addSubpopSplit("p1", 70, p0); // This is n - Ne //
 												 // This allow us to copy part of the subpopulation to "increse" Ne size to allow the sample of n //
-	sim.addSubpopSplit("p1", 70, p0); 
 }												 
 
 10010 late(){
@@ -78,9 +78,10 @@ initialize() {
 	p1.setSubpopulationSize(0); 
 }
 
-10019 late(){								 // This is n - Ne //
+10019 late(){								 
+	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //
+	sim.addSubpopSplit("p1", 70, p0); // This is n - Ne //
 												 // This allow us to copy part of the subpopulation to "increse" Ne size to allow the sample of n //
-	sim.addSubpopSplit("p1", 70, p0); 
 }												 
 
 10020 late(){
