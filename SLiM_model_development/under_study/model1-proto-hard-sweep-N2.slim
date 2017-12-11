@@ -1,0 +1,132 @@
+// V2 - This model is a complemetar implementation of V1 for the cases where n < Ne //
+initialize() {
+	initializeMutationRate(2.5e-8); 	// Same as in Florian MS - u=2.5e-8 //
+	initializeMutationType("m1", 0.5, "f", 0.0); // neutral //
+	initializeMutationType("m2", 0.5, "f", 0.1); // beneficial - same as in Florian MS - unrealistic cap is s=0.5 //
+	m2.mutationStackPolicy = "l"; // "f" for the first and "l" for the last //
+	m1.convertToSubstitution = T; // add this to the main model1 code, but not before the 10*Ne equilibrium //
+	m2.convertToSubstitution = T; // add this to the main model1 code, but not before the 10*Ne equilibrium //
+	m1.color = "gray40";
+	m2.color = "green";
+	m1.colorSubstitution = "gray20";
+	m2.colorSubstitution = "darkgreen";
+	
+	initializeGenomicElementType("g1", m1, 1.0);
+	initializeGenomicElementType("g2", m1, 1.0);
+	g1.color = "black";
+	g2.color = "black";	
+	initializeGenomicElement(g1, 0, 49999); // genome size? - It could be a value that we can control in R implementation //
+	initializeGenomicElement(g2, 50001, 99999); // genome size? //
+	
+	initializeRecombinationRate(c(1e-8, 0.5, 1e-8), c(49999, 50000, 99999));	
+
+}
+
+1 {
+	sim.chromosome.colorSubstitution = "";
+	sim.addSubpop("p0", 30); // Use a value to mimicry cases where Ne < n - sample size n = 100 //
+}
+
+10000 late() {
+	// It explicitly sample one genome from the entire simulation and add a new/denovo benefitial mutation //
+	// It is similar to the "addtion" of a new mutations during gametogenesisthis //
+	// This mutation will have higher fitness //
+	dnovo = sample(sim.subpopulations.genomes, 1);
+	if (dnovo.countOfMutationsOfType(m2) == 0)
+		 dnovo.addNewDrawnMutation(m2, 0);
+	
+	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the 10*Ne equilibrium //
+	m2.convertToSubstitution = F; // add this to the main model1 code, but not before the 10*Ne equilibrium //
+}
+
+10009 late(){								 // This is n - Ne //
+												 // This allow us to copy part of the subpopulation to "increse" Ne size to allow the sample of n //
+	sim.addSubpopSplit("p1", 70, p0); 
+}												 
+
+10010 late(){
+
+	u = sim.subpopulations.individuals;
+	g = u.genomes;
+	m = sortBy(unique(g.mutations), "position"); 
+	mp = m.position;
+	mi = m.id;
+	mc = m.selectionCoeff;
+
+	mfA = sim.mutationFrequencies(subpops=NULL,mutations=m);
+	mfR = (1-mfA); 
+	
+	chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
+	sel = ifelse(mc != 0, paste("Y"), paste("N"));
+	
+	cat("\n\nsegsites: " + size(m) + "\n\n");
+	cat(paste("chrom"+"\t"+"pos"+"\t"+"id"+"\t"+"selection"+"\t"+"selCoeff"+"\t"+"fR"+"\t"+"fA"+"\n"));
+	cat(paste(chr+"\t"+format("%5d",mp)+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\t"+format("%.4f",mfR)+"\t"+format("%.4f",mfA)+"\n"));
+	
+	su = sample(u, 100, F);
+	
+	for (si in su){
+	
+		hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
+		hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
+		cat(paste(hp1 + '' + hp2) + "\n");
+	}		
+}
+
+10011 late(){
+	
+	p1.setSubpopulationSize(0); 
+}
+
+10019 late(){								 // This is n - Ne //
+												 // This allow us to copy part of the subpopulation to "increse" Ne size to allow the sample of n //
+	sim.addSubpopSplit("p1", 70, p0); 
+}												 
+
+10020 late(){
+
+	u = sim.subpopulations.individuals;
+	g = u.genomes;
+	m = sortBy(unique(g.mutations), "position"); 
+	mp = m.position;
+	mi = m.id;
+	mc = m.selectionCoeff;
+	
+	mfA = sim.mutationFrequencies(subpops=NULL,mutations=m);
+	mfR = (1-mfA); 
+
+	chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
+	sel = ifelse(mc != 0, paste("Y"), paste("N"));
+	
+	cat("\n\nsegsites: " + size(m) + "\n\n");
+	cat(paste("chrom"+"\t"+"pos"+"\t"+"id"+"\t"+"selection"+"\t"+"selCoeff"+"\t"+"fR"+"\t"+"fA"+"\n"));
+	cat(paste(chr+"\t"+format("%5d",mp)+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\t"+format("%.4f",mfR)+"\t"+format("%.4f",mfA)+"\n"));
+	
+	su = sample(u, 100, F);
+	
+	for (si in su){
+	
+		hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
+		hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
+		cat(paste(hp1 + '' + hp2) + "\n");
+	}	
+}
+
+10021 late(){
+	
+	p1.setSubpopulationSize(0); 
+
+	sim.simulationFinished();
+}
+
+//	match(ia,ib); // voltar aqui depois
+
+// global variable with all mutations to cross ref at the end of simulation mutations in the 1st and 2nd samples
+// For loop to add genomes in table format
+// is there a probem with sampling genomes rather than individuals?
+
+
+
+
+
+
