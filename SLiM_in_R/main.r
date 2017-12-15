@@ -20,7 +20,7 @@ R.version.string;
 #sessionInfo()$otherPkgs$abcrf$Version;
 
 recordSessionInfo <- sessionInfo();
-setwd("/Users/vitorpavinato/Dropbox/PosDoc INRA 2017/SLiM_in_R/");
+setwd("/Users/vitorpavinato/Documents/My_repositories/Tracking-selection/SLiM_in_R");
 save(recordSessionInfo,file="results/sessionInfo.RData");
 save.image(file = "results/workspaceFile.RData");
 
@@ -43,9 +43,9 @@ if (file.exists(dir('data/', pattern = '.slim$', full.names = TRUE))){
   file_removed <- file.remove(dir('data/', pattern = '.slim$', full.names = TRUE))
 }
 
-model1(parm = N_size, 
+model1(ne = N_size,
        filename = 'infile_N_size', 
-       folder = 'data/');
+       folder = 'data/');  ## ate aqui esta ok;
 
 ## Running SLiM simulations 
 
@@ -56,6 +56,7 @@ random_seeds <- as.integer(runif(length(N_size), 100000, 900000));
 
 # SLiM2 runs v1:
 # It runs SLiM2 and saves the parameters and the output in the same file;
+# This function is one I worked last time;
 slim(    parm = N_size, 
          seed = random_seeds,
      filename = 'outfile_N_size',

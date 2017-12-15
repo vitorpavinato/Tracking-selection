@@ -1,17 +1,18 @@
-// Model 1 - Hard Sweep with no Linked Neutral Sites;
-// de novo mutation that rapidly reach fixation when it arises;
+// Model 1 - Hard Sweep: de novo mutation that rapidly reach fixation when it arises;
+// N1 - This model explicitly implements 2 temporal samples - works were n < Ne//
 
 // Neutral starts at generation 0 but Beneficial mutation starst at generation 1;
 // Neutral mutation has a fixed selection coefficient = 0 and can randomly arise in any chromossome;
 // Beneficial mutation, however, happens in a specific point position of the chromossome 2;
 // Beneficial mutation also has a fixed selection coefficient;
-// Three outputs are generated to check if the simulation is doing what it is supposed to do;
-// But the more important is the 10xN output, since it is after population reachs equilibrium;
  
 initialize() {
-	initializeMutationRate(1e-7); 	
+	initializeMutationRate(2.5e-8); 	
 	initializeMutationType("m1", 0.5, "f", 0.0); // neutral
-	initializeMutationType("m2", 0.5, "f", 0.8); // beneficial
+	initializeMutationType("m2", 0.5, "f", 0.1); // beneficial
+	m2.mutationStackPolicy = "l"; // "f" for the first and "l" for the last //
+	m1.convertToSubstitution = T; // add this to the main model1 code, but not before the 10*Ne equilibrium //
+	m2.convertToSubstitution = T; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 	m1.color = "gray40";
 	m2.color = "green";
 	m1.colorSubstitution = "gray20";
@@ -29,155 +30,78 @@ initialize() {
 
 1 {
 	sim.chromosome.colorSubstitution = "";
-	sim.addSubpop("p1", 1000); // Effective population size
+	sim.addSubpop("p0", 1000); // Effective population size
 }
 
-// Wait until MD-Equilibrium to add the beneficial mutation;
-// After simulations reachs 10xN;
-// Add benefitial mutations;
-// Sample t0 and t1 - 20 generations apart
+
 
 10000 late() {
-	target = sample(p1.genomes, 1);
-	target.addNewDrawnMutation(m2, 0);
+	// Wait until MD-Equilibrium to add the beneficial mutation;
+	// It explicitly sample one genome from the entire simulation and add a new/denovo benefitial mutation //
+	// It is similar to the "addtion" of a new mutations during gametogenesisthis //
+	// This mutation will have higher fitness //
+	dnovo = sample(sim.subpopulations.genomes, 1);
+	if (dnovo.countOfMutationsOfType(m2) == 0)
+		 dnovo.addNewDrawnMutation(m2, 0);
+	
+	m2.convertToSubstitution = F; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 }
 
-// Output 10xN + 10 (9 generations apart from when the selection coefficient for one mutation changed)
-10010 late() {
-	m = sim.mutationsOfType(m1);
-	x = sortBy(unique(m), "position");
-	p = x.position / sim.chromosome.lastPosition;
-	positions = format("%.6f", p);
-	cat("Polymorphic Mutations in Generation 1 t=10010: " + "\n\n");
-	cat("Polymorphic Neutral mutations m1 in G1: " + size(x) + "\n");
-	cat("Positions of pNeutral mutations in G1: " + "\n" + paste(positions, " ") + "\n");
-	cat("Number of pNeutral mutations in Chr1: " + sum(p < 0.499995) + "\n");
-	cat("Number of pNeutral mutations in Chr2: " + sum(p > 0.500005) + "\n\n");
-	
-	m = sim.mutationsOfType(m2);
-	x = sortBy(unique(m), "position");
-	p = x.position / sim.chromosome.lastPosition;
-	positions = format("%.6f", p);
-	cat("Polymorphic Beneficial mutations m2 in G1: " + size(x) + "\n");
-	cat("Positions of pBenefitial mutations in G1: " + "\n" + paste(positions, " ") + "\n");
-	cat("Number of pBeneficial mutations in Chr1: " + sum(p < 0.499995) + "\n");
-	cat("Number of pBeneficial mutations in Chr2: " + sum(p > 0.500005) + "\n\n");
-	
-	f = sim.substitutions.mutationType;
-	n = sim.substitutions.mutationType == m1;
-	b = sim.substitutions.mutationType == m2;
-	y = sim.substitutions.position[n]/sim.chromosome.lastPosition;
-	z = sim.substitutions.position[b]/sim.chromosome.lastPosition;
-	cat("Fixed Mutations in Generation 1 t=10010: " + "\n\n");
-	cat("Number of Fixed mutations in G1: " + size(f) + "\n");
-	cat("fNeutral mutations in G1: " + sum(n) + "\n");
-	cat("Position of fNeutral mutations in G1: " + "\n" + paste(format("%.6f", y)) + "\n");
-	cat("fBenefitial mutations in G1: " + sum(b) + "\n");
-	cat("Position of fBeneficial mutations in G1: " + "\n" + paste(format("%.6f", z)) + "\n\n");
-
-	s = sim.substitutions.selectionCoeff[b];
-	o = sim.substitutions.originGeneration[b];
-	e = sim.substitutions.fixationGeneration[b];
-	cat("position " + paste(format("%.6f", z)) + "\n");
-	cat("selCoeff " + paste(format("%.6f", s)) + "\n");
-	cat("fixatOrg " + paste(o) + "\n");
-	cat("fixatEnd " + paste(e) + "\n");
-	
-	//allIndividuals = sim.subpopulations.individuals;
-   //sampledIndividuals = sample(allIndividuals, 100);
-   //sampledIndividuals.genomes.outputVCF(filePath = "~/Desktop/model1_t1.txt", outputMultiallelics = F);
+10009 late(){
+	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //
 }
 
-// Output 10xN + 20
-10020 late() {
-	m = sim.mutationsOfType(m1);
-	x = sortBy(unique(m), "position");
-	p = x.position / sim.chromosome.lastPosition;
-	positions = format("%.6f", p);
-	cat("Polymorphic Mutations in Generation 2 t=10020: " + "\n\n");
-	cat("Polymorphic Neutral mutations m1 in G2: " + size(x) + "\n");
-	cat("Positions of pNeutral mutations in G2: " + "\n" + paste(positions, " ") + "\n");
-	cat("Number of pNeutral mutations in Chr1: " + sum(p < 0.499995) + "\n");
-	cat("Number of pNeutral mutations in Chr2: " + sum(p > 0.500005) + "\n\n");
+10010 late(){
+	u = sim.subpopulations.individuals;
+	g = u.genomes;
+	m = sortBy(unique(g.mutations), "position"); 
+	mp = m.position;
+	mi = m.id;
+	mc = m.selectionCoeff;
 	
-	m = sim.mutationsOfType(m2);
-	x = sortBy(unique(m), "position");
-	p = x.position / sim.chromosome.lastPosition;
-	positions = format("%.6f", p);
-	cat("Benefitial mutations m2 in G2: " + size(x) + "\n");
-	cat("Positions of pBeneficial mutations in G2: " + "\n" + paste(positions, " ") + "\n");
-	cat("Number of pBeneficial mutations in Chr1: " + sum(p < 0.499995) + "\n");
-	cat("Number of pBeneficial mutations in Chr2: " + sum(p > 0.500005) + "\n\n");
+	chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
+	sel = ifelse(mc != 0, paste("Y"), paste("N"));
 	
-	f = sim.substitutions.mutationType;
-	n = sim.substitutions.mutationType == m1;
-	b = sim.substitutions.mutationType == m2;
-	y = sim.substitutions.position[n]/sim.chromosome.lastPosition;
-	z = sim.substitutions.position[b]/sim.chromosome.lastPosition;
-	cat("Fixed Mutations in Generation 2 t=10020: " + "\n\n");
-	cat("Number of Fixed mutations in G2: " + size(f) + "\n");
-	cat("fNeutral mutations in G2: " + sum(n) + "\n");
-	cat("Position of fNeutral mutations in G2: " + "\n" + paste(format("%.6f", y)) + "\n");
-	cat("fBenefitial mutations in G2: " + sum(b) + "\n");
-	cat("Position of fBeneficial mutations in G2: " + "\n" + paste(format("%.6f", z)) + "\n\n");	
+	cat(paste("chrom"+"\t"+"pos"+"\t"+"id"+"\t"+"selection"+"\t"+"selCoeff"+"\n"));
+	cat(paste(chr+"\t"+format("%5d",mp)+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\n"));
+	
+	su = sample(u, 100, F);
+	
+	for (si in su){
+	
+		hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
+		hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
+		cat(paste(hp1 + '' + hp2) + "\n");
+	}
+}	
 
-	s = sim.substitutions.selectionCoeff[b];
-	o = sim.substitutions.originGeneration[b];
-	e = sim.substitutions.fixationGeneration[b];
-	cat("position " + paste(format("%.6f", z)) + "\n");
-	cat("selCoeff " + paste(format("%.6f", s)) + "\n");
-	cat("fixatOrg " + paste(o) + "\n");
-	cat("fixatEnd " + paste(e) + "\n");
-	
-	//allIndividuals = sim.subpopulations.individuals;
-   //sampledIndividuals = sample(allIndividuals, 100);
-   //sampledIndividuals.genomes.outputVCF(filePath = "~/Desktop/model1_t2.txt", outputMultiallelics = F);
+10019 late(){
+	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //
 }
 
-// Output 10xN + 100
-10100 late() {
-	m = sim.mutationsOfType(m1);
-	x = sortBy(unique(m), "position");
-	p = x.position / sim.chromosome.lastPosition;
-	positions = format("%.6f", p);
-	cat("Polymorphic Mutations in Generation 3 t=10100: " + "\n\n");
-	cat("Polymorphic Neutral mutations m1 in G3: " + size(x) + "\n");
-	cat("Positions of pNeutral mutations in G3: " + "\n" + paste(positions, " ") + "\n");
-	cat("Number of pNeutral mutations in Chr1: " + sum(p < 0.499995) + "\n");
-	cat("Number of pNeutral mutations in Chr2: " + sum(p > 0.500005) + "\n\n");
+10020 late(){
+	u = sim.subpopulations.individuals;
+	g = u.genomes;
+	m = sortBy(unique(g.mutations), "position"); 
+	mp = m.position;
+	mi = m.id;
+	mc = m.selectionCoeff;
 	
-	m = sim.mutationsOfType(m2);
-	x = sortBy(unique(m), "position");
-	p = x.position / sim.chromosome.lastPosition;
-	positions = format("%.6f", p);
-	cat("Benefitial mutations m2 in G3: " + size(x) + "\n");
-	cat("Positions of pBeneficial mutations in G3: " + "\n" + paste(positions, " ") + "\n");
-	cat("Number of pBeneficial mutations in Chr1: " + sum(p < 0.499995) + "\n");
-	cat("Number of pBeneficial mutations in Chr2: " + sum(p > 0.500005) + "\n\n");
+	chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
+	sel = ifelse(mc != 0, paste("Y"), paste("N"));
 	
-	f = sim.substitutions.mutationType;
-	n = sim.substitutions.mutationType == m1;
-	b = sim.substitutions.mutationType == m2;
-	y = sim.substitutions.position[n]/sim.chromosome.lastPosition;
-	z = sim.substitutions.position[b]/sim.chromosome.lastPosition;
-	cat("Fixed Mutations in Generation 3 t=10100: " + "\n\n");
-	cat("Number of Fixed mutations in G3: " + size(f) + "\n");
-	cat("fNeutral mutations in G3: " + sum(n) + "\n");
-	cat("Position of fNeutral mutations in G3: " + "\n" + paste(format("%.6f", y)) + "\n");
-	cat("fBenefitial mutations in G3: " + sum(b) + "\n");
-	cat("Position of fBeneficial mutations in G3: " + "\n" + paste(format("%.6f", z)) + "\n\n");	
+	cat(paste("chrom"+"\t"+"pos"+"\t"+"id"+"\t"+"selection"+"\t"+"selCoeff"+"\n"));
+	cat(paste(chr+"\t"+format("%5d",mp)+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\n"));
 	
-	s = sim.substitutions.selectionCoeff[b];
-	o = sim.substitutions.originGeneration[b];
-	e = sim.substitutions.fixationGeneration[b];
-	cat("position " + paste(format("%.6f", z)) + "\n");
-	cat("selCoeff " + paste(format("%.6f", s)) + "\n");
-	cat("fixatOrg " + paste(o) + "\n");
-	cat("fixatEnd " + paste(e) + "\n");
+	su = sample(u, 100, F);
 	
-	//allIndividuals = sim.subpopulations.individuals;
-   //sampledIndividuals = sample(allIndividuals, 100);
-   //sampledIndividuals.genomes.outputVCF(filePath = "~/Desktop/model1_t3.txt", outputMultiallelics = F);
-
+	for (si in su){
+	
+		hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
+		hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
+		cat(paste(hp1 + '' + hp2) + "\n");
+	}	
+	
 	sim.simulationFinished();
-}
+	
+} 

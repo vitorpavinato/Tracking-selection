@@ -1,4 +1,5 @@
-// V1 - This model explicitly implement 2 temporal samples //
+// Model 1 - Hard Sweep: de novo mutation that rapidly reach fixation when it arises;
+// N1 - This model explicitly implement 2 temporal samples - works were n < Ne //
 initialize() {
 	initializeMutationRate(2.5e-8); 	// Same as in Florian MS - u=2.5e-8 //
 	initializeMutationType("m1", 0.5, "f", 0.0); // neutral //
@@ -23,7 +24,7 @@ initialize() {
 
 1 {
 	sim.chromosome.colorSubstitution = "";
-	sim.addSubpop("p0", 1000); // Same as in Florian MS - Ne=1000 - but this is a parameter //
+	sim.addSubpop("p0", 1000); // Effective population size - Same as in Florian MS - Ne=1000 - but this is a parameter //
 }
 
 10000 late() {
@@ -42,7 +43,6 @@ initialize() {
 }
 
 10010 late(){
-	
 	u = sim.subpopulations.individuals;
 	g = u.genomes;
 	m = sortBy(unique(g.mutations), "position"); 
@@ -54,11 +54,12 @@ initialize() {
 	mfR = (1-mfA); 
 	
 	chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
+	chrp = ifelse(mp <= 50000, cat(paste(mp)), cat(paste(mp-(50000)))); // Fix this
 	sel = ifelse(mc != 0, paste("Y"), paste("N"));
 	
 	cat("\n\nsegsites: " + size(m) + "\n\n");
 	cat(paste("chrom"+"\t"+"pos"+"\t"+"id"+"\t"+"selection"+"\t"+"selCoeff"+"\t"+"fR"+"\t"+"fA"+"\n"));
-	cat(paste(chr+"\t"+format("%5d",mp)+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\t"+format("%.4f",mfR)+"\t"+format("%.4f",mfA)+"\n"));
+	cat(paste(chr+"\t"+chrp+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\t"+format("%.4f",mfR)+"\t"+format("%.4f",mfA)+"\n"));
 	
 	su = sample(u, 100, F);
 	
