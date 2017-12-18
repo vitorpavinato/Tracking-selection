@@ -43,6 +43,8 @@ initialize() {
 }
 
 10010 late(){
+	
+	// Print mutation information //
 	u = sim.subpopulations.individuals;
 	g = u.genomes;
 	m = sortBy(unique(g.mutations), "position"); 
@@ -54,58 +56,93 @@ initialize() {
 	mfR = (1-mfA); 
 	
 	chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
-	chrp = ifelse(mp <= 50000, cat(paste(mp)), cat(paste(mp-(50000)))); // Fix this
 	sel = ifelse(mc != 0, paste("Y"), paste("N"));
 	
 	cat("\n\nsegsites: " + size(m) + "\n\n");
-	cat(paste("chrom"+"\t"+"pos"+"\t"+"id"+"\t"+"selection"+"\t"+"selCoeff"+"\t"+"fR"+"\t"+"fA"+"\n"));
-	cat(paste(chr+"\t"+chrp+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\t"+format("%.4f",mfR)+"\t"+format("%.4f",mfA)+"\n"));
+	//cat(paste("chrom"+"\t"+"pos"+"\t"+"id"+"\t"+"selection"+"\t"+"selCoeff"+"\t"+"fR"+"\t"+"fA"+"\n"));
+	//cat(paste(chr+"\t"+chrp+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\t"+format("%.4f",mfR)+"\t"+format("%.4f",mfA)+"\n"));
+
+	cmp = (mp - 50000);	
+	cmpt = apply(mp, "if (applyValue <=50000) paste(applyValue); paste((50000 - applyValue));");
+	cmptt = ifelse(mp <= 50000, paste(mp), paste((mp - 50000)));
 	
-	su = sample(u, 100, F);
+	cat(paste(mp + "\t" + cmp + "\t" + cmpt + "\t" + cmptt + "\n"));
 	
-	for (si in su){
 	
-		hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
-		hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
-		cat(paste(hp1 + '' + hp2) + "\n");
-	}
+	
+
+	
+	// Print genotypes //
+	//su = sample(u, 100, F);
+	
+	//for (si in su){
+	
+	//	hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
+	//	hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
+	//	cat(paste(hp1 + '' + hp2) + "\n");
+	//}
+	
+	//lines = NULL; 
+	//for (mut in sim.mutations) 
+	//{ 
+	//	mutLine = paste(c(mut.position, ", ", mut.selectionCoeff, "\n"), ""); 
+	//	lines = c(lines, mutLine);  
+	//} 
+	//file = paste(lines, ""); 
+	//file = "position, selcoeff\n" + file;  
+	//if (!writeFile("~/out.txt", file)) 
+   //      stop("Error writing file.");
+	
+	
+	
+	
+	//lines = apply(sim.mutations, "paste(c(applyValue.position, '\t ',  applyValue.selectionCoeff, '\\n'), '');"); 
+	//file = paste(lines, ""); 
+	//file = "position, selcoeff\n" + file;  
+	//if (!writeFile("~/out.txt", file)) 
+   //       stop("Error writing file.");
+	
+	
+	
+	sim.simulationFinished();
+
 }	
 
 10019 late(){
 	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //
 }
 
-10020 late(){
+//10020 late(){
 	
-	u = sim.subpopulations.individuals;
-	g = u.genomes;
-	m = sortBy(unique(g.mutations), "position"); 
-	mp = m.position;
-	mi = m.id;
-	mc = m.selectionCoeff;
+	//u = sim.subpopulations.individuals;
+	//g = u.genomes;
+	//m = sortBy(unique(g.mutations), "position"); 
+	//mp = m.position;
+	//mi = m.id;
+	//mc = m.selectionCoeff;
 	
-	mfA = sim.mutationFrequencies(subpops=NULL,mutations=m);
-	mfR = (1-mfA); 
+	//mfA = sim.mutationFrequencies(subpops=NULL,mutations=m);
+	//mfR = (1-mfA); 
 
-	chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
-	sel = ifelse(mc != 0, paste("Y"), paste("N"));
+	//chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
+	//sel = ifelse(mc != 0, paste("Y"), paste("N"));
 	
-	cat("\n\nsegsites: " + size(m) + "\n\n");
-	cat(paste("chrom"+"\t"+"pos"+"\t"+"id"+"\t"+"selection"+"\t"+"selCoeff"+"\t"+"fR"+"\t"+"fA"+"\n"));
-	cat(paste(chr+"\t"+format("%5d",mp)+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\t"+format("%.4f",mfR)+"\t"+format("%.4f",mfA)+"\n"));
+	//cat("\n\nsegsites: " + size(m) + "\n\n");
+	//cat(paste("chrom"+"\t"+"pos"+"\t"+"id"+"\t"+"selection"+"\t"+"selCoeff"+"\t"+"fR"+"\t"+"fA"+"\n"));
+	//cat(paste(chr+"\t"+format("%5d",mp)+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\t"+format("%.4f",mfR)+"\t"+format("%.4f",mfA)+"\n"));
 	
-	su = sample(u, 100, F);
+	//su = sample(u, 100, F);
 	
-	for (si in su){
+	//for (si in su){
 	
-		hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
-		hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
-		cat(paste(hp1 + '' + hp2) + "\n");
-	}	
+	//	hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
+	//	hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
+	//	cat(paste(hp1 + '' + hp2) + "\n");
+	//}	
 	
-	sim.simulationFinished();
+	//sim.simulationFinished();
 	
-} 
+//} 
 
 // Come back in this latter
 // Implementation of the for loop to print genotypes in colunms

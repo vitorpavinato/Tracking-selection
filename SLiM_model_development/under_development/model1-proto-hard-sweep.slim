@@ -7,9 +7,9 @@
 // Beneficial mutation also has a fixed selection coefficient;
  
 initialize() {
-	initializeMutationRate(2.5e-8); 	
-	initializeMutationType("m1", 0.5, "f", 0.0); // neutral
-	initializeMutationType("m2", 0.5, "f", 0.1); // beneficial
+	initializeMutationRate(2.5e-8); // Same as in Florian MS - u=2.5e-8 //
+	initializeMutationType("m1", 0.5, "f", 0.0); // neutral //
+	initializeMutationType("m2", 0.5, "f", 0.1); // beneficial - same as in Florian MS - unrealistic cap is s=0.5 //
 	m2.mutationStackPolicy = "l"; // "f" for the first and "l" for the last //
 	m1.convertToSubstitution = T; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 	m2.convertToSubstitution = T; // add this to the main model1 code, but not before the 10*Ne equilibrium //
@@ -30,7 +30,7 @@ initialize() {
 
 1 {
 	sim.chromosome.colorSubstitution = "";
-	sim.addSubpop("p0", 1000); // Effective population size
+	sim.addSubpop("p0", 1000); // Effective population size - Same as in Florian MS - Ne=1000 - but this is a parameter //
 }
 
 
@@ -52,6 +52,7 @@ initialize() {
 }
 
 10010 late(){
+	// Here only what is going to be implemented in R //
 	u = sim.subpopulations.individuals;
 	g = u.genomes;
 	m = sortBy(unique(g.mutations), "position"); 
@@ -80,6 +81,7 @@ initialize() {
 }
 
 10020 late(){
+	// Here only what is going to be implemented in R //
 	u = sim.subpopulations.individuals;
 	g = u.genomes;
 	m = sortBy(unique(g.mutations), "position"); 
