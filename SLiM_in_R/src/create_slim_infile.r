@@ -33,7 +33,7 @@ toymodel <- function(ne, filename, folder){
 ##########################################################################################
 # MODEL 1 - HARD SWEEP                                         													 #
 # 																						                                           #
-# model1(ne = N_size, filename = 'infile_N_size', folder = 'data/');                     #
+# model1(ne = N_size, filename = 'infile_slim', folder = 'infiles/');                     #
 #                                                                                        #
 # This function creates the infile for model 1 to run SLiM2 simulations.                 #
 ##########################################################################################
@@ -46,7 +46,7 @@ model1 <- function(ne, n=100,
                    filename, folder){
   
   for (i in 1:length(ne)){
-    sink(file = paste0(folder, filename, '_', ne[i], '.slim'), type = 'output');
+    sink(file = paste0(folder, filename, '_N_', ne[i], '.slim'), type = 'output');
     
       cat(paste0('initialize() {', '\n',
                 '\t', 'initializeMutationRate(', mur, ');', '\n',
@@ -67,7 +67,7 @@ model1 <- function(ne, n=100,
       cat(paste0((ne[i]*10), ' late() {', '\n',
                 '\t', 'dnovo = sample(sim.subpopulations.genomes, 1);', '\n',
                 '\t', 'if (dnovo.countOfMutationsOfType(m2) == 0)', '\n',
-                '\t\t', 'dnovo.addNewDrawnMutation(m2, 0);', '\n\n', 
+                '\t\t', ' dnovo.addNewDrawnMutation(m2, 0);', '\n\n', 
                 
                 '\t', 'm2.convertToSubstitution = F;', '\n',
                 '}', '\n\n'));
@@ -85,18 +85,29 @@ model1 <- function(ne, n=100,
                 '\t', 'mc = m.selectionCoeff;', '\n\n',
                 
                 '\t', 'chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));', '\n',
+                '\t', 'mps = apply(mp, "if (applyValue > 50000) paste(applyValue - 50000); else paste(applyValue);");', '\n',
                 '\t', 'sel = ifelse(mc != 0, paste("Y"), paste("N"));', '\n\n',
                 
-                '\t', 'cat(paste("chrom"+"\\t"+"pos"+"\\t"+"id"+"\\t"+"selection"+"\\n"));', '\n',
-                '\t', 'cat(paste(chr+"\\t"+format("%5d",mp)+"\\t"+format("%d",mi)+"\\t"+sel+"\\n"));', '\n\n',
+                '\t', 'header = paste("chrom"+"\\t"+"position"+"\\t"+"ID"+"\\t"+"selection"+"\\t"+"selCoeff"+"\\n");', '\n',
+                '\t', 'mutInf = paste(chr+"\\t"+mps+"\\t"+format("%d",mi)+"\\t"+sel+"\\t"+format("%.2f",mc)+"\\n");', '\n',
+                '\t', 'mutInf = header + mutInf;', '\n',
+                '\t', 'writeFile("', getwd(), '/data/', 'output_slim', '_N_', ne[i], '_mutInfo_t1.txt", mutInf);', '\n\n',
                 
                 '\t', 'su = sample(u, ', n, ', F);', '\n\n',
                 
-                '\t', 'for (si in su){', '\n',
+                '\t', 'genos = NULL;', '\n',
+                '\t', 'for (si in su)','\n',
+                '\t', '{', '\n',
                 '\t\t', 'hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);', '\n',
-                '\t\t', 'hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);', '\n',
-                '\t\t', 'cat(paste(hp1 + "" + hp2) + "\\n");', '\n',
-                '\t', '}', '\n',
+                '\t\t', 'hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);', '\n\n',
+                
+                '\t\t', 'genoLine = paste(hp1 + "" + hp2, "\\t");', '\n',
+                '\t\t', 'genos = c(genos, genoLine);', '\n',
+                '\t', '}', '\n\n',
+                
+                '\t', 'genomatrix = paste(genos, "\\n");', '\n',
+                '\t', 'writeFile("', getwd(), '/data/', 'output_slim', '_N_', ne[i], '_genotypes_t1.txt", genomatrix);', '\n\n',
+                
                 '}', '\n\n'));
                
       cat(paste0((ne[i]*10)+(ts2-(1)), ' late() {', '\n',
@@ -112,30 +123,32 @@ model1 <- function(ne, n=100,
                  '\t', 'mc = m.selectionCoeff;', '\n\n',
                  
                  '\t', 'chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));', '\n',
+                 '\t', 'mps = apply(mp, "if (applyValue > 50000) paste(applyValue - 50000); else paste(applyValue);");', '\n',
                  '\t', 'sel = ifelse(mc != 0, paste("Y"), paste("N"));', '\n\n',
                  
-                 '\t', 'cat(paste("chrom"+"\\t"+"pos"+"\\t"+"id"+"\\t"+"selection"+"\\n"));', '\n',
-                 '\t', 'cat(paste(chr+"\\t"+format("%5d",mp)+"\\t"+format("%d",mi)+"\\t"+sel+"\\n"));', '\n\n',
+                 '\t', 'header = paste("chrom"+"\\t"+"position"+"\\t"+"ID"+"\\t"+"selection"+"\\t"+"selCoeff"+"\\n");', '\n',
+                 '\t', 'mutInf = paste(chr+"\\t"+mps+"\\t"+format("%d",mi)+"\\t"+sel+"\\t"+format("%.2f",mc)+"\\n");', '\n',
+                 '\t', 'mutInf = header + mutInf;', '\n',
+                 '\t', 'writeFile("', getwd(), '/data/', 'output_slim', '_N_', ne[i], '_mutInfo_t2.txt", mutInf);', '\n\n',
                  
                  '\t', 'su = sample(u, ', n, ', F);', '\n\n',
                  
-                 '\t', 'for (si in su){', '\n',
+                 '\t', 'genos = NULL;', '\n',
+                 '\t', 'for (si in su)','\n',
+                 '\t', '{', '\n',
                  '\t\t', 'hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);', '\n',
-                 '\t\t', 'hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);', '\n',
-                 '\t\t', 'cat(paste(hp1 + "" + hp2) + "\\n");', '\n',
+                 '\t\t', 'hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);', '\n\n',
+                 
+                 '\t\t', 'genoLine = paste(hp1 + "" + hp2, "\\t");', '\n',
+                 '\t\t', 'genos = c(genos, genoLine);', '\n',
                  '\t', '}', '\n\n',
+                 
+                 '\t', 'genomatrix = paste(genos, "\\n");', '\n',
+                 '\t', 'writeFile("', getwd(), '/data/', 'output_slim', '_N_', ne[i], '_genotypes_t2.txt", genomatrix);', '\n\n',
                
-                 '\t','sim.simulationFinished();', '\n\n', 
+                 '\t','sim.simulationFinished();', '\n', 
                
                  '}', '\n\n'));
     sink();
   };
-}; ## ate aqui esta ok;
-
-## TO DO or FURTER IMPLEMENTATIONS
-# Allow user definition for all parameters and set default values (Miguel 8/11);
-# Sample all the genomes/individuals
-# Fixed number of individuals that are samples or it can vary given the N?
-# Time between sample 1 and 2 can vary os it would be fixed?
-# Be aware of drift effect - it is ok for neutral, but not ok for the benefitial.
-## If the benefitial arises in t1, it should be present in t2 as well;
+};

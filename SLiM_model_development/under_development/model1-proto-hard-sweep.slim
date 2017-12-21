@@ -51,37 +51,51 @@ initialize() {
 	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //
 }
 
-10010 late(){
-	// Here only what is going to be implemented in R //
+10010 late(){ // Here only what is going to be implemented in R //
+	
+	// BEGIN::Print mutation information //
 	u = sim.subpopulations.individuals;
 	g = u.genomes;
 	m = sortBy(unique(g.mutations), "position"); 
 	mp = m.position;
 	mi = m.id;
 	mc = m.selectionCoeff;
-	
+
 	chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
+	mps = apply(mp, "if (applyValue > 50000) paste(applyValue - 50000); else paste(applyValue);");
 	sel = ifelse(mc != 0, paste("Y"), paste("N"));
 	
-	cat(paste("chrom"+"\t"+"pos"+"\t"+"id"+"\t"+"selection"+"\t"+"selCoeff"+"\n"));
-	cat(paste(chr+"\t"+format("%5d",mp)+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\n"));
+	header = paste("chrom"+"\t"+"position"+"\t"+"ID"+"\t"+"selection"+"\t"+"selCoeff"+"\n");
+	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\n");
+	mutInf = header + mutInf;
+	writeFile("~/mutInfo_t1.txt", mutInf);
+	// END::Print mutation information //
 	
+	// BEGIN::Print genotypes //
 	su = sample(u, 100, F);
 	
-	for (si in su){
-	
+	genos = NULL; 
+	for (si in su)
+	{
 		hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
 		hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
-		cat(paste(hp1 + '' + hp2) + "\n");
+		
+		genoLine = paste(hp1 + '' + hp2, "\t");
+		genos = c(genos, genoLine);
 	}
+	
+	genomatrix = paste(genos, "\n");
+	writeFile("~/genotypes_t1.txt", genomatrix);
+	// END::Print genotypes //
 }	
 
 10019 late(){
 	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //
 }
 
-10020 late(){
-	// Here only what is going to be implemented in R //
+10020 late(){ // Here only what is going to be implemented in R //
+	
+	// BEGIN::Print mutation information //
 	u = sim.subpopulations.individuals;
 	g = u.genomes;
 	m = sortBy(unique(g.mutations), "position"); 
@@ -89,21 +103,34 @@ initialize() {
 	mi = m.id;
 	mc = m.selectionCoeff;
 	
+	
 	chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
+	mps = apply(mp, "if (applyValue > 50000) paste(applyValue - 50000); else paste(applyValue);");
 	sel = ifelse(mc != 0, paste("Y"), paste("N"));
 	
-	cat(paste("chrom"+"\t"+"pos"+"\t"+"id"+"\t"+"selection"+"\t"+"selCoeff"+"\n"));
-	cat(paste(chr+"\t"+format("%5d",mp)+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\n"));
-	
+	header = paste("chrom"+"\t"+"position"+"\t"+"ID"+"\t"+"selection"+"\t"+"selCoeff"+"\n");
+	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\n");
+	mutInf = header + mutInf;
+	writeFile("~/mutInfo_t2.txt", mutInf);
+	// END::Print mutation information //
+
+	// BEGIN::Print genotypes //
 	su = sample(u, 100, F);
 	
-	for (si in su){
-	
+	genos = NULL;
+	for (si in su)
+	{
 		hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
 		hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
-		cat(paste(hp1 + '' + hp2) + "\n");
+	
+		genoLine = paste(hp1 + '' + hp2, "\t");
+		genos = c(genos, genoLine);	
+	
 	}	
 	
-	sim.simulationFinished();
+	genomatrix = paste(genos, "\n");
+	writeFile("~/genotypes_t2.txt", genomatrix);
+	// END::Print genotypes //
 	
+	sim.simulationFinished();	
 } 

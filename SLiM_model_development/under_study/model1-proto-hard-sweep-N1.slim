@@ -44,7 +44,7 @@ initialize() {
 
 10010 late(){
 	
-	// Print mutation information //
+	// BEGIN::Print mutation information //
 	u = sim.subpopulations.individuals;
 	g = u.genomes;
 	m = sortBy(unique(g.mutations), "position"); 
@@ -58,11 +58,11 @@ initialize() {
 	
 	header = paste("chrom"+"\t"+"position"+"\t"+"ID"+"\t"+"selection"+"\t"+"selCoeff"+"\n");
 	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\n");
-
 	mutInf = header + mutInf;
 	writeFile("~/mutInfo_t1.txt", mutInf);
+	// END::Print mutation information //
 	
-	// Print genotypes //
+	// BEGIN::Print genotypes //
 	su = sample(u, 100, F);
 	
 	genos = NULL; 
@@ -70,7 +70,6 @@ initialize() {
 	{
 		hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
 		hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
-		cat(paste(hp1 + '' + hp2) + "\n");
 		
 		genoLine = paste(hp1 + '' + hp2, "\t");
 		genos = c(genos, genoLine);
@@ -79,7 +78,7 @@ initialize() {
 	
 	genomatrix = paste(genos, "\n");
 	writeFile("~/genotypes_t1.txt", genomatrix);
-
+	// END::Print genotypes //
 }	
 
 10019 late(){
@@ -88,6 +87,7 @@ initialize() {
 
 10020 late(){
 	
+	// BEGIN::Print mutation information //
 	u = sim.subpopulations.individuals;
 	g = u.genomes;
 	m = sortBy(unique(g.mutations), "position"); 
@@ -102,11 +102,11 @@ initialize() {
 	
 	header = paste("chrom"+"\t"+"position"+"\t"+"ID"+"\t"+"selection"+"\t"+"selCoeff"+"\n");
 	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\n");
-
 	mutInf = header + mutInf;
 	writeFile("~/mutInfo_t2.txt", mutInf);
-	
-	// Print genotypes //
+	// END::Print mutation information //
+
+	// BEGIN::Print genotypes //
 	su = sample(u, 100, F);
 	
 	genos = NULL;
@@ -114,7 +114,6 @@ initialize() {
 	{
 		hp1 = (asInteger(match(m,sortBy(unique(si.genomes[0].mutations), "position")) >=0)+1);
 		hp2 = (asInteger(match(m,sortBy(unique(si.genomes[1].mutations), "position")) >=0)+1);
-		cat(paste(hp1 + '' + hp2) + "\n");
 	
 		genoLine = paste(hp1 + '' + hp2, "\t");
 		genos = c(genos, genoLine);	
@@ -123,9 +122,9 @@ initialize() {
 	
 	genomatrix = paste(genos, "\n");
 	writeFile("~/genotypes_t2.txt", genomatrix);
+	// END::Print genotypes //
 	
-	sim.simulationFinished();
-	
+	sim.simulationFinished();	
 } 
 
 // Come back in this latter

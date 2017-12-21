@@ -20,7 +20,14 @@ R.version.string;
 #sessionInfo()$otherPkgs$abcrf$Version;
 
 recordSessionInfo <- sessionInfo();
-setwd("/Users/vitorpavinato/Documents/My_repositories/Tracking-selection/SLiM_in_R");
+working_dir <- "/Users/vitorpavinato/Documents/My_repositories/Tracking-selection/SLiM_in_R"
+
+if (is.na(match(working_dir,getwd()))){
+  setwd(working_dir)
+} else {
+  print("Working directory already set up")
+}
+
 save(recordSessionInfo,file="results/sessionInfo.RData");
 save.image(file = "results/workspaceFile.RData");
 
@@ -33,19 +40,18 @@ save.image(file = "results/workspaceFile.RData");
 source("src/create_slim_infile.r");
 
 # Simulating N from prior;
-N_size <- as.integer(runif(3, 100, 300));
+N_size <- as.integer(runif(10, 500, 1000));
 
 for (n in 1:length(N_size)){
 cat(paste("You simulated sample",n,"of size N =", N_size[n],"\n"));
 };
 
-if (file.exists(dir('data/', pattern = '.slim$', full.names = TRUE))){
-  file_removed <- file.remove(dir('data/', pattern = '.slim$', full.names = TRUE))
-}
-
-model1(ne = N_size,
-       filename = 'infile_N_size', 
-       folder = 'data/');  ## ate aqui esta ok;
+ifelse(file.exists(dir("infiles/", pattern = ".slim$", full.names = TRUE)), 
+       file.remove(dir("infiles/", pattern = ".slim$", full.names = TRUE)), NULL)
+      
+model1(      ne = N_size,
+       filename = "infile_slim", 
+         folder = "infiles/");
 
 ## Running SLiM simulations 
 
@@ -54,26 +60,45 @@ source("src/slim.r");
 # Random seeds;
 random_seeds <- as.integer(runif(length(N_size), 100000, 900000));
 
+ifelse(file.exists(dir('data/', pattern = "output_", full.names = TRUE)), 
+       file.remove(dir('data/', pattern = "output_", full.names = TRUE)), NULL)
+
 # SLiM2 runs v1:
-# It runs SLiM2 and saves the parameters and the output in the same file;
-# This function is one I worked last time;
-slim(    parm = N_size, 
-         seed = random_seeds,
-     filename = 'outfile_N_size',
-       folder = 'data/',
-       infile = 'infile_N_size');
+# It runs SLiM2 and saves the parameters of each simulation in an outfile;
+# Thanks to Eidos code each simulation now generate 2 files for each sampling;
+
+slim(     parm = N_size, 
+          seed = random_seeds,
+      filename = 'outfile_slim',
+     folderout = 'data/',
+        infile = 'infile_slim',
+      folderin = 'infiles/');
+
+# system time: 10 simulation Ne < 1000
+# user  system elapsed 
+# 17.502   0.146  17.690
 
 # SLiM2 runs v2:
 # It runs SLiM2 and saves only the output;
-run_slim_infile2(parm = N_size, 
-                seed = random_seeds,
-                filename = 'outfile_N_size',
-                folder = 'data/',
-                infile = 'infile_N_size');
 
-tmp <- system2(command = '/usr/local/bin/slim', 
-               args = paste0('-s', ' ', 755552, ' ', 'data/', 'infile_N_size', '_', 1293, '.slim'), 
-               stdout = TRUE);
+slimclean(    parm = N_size, 
+              seed = random_seeds,
+            infile = 'infile_slim',      
+          folderin = 'infiles/');
 
-tmp[17:270]
-tmp[271:length(tmp)]
+# system time: 10 simulation Ne < 1000
+# user  system elapsed 
+# 18.895   0.155  19.081
+
+## Uploading SLiM simulations outputs
+
+infot1 <- read.table("data/output_slim_N_520_mutInfo_t1.txt", header = TRUE)
+dim(infot1)
+
+genot1 <- read.table("data/output_slim_N_520_genotypes_t1.txt", header = FALSE)
+genot1 <- t(genot1)
+
+index = seq(from=1, to=length(genot1[1,]), by=1)
+colnames(genot1) <- paste0("indiv",index,"@pop1", "")
+
+cbind(infot1,genot1)
