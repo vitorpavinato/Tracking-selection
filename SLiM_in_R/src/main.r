@@ -40,31 +40,18 @@ save.image(file = "results/workspaceFile.RData");
 source("src/create_slim_infile.r");
 
 # Simulating from prior;
-fromprior <- function(nsims){
-                   ne <- as.integer(runif(nsims, 500, 1000));
-                 mud1 <- runif(nsims, 0.5, 1.0);
-                 mud2 <- runif(nsims, 0.5, 1.0);
-                mufv2 <- runif(nsims, 0, 0.5);
-                  ts1 <- as.integer(runif(nsims, 1, 1000));
-                int12 <- as.integer(runif(nsims, 1, 1000));
-                  
-                result <- cbind(ne, mud1, mud2, mufv2, ts1, int12);
-                return(result)
-                }
-
-parm <- fromprior(10)
-
-for (i in 1:nsim){
-  cat(paste("You simulated sample",i,"of size N =", parm[,1][i],"\n"));
-  cat(paste("You simulated selcoeff ",i," =", parm[,4][i],"\n"));
-};
 
 ifelse(file.exists(dir("infiles/", pattern = ".slim$", full.names = TRUE)), 
        file.remove(dir("infiles/", pattern = ".slim$", full.names = TRUE)), NULL)
       
-model1(   nsims = 1,
-       filename = "infile_slim", 
-         folder = "infiles/");
+testrun2 <- model1(      nsim = 5,
+                         ne_min = 100, ne_max = 500,
+                         mufv2_min = 0.05, mufv2_max = 0.5,
+                         filename = "infile_slim", 
+                         folder = "infiles/");
+testrun2
+
+
 
 ## Running SLiM simulations 
 
@@ -139,7 +126,7 @@ colnames(genot2) <- paste0("indiv",iindex,"@pop2", "")
 sp2 <- cbind(infot2,genot2)
 
 test <- merge(sp1, sp2, by.x= c(1,2,3,4,5), by.y = c(1,2,3,4,5), all=TRUE)
-test[is.na(test)] <- 00
+test[is.na(test)] <- "00" # it might fix
 dim(test)
 
 colnames(test)[3] <- "status"
