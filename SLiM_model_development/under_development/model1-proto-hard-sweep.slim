@@ -10,7 +10,8 @@ initialize() {
 	initializeMutationRate(2.5e-8); // Same as in Florian MS - u=2.5e-8 //
 	initializeMutationType("m1", 0.5, "f", 0.0); // neutral //
 	initializeMutationType("m2", 0.5, "f", 0.1); // beneficial - same as in Florian MS - unrealistic cap is s=0.5 //
-	m2.mutationStackPolicy = "l"; // "f" for the first and "l" for the last //
+	m1.mutationStackPolicy = "f"; // "f" for the first and "l" for the last //
+	m2.mutationStackPolicy = "f"; // "f" for the first and "l" for the last //
 	m1.convertToSubstitution = T; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 	m2.convertToSubstitution = T; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 	m1.color = "gray40";
@@ -42,7 +43,7 @@ initialize() {
 	// This mutation will have higher fitness //
 	dnovo = sample(sim.subpopulations.genomes, 1);
 	if (dnovo.countOfMutationsOfType(m2) == 0)
-		 dnovo.addNewDrawnMutation(m2, 0);
+		 dnovo.addNewDrawnMutation(m2, 1);
 	
 	m2.convertToSubstitution = F; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 }
@@ -88,6 +89,10 @@ initialize() {
 	writeFile("~/genotypes_t1.txt", genomatrix);
 	// END::Print genotypes //
 }	
+
+10011 late(){
+	m1.convertToSubstitution = T; // add this to the main model1 code, but not before the first sampling //
+}
 
 10019 late(){
 	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //

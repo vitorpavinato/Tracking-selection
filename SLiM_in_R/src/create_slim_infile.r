@@ -166,7 +166,8 @@ model1 <- function(nsim,
                                 '\t', 'initializeMutationRate(', mur, ');', '\n',
                                 '\t', 'initializeMutationType("m1", ', mud1[i], ', "', mufd1, '", ', mufv1, ');', '\n',
                                 '\t', 'initializeMutationType("m2", ', mud2[i], ', "', mufd2, '", ', mufv2[i], ');', '\n',
-                                '\t', 'm2.mutationStackPolicy = "l";', '\n',
+                                '\t', 'm1.mutationStackPolicy = "f";', '\n',
+                                '\t', 'm2.mutationStackPolicy = "f";', '\n',
                                 '\t', 'm1.convertToSubstitution = T;', '\n',
                                 '\t', 'm2.convertToSubstitution = T;', '\n',
                                 '\t', 'initializeGenomicElementType("g1", m1, 1.0);', '\n',
@@ -181,7 +182,7 @@ model1 <- function(nsim,
                       cat(paste0((ne[i]*10), ' late() {', '\n',
                                 '\t', 'dnovo = sample(sim.subpopulations.genomes, 1);', '\n',
                                 '\t', 'if (dnovo.countOfMutationsOfType(m2) == 0)', '\n',
-                                '\t\t', ' dnovo.addNewDrawnMutation(m2, 0);', '\n\n', 
+                                '\t\t', ' dnovo.addNewDrawnMutation(m2, 1);', '\n\n', 
                                 
                                 '\t', 'm2.convertToSubstitution = F;', '\n',
                                 '}', '\n\n'));
@@ -224,9 +225,13 @@ model1 <- function(nsim,
                                 
                                 '}', '\n\n'));
                                
+                      cat(paste0((ne[i]*10)+(ts1[i]+(1)), ' late() {', '\n',
+                                '\t', 'm1.convertToSubstitution = T;', '\n',
+                                '}', '\n\n'));
+            
                       cat(paste0((ne[i]*10)+(ts2[i]-(1)), ' late() {', '\n',
-                               '\t', 'm1.convertToSubstitution = F;', '\n',
-                               '}', '\n\n'));
+                                '\t', 'm1.convertToSubstitution = F;', '\n',
+                                '}', '\n\n'));
                       
                       cat(paste0((ne[i]*10)+(ts2[i]), ' late() {', '\n',
                                  '\t', 'u = sim.subpopulations.individuals;' , '\n',
