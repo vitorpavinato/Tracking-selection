@@ -1,3 +1,9 @@
+##########################################################################################
+# simuprior(nsim, ne = N_size, ..., int12_max = value);                                  #
+#                                                                                        #
+# This function creates a table with simulation parameters                               #
+##########################################################################################                            
+
 simuprior <- function(nsim, 
                       ne = 1000, ne_min = NULL, ne_max = NULL,
                       n = 100,   n_min = NULL,  n_man = NULL,
@@ -50,12 +56,13 @@ simuprior <- function(nsim,
 }
 
 ##########################################################################################
-# toymodel(ne = N_size, filename = 'infile_N_size', folder = 'data/');                   #
+# toymodel(nsim, ne = N_size, filename = 'infile_N_size', folder = 'data/');             #
 #                                                                                        #
 # This function creates the infile for a toymodel to run SLiM2 simulations.              #
-# Toymodel helped the initial stages of R/SLiM implementation                                              #                             
+# Toymodel helped the initial stages of R/SLiM implementation                            #                             
 #																						                                             #
 # ne = a vector containing population size N to be simulated;                            #
+# ne_min and ne_max are the defined range values for random sampling taking from uniform #
 # filename = prefix for a filename system;                                               #
 # folder = path where to save the generated SLiM2 infiles.                               #
 ##########################################################################################
@@ -98,7 +105,7 @@ toymodel <- function(nsim,
 ##########################################################################################
 # MODEL 1 - HARD SWEEP                                         													 #
 # 																						                                           #
-# model1(ne = N_size, filename = 'infile_slim', folder = 'infiles/');                    #
+# model1(nsim, ne = N_size, ..., filename = 'infile_slim', folder = 'infiles/');         #
 #                                                                                        #
 # This function creates the infile for model 1 to run SLiM2 simulations.                 #
 ##########################################################################################
@@ -106,14 +113,13 @@ toymodel <- function(nsim,
 model1 <- function(nsim, 
                    ne = 1000, ne_min = NULL, ne_max = NULL, 
                    n = 100,   n_min = NULL,  n_man = NULL,
-                   mur = 2.5e-8, 
+                   mur = 2.5e-8, mur_min = NULL, mur_max = NULL,
                    mud1 = 0.5, mud1_min = NULL, mud1_max = NULL, 
-                   mufd1 = "f", mufv1 = 0.0, 
+                   mufd1 = "f", mufv1 = 0.0, mufv1_min = NULL, mufv1_max = NULL,
                    mud2 = 0.5, mud2_min = NULL, mud2_max = NULL, 
-                   mufd2 = "f", mufv2 = 0.1, mufv2_min = NULL, mufv2_max = NULL,
+                   mufd2 = "f", mufv2 = 0.0, mufv2_min = NULL, mufv2_max = NULL,
                    ts1 = 10, ts1_min = NULL, ts1_max = NULL,  
                    int12 = 10, int12_min = NULL, int12_max = NULL, 
-                   ts2 = ts1+int12,
                    genomesize = 100000,
                    filename, folder)
 {
@@ -124,48 +130,61 @@ model1 <- function(nsim,
         if (!is.null(ne_min)){
           ne <- as.integer(runif(nsim, ne_min, ne_max));
         } else {
-          ne = rep(ne, nsim);
+          ne = as.integer(rep(ne, nsim));
         }
         if (!is.null(n_min)){
           n <- as.integer(runif(nsim, n_min, n_max));
         } else {
-          n = rep(n, nsim);
+          n = as.integer(rep(n, nsim));
+        }
+        if (!is.null(mur_min)){
+          mur <- runif(nsim, mur_min, mur_max);
+        } else {
+          mur = rep(mur, nsim);
         }
         if (!is.null(mud1_min)){
-          mud1 <- round(runif(nsim, mud1_min, mud1_max), digits = 3);
+          mud1 <- runif(nsim, mud1_min, mud1_max);
         } else {
           mud1 = rep(mud1, nsim);
         }
+        if (!is.null(mufv1_min)){
+          mufv1 <- runif(nsim, mufv1_min, mufv1_max);
+        } else {
+          mufv1 = rep(mufv1, nsim);
+        }
         if (!is.null(mud2_min)){
-          mud2 <- round(runif(nsim, mud2_min, mud2_max), digits = 3);
+          mud2 <- runif(nsim, mud2_min, mud2_max);
         } else {
           mud2 = rep(mud2, nsim);
         }
         if (!is.null(mufv2_min)){
-          mufv2 <- round(runif(nsim, mufv2_min, mufv2_max), digits = 3);
+          mufv2 <- runif(nsim, mufv2_min, mufv2_max);
         } else {
           mufv2 = rep(mufv2, nsim);
         }
         if (!is.null(ts1_min)){
           ts1 <- as.integer(runif(nsim, ts1_min, ts1_max));
         } else {
-          ts1 = rep(ts1, nsim);
+          ts1 = as.integer(rep(ts1, nsim));
         }
         if (!is.null(int12_min)){
-          int12 <- as.integer(runif(nsim, int12_min_min, int12_max));
+          int12 <- as.integer(runif(nsim, int12_min, int12_max));
         } else {
-          int12 = rep(int12, nsim);
+          int12 = as.integer(rep(int12, nsim));
         }
+        ts2 = ts1+int12;
         
-        parm <- cbind(simnumb, ne, n, mud1, mud2, mufv2, ts1, int12);
-  
+        parm <- cbind(simnumb, ne, n, sprintf("%1.1e",mur), sprintf("%.1f",mud1), sprintf("%.1f",mufv1), sprintf("%.1f",mud2), sprintf("%.1f", mufv2), ts1, int12, ts2);
+        colnames(parm) <- c("Sim", "NE", "sampleS", "murate", "neuDom", "neuFitness", 
+                            "benDom", "benFitness", "sampleT1", "INT12", "sampleT2");
+        
           for(i in 1:nsim){
                 sink(file = paste0(folder, filename, '_', simnumb[i], '.slim'), type = 'output');
         
                       cat(paste0('initialize() {', '\n',
-                                '\t', 'initializeMutationRate(', mur, ');', '\n',
-                                '\t', 'initializeMutationType("m1", ', mud1[i], ', "', mufd1, '", ', mufv1, ');', '\n',
-                                '\t', 'initializeMutationType("m2", ', mud2[i], ', "', mufd2, '", ', mufv2[i], ');', '\n',
+                                '\t', 'initializeMutationRate(', sprintf("%1.1e", mur[i]), ');', '\n',
+                                '\t', 'initializeMutationType("m1", ', sprintf("%.1f", mud1[i]), ', "', mufd1, '", ', sprintf("%.1f", mufv1[i]), ');', '\n',
+                                '\t', 'initializeMutationType("m2", ', sprintf("%.1f", mud2[i]), ', "', mufd2, '", ', sprintf("%.1f", mufv2[i]), ');', '\n',
                                 '\t', 'm1.mutationStackPolicy = "f";', '\n',
                                 '\t', 'm2.mutationStackPolicy = "f";', '\n',
                                 '\t', 'm1.convertToSubstitution = T;', '\n',

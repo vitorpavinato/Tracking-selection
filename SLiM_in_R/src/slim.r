@@ -69,8 +69,9 @@ convertEggLib <- function(nsim,
                           input, folderin)
 {
        		simnumb <- seq(1,nsim,1);
+       		out<-vector("list", nsim);
        		 for(i in 1:nsim){
-       		 	  f1 <- paste0(input,"_",simnumb[i],"_","mutInfo_t1.txt");
+       		    f1 <- paste0(input,"_",simnumb[i],"_","mutInfo_t1.txt");
        		 	    inft1 <- read.table(paste0(folderin,f1), header = TRUE);
        		 	  
        		 	  f2 <- paste0(input,"_",simnumb[i],"_","genotypes_t1.txt");
@@ -103,9 +104,12 @@ convertEggLib <- function(nsim,
        		 	                colnames(mrgdata)[5] <- "alleles"
        		 	                mrgdata[,5]<- rep("A,T", times=dim(mrgdata)[1])
        		 	                
-       		 	                out <- paste0(output,"_",simnumb[i],".txt");
-       		 	                write.table(mrgdata, file = paste0(folderout,out), quote=FALSE, sep="\t", row.names = FALSE)
+       		 	                out[[i]] <- mrgdata[,1:5]
+       		 	                
+       		 	                outfile <- paste0(output,"_",simnumb[i],".txt");
+       		 	                write.table(mrgdata, file = paste0(folderout,outfile), quote=FALSE, sep="\t", row.names = FALSE)
        		 };
+       		return(out); # acho que não precisa disso
 };
 
 ##########################################################################################
@@ -124,7 +128,6 @@ runEggLib <- function(nsim,
 {
        		simnumb <- seq(1,nsim,1);
        		  for(i in 1:nsim){
-       		    
        		      args <- c(paste0(workdir,'/', sourcepath),
        		                paste0('input-file=', workdir, '/', folderin, input, '_', simnumb[i], '.txt'),
        		                paste0('output-file=', workdir, '/', folderout, output, '_', simnumb[i], '.txt'),
@@ -132,10 +135,56 @@ runEggLib <- function(nsim,
        		                paste0('WSS=','S,thetaW,D,Da,ZZ'),
        		                paste0('GSS=','S,thetaW,D,Da,ZZ'),
        		                paste0('wspan=','10'),
-       		                paste0('select=','all'))
+       		                paste0('select=','all'));
        		      
        		      system2(command = pythonpath, args = args, stdout = TRUE, wait = FALSE);
        		    
-       		   } 
+       		   }; 
   
-}
+};
+
+createGSS <- function(nsim, 
+                      inputss, folderin)
+{
+            out <- matrix(ncol = 5, nrow = nsim);
+            simnumb <- seq(1, nsim, 1);  
+              for(i in 1:nsim){
+                  f <- paste0(inputss,"_",simnumb[i],".txt");
+                    fdata <- read.table(file = paste0(folderin,f), header = TRUE, na.strings = "NA");
+                    temp  <- as.matrix(fdata[1, c("GSS.S", "GSS.thetaW", "GSS.D", "GSS.Da", "GSS.ZZ")]);
+                  out[i,] <- temp 
+              };
+            rf <- cbind(simnumb,out)
+            colnames(rf) <- c("Sim", "S", "thetaW", "D", "Da", "ZZ");
+            return(rf);
+};
+
+createLSS <- function(nsim, input,
+                      inputss, folderin)
+{
+              simnumb <- seq(1,nsim,1);
+              #data <- vector("list", nsim);
+              rf <- vector("list", nsim);
+                for(i in 1:nsim){
+                  f1 <- paste0(input,"_",simnumb[i], ".txt");
+                    inft1 <- read.table(paste0(folderin,f1), header = TRUE, na.strings = "NA");
+                    temp1 <- inft1[,1:5];
+                  
+                  f2 <- paste0(inputss,"_",simnumb[i], ".txt");
+                    inft2 <- read.table(paste0(folderin,f2), header = TRUE, na.strings = "NA");
+                    temp2 <- inft2[, c("ID","LSS.He","LSS.Dj","LSS.WCst","WSS.S","WSS.thetaW","WSS.D","WSS.Da","WSS.ZZ")];
+                  
+                  dataset <- cbind(temp1, temp2);
+                  
+                  #data[[i]] <- dataset
+                  
+                  benefitial = dataset[which(dataset$selection == "Y"), ]
+                  randomrow <- sample(2:dim(dataset)[1], size = 1)
+                  neutral = dataset[randomrow, ] 
+                  out <- rbind(benefitial,neutral)
+                  colnames(out) <- c("chrom","position","status","selection","alleles","ID","He","Dj","WCst","S","thetaW","D","Da","ZZ");
+                  rf[[i]] <- out
+            };
+  
+        return(rf);
+};
