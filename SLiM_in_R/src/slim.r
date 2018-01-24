@@ -14,47 +14,29 @@
 # folderin = path to the infiles.                                                        #            
 ##########################################################################################
 
-slim <- function(nsim, 
-                 seed = 845295086, 
+slim <- function(seed = 845295086, 
                  outfile, folderout, 
                  infile, folderin)
 {
-     	    simnumb <- seq(from = 1, to = nsim, by = 1);
-     	     if (nsim > 1){
-     	      seed <- as.integer(runif(nsim, 100000000, 900000000));
-     	    } else {
-     	      seed = seed;
-     	    }
-     	    
-     	    parm <- cbind(simnumb, seed);
-     	    
-     	      for (i in 1:nsim){
-     	            system2(command = '/usr/local/bin/slim', 
-     	                       args = paste0('-s', ' ', seed[i], ' ', folderin, infile, '_', simnumb[i], '.slim'), 
-     	                     stdout = paste0(folderout, outfile, '_', simnumb[i], '.txt')); 
-     	      };
-     	    return(parm);
+    parm <- as.data.frame(seed);
+    
+    for (i in 1:dim(parm)[1]){
+      system2(command = '/usr/local/bin/slim', 
+                 args = paste0('-s', ' ', parm$seed[i], ' ', folderin, infile, '_', i, '.slim'), 
+               stdout = paste0(folderout, outfile, '_', i, '.txt')); 
+    };
 };
 
-slimclean <- function(nsim,
-                      seed = 845295086, 
+slimclean <- function(seed = 845295086, 
                       infile, folderin)
 {
-            simnumb <- seq(1,nsim,1);
-             if (nsim > 1){
-              seed <- as.integer(runif(nsim, 100000000, 900000000));
-            } else {
-              seed = seed;
-            }
+    parm <- as.data.frame(seed);
   
-            parm <- cbind(simnumb, seed);
-  
-              for (i in 1:nsim){
-                    system2(command = '/usr/local/bin/slim', 
-                               args = paste0('-s', ' ', seed[i], ' ', folderin, infile, '_', simnumb[i], '.slim'), 
-                             stdout = FALSE);
-              };
-            return(parm);
+    for (i in 1:dim(parm)[1]){
+      system2(command = '/usr/local/bin/slim', 
+                 args = paste0('-s', ' ', parm$seed[i], ' ', folderin, infile, '_', i, '.slim'), 
+               stdout = FALSE);
+    };
 };
 
 ##########################################################################################

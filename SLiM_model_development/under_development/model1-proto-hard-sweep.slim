@@ -9,7 +9,7 @@
 initialize() {
 	initializeMutationRate(2.5e-8); // Same as in Florian MS - u=2.5e-8 //
 	initializeMutationType("m1", 0.5, "f", 0.0); // neutral //
-	initializeMutationType("m2", 0.5, "f", 0.1); // beneficial - same as in Florian MS - unrealistic cap is s=0.5 //
+	initializeMutationType("m2", 0.5, "f", 0.5); // beneficial - same as in Florian MS - unrealistic cap is s=0.5 //
 	m1.mutationStackPolicy = "f"; // "f" for the first and "l" for the last //
 	m2.mutationStackPolicy = "f"; // "f" for the first and "l" for the last //
 	m1.convertToSubstitution = T; // add this to the main model1 code, but not before the 10*Ne equilibrium //
@@ -31,12 +31,12 @@ initialize() {
 
 1 {
 	sim.chromosome.colorSubstitution = "";
-	sim.addSubpop("p0", 1000); // Effective population size - Same as in Florian MS - Ne=1000 - but this is a parameter //
+	sim.addSubpop("p0", 500); // Effective population size - Same as in Florian MS - Ne=1000 - but this is a parameter //
 }
 
 
 
-10000 late() {
+5000 late() {
 	// Wait until MD-Equilibrium to add the beneficial mutation;
 	// It explicitly sample one genome from the entire simulation and add a new/denovo benefitial mutation //
 	// It is similar to the "addtion" of a new mutations during gametogenesisthis //
@@ -48,11 +48,11 @@ initialize() {
 	m2.convertToSubstitution = F; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 }
 
-10009 late(){
+5009 late(){
 	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //
 }
 
-10010 late(){ // Here only what is going to be implemented in R //
+5010 late(){ // Here only what is going to be implemented in R //
 	
 	// BEGIN::Print mutation information //
 	u = sim.subpopulations.individuals;
@@ -60,14 +60,16 @@ initialize() {
 	m = sortBy(unique(g.mutations), "position"); 
 	mp = m.position;
 	mi = m.id;
+	mf = sim.mutationFrequencies(subpops=NULL,mutations=m);
 	mc = m.selectionCoeff;
 
 	chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
 	mps = apply(mp, "if (applyValue > 50000) paste(applyValue - 50000); else paste(applyValue);");
-	sel = ifelse(mc != 0, paste("Y"), paste("N"));
+	status = repEach(paste("NS"), size(m));
+	alleles = repEach(paste("A,T"), size(m));
 	
-	header = paste("chrom"+"\t"+"position"+"\t"+"ID"+"\t"+"selection"+"\t"+"selCoeff"+"\n");
-	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\n");
+	header = paste("chrom"+"\t"+"position"+"\t"+"muID"+"\t"+"mufreq"+"\t"+"selCoeff"+"\t"+"status"+"\t"+"alleles"+"\n");
+	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+format("%.3f",mf)+"\t"+format("%.3f",mc)+"\t"+status+"\t"+alleles+"\n");
 	mutInf = header + mutInf;
 	writeFile("~/mutInfo_t1.txt", mutInf);
 	// END::Print mutation information //
@@ -90,15 +92,15 @@ initialize() {
 	// END::Print genotypes //
 }	
 
-10011 late(){
+5011 late(){
 	m1.convertToSubstitution = T; // add this to the main model1 code, but not before the first sampling //
 }
 
-10019 late(){
+5019 late(){
 	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //
 }
 
-10020 late(){ // Here only what is going to be implemented in R //
+5020 late(){ // Here only what is going to be implemented in R //
 	
 	// BEGIN::Print mutation information //
 	u = sim.subpopulations.individuals;
@@ -106,15 +108,16 @@ initialize() {
 	m = sortBy(unique(g.mutations), "position"); 
 	mp = m.position;
 	mi = m.id;
+	mf = sim.mutationFrequencies(subpops=NULL,mutations=m);
 	mc = m.selectionCoeff;
-	
 	
 	chr = ifelse(mp > 50000, paste("chr2"), paste("chr1"));
 	mps = apply(mp, "if (applyValue > 50000) paste(applyValue - 50000); else paste(applyValue);");
-	sel = ifelse(mc != 0, paste("Y"), paste("N"));
+	status = repEach(paste("NS"), size(m));
+	alleles = repEach(paste("A,T"), size(m));
 	
-	header = paste("chrom"+"\t"+"position"+"\t"+"ID"+"\t"+"selection"+"\t"+"selCoeff"+"\n");
-	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+sel+"\t"+format("%.2f",mc)+"\n");
+	header = paste("chrom"+"\t"+"position"+"\t"+"muID"+"\t"+"mufreq"+"\t"+"selCoeff"+"\t"+"status"+"\t"+"alleles"+"\n");
+	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+format("%.3f",mf)+"\t"+format("%.3f",mc)+"\t"+status+"\t"+alleles+"\n");
 	mutInf = header + mutInf;
 	writeFile("~/mutInfo_t2.txt", mutInf);
 	// END::Print mutation information //
