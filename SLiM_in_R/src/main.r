@@ -16,6 +16,7 @@ R.version.string;
 #library(abc);
 #library(abcrf);
 library(plyr); # for the convertEggLib function 
+library(dplyr)
 
 #sessionInfo()$otherPkgs$abc$Version;
 #sessionInfo()$otherPkgs$abcrf$Version;
@@ -37,6 +38,8 @@ save.image(file = "results/workspaceFile.RData");
 ##       Runing Forward-time Simulations       ##
 #################################################
 
+load(file = "results/workspaceFile.RData");
+
 ## Creating SLiM infiles
 
 # Set the number of simulations
@@ -44,6 +47,7 @@ save.image(file = "results/workspaceFile.RData");
 nsim <- 10; 
 
 # Set values for the prior - only for Ne
+
 sim_ne <- as.integer(runif(nsim, 100, 1000));
 sim_seed <- as.integer(runif(nsim, 100000000, 900000000));
 
@@ -61,6 +65,8 @@ createslim <- model1(      ne = sim_ne,
                        folder = "results/slim-infiles/",
                        output = "output_slim",
                     folderout = "results/slim-outputs");
+
+priors <- join(priors, createslim)
 
 ## Running SLiM simulations 
 
@@ -82,64 +88,93 @@ slim(     seed = sim_seed,
         infile = 'infile_slim',
       folderin = 'results/slim-infiles/');
 
-
-
 # SLiM2 runs v2:
-# It runs SLiM2 and saves only the output;
+# It runs SLiM2 and saves only the outputs;
 
 # slimclean(    seed = sim_seed, 
 #             infile = 'infile_slim',      
 #           folderin = 'infiles/');
 
+save.image(file = "results/workspaceFile.RData");
+
+#################################################
+##     Calculating the Summary Statistics      ##
+#################################################
+
+load(file = "results/workspaceFile.RData");
+
 ## Converting SLiM outputs to EggLib inputs
+
+source("src/create_ref_table.r");
 
 ifelse(file.exists(dir('results/egglib-inputs/', pattern = "input_egglib_", full.names = TRUE)), 
        file.remove(dir('results/egglib-inputs/', pattern = "input_egglib_", full.names = TRUE)), NULL)
 
-system.time(converteddata <- convertEggLib(     nsim = 10, 
-                                              output = "input_egglib" , 
-                                           folderout = "results/egglib-inputs/", 
-                                               input = "output_slim", 
-                                            folderin = "results/slim-outputs/"));
+dataconvertion <- convertEggLib(       nsim = 10,
+                                select_freq = 0.3,
+                                     output = "input_egglib" , 
+                                  folderout = "results/egglib-inputs/", 
+                                      input = "output_slim", 
+                                   folderin = "results/slim-outputs/");
 
 ## Running EggLib
 
 ifelse(file.exists(dir('results/egglig-outputs/', pattern = "output_egglib_", full.names = TRUE)), 
        file.remove(dir('results/egglig-outputs/', pattern = "output_egglib_", full.names = TRUE)), NULL)
 
-system.time(runEggLib(      nsim = 10, 
-              output = "output_egglib", 
+runEggLib(    output = "output_egglib", 
            folderout = "results/egglig-outputs/", 
-               input = "input_egglib", 
-            folderin = "results/egglib-inputs/"));
+               input = "input_egglib",
+            folderin = "results/egglib-inputs/",
+          pythonpath = '/Users/vitorpavinato/anaconda/bin/python',
+          sourcepath = 'src/summstats.py',
+                 lss = c("He", "WCst"),
+                 wss = c("S","thetaW","D"),
+                 gss = c("He", "WCst","D"));
 
-#  user  system elapsed 
-# 5.255   0.497   5.794
+save.image(file = "results/workspaceFile.RData");
+
+#################################################
+##                    ABC-RF                   ##
+#################################################
+
+load(file = "results/workspaceFile.RData");
 
 ## Creating the Reference Tables
 
-# Global Simulations Parameters
+# Global Reference Table - GRT
 
-simparameters <- createslim
+globalrf <- createGRT(sim_priors = priors, 
+                          output = "output_egglib", 
+                       outfolder = "results/egglig-outputs/",
+                        gss_list = c("GSS.He", "GSS.WCst", "GSS.D"));
 
-colnames(priors) <- c("Sim", "NE", "sampleS", "murate", "neuDom", "neuFitness", 
-                      "benDom", "benFitness", "sampleT1","Time1", "INT12", "sampleT2", "Time2");
+# Locus-specific Reference Table - LRF
 
-# Global Summary Statistics
+locusrf <- createLRT(sim_priors = priors,
+                           data = dataconvertion,
+                          input = "input_egglib",
+                       infolder = "results/egglib-inputs/",
+                         output = "output_egglib", 
+                      outfolder = "results/egglig-outputs/")
 
-system.time(globalss <- createGSS(    nsim = 1, 
-                                   inputss = "output_egglib", 
-                                  folderin = "data/"));
 
-# user  system elapsed 
-# 0.069   0.001   0.070 
 
-# Locus-specific Summary Statistics
 
-system.time(locusss <- createLSS(    nsim = 1,
-                                    input = "input_egglib",
-                                  inputss = "output_egglib", 
-                                 folderin = "data/"));
 
-# user  system elapsed 
-# 0.419   0.003   0.423 
+
+
+
+
+ 
+
+
+
+
+
+#colnames(priors) <- c("Sim", "NE", "sampleS", "murate", "neuDom", "neuFitness", 
+#                      "benDom", "benFitness", "sampleT1","Time1", "INT12", "sampleT2", "Time2");
+
+
+save.image(file = "results/workspaceFile.RData");
+ 

@@ -68,8 +68,8 @@ initialize() {
 	status = repEach(paste("NS"), size(m));
 	alleles = repEach(paste("A,T"), size(m));
 	
-	header = paste("chrom"+"\t"+"position"+"\t"+"muID"+"\t"+"mufreq"+"\t"+"selCoeff"+"\t"+"status"+"\t"+"alleles"+"\n");
-	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+format("%.3f",mf)+"\t"+format("%.3f",mc)+"\t"+status+"\t"+alleles+"\n");
+	header = paste("chrom"+"\t"+"position"+"\t"+"muID"+"\t"+"mufreq"+"\t"+"status"+"\t"+"selCoeff"+"\t"+"alleles"+"\n");
+	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+format("%.3f",mf)+"\t"+status+"\t"+format("%.3f",mc)+"\t"+alleles+"\n");
 	mutInf = header + mutInf;
 	writeFile("~/mutInfo_t1.txt", mutInf);
 	// END::Print mutation information //
@@ -116,8 +116,8 @@ initialize() {
 	status = repEach(paste("NS"), size(m));
 	alleles = repEach(paste("A,T"), size(m));
 	
-	header = paste("chrom"+"\t"+"position"+"\t"+"muID"+"\t"+"mufreq"+"\t"+"selCoeff"+"\t"+"status"+"\t"+"alleles"+"\n");
-	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+format("%.3f",mf)+"\t"+format("%.3f",mc)+"\t"+status+"\t"+alleles+"\n");
+	header = paste("chrom"+"\t"+"position"+"\t"+"muID"+"\t"+"mufreq"+"\t"+"status"+"\t"+"selCoeff"+"\t"+"alleles"+"\n");
+	mutInf = paste(chr+"\t"+mps+"\t"+format("%d",mi)+"\t"+format("%.3f",mf)+"\t"+status+"\t"+format("%.3f",mc)+"\t"+alleles+"\n");
 	mutInf = header + mutInf;
 	writeFile("~/mutInfo_t2.txt", mutInf);
 	// END::Print mutation information //

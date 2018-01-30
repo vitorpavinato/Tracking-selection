@@ -106,8 +106,8 @@ model1 <- function(ne = 1000, n = 100, mur = 2.5e-8,
                           '\t', 'status = repEach(paste("NS"), size(m));', '\n',
                           '\t', 'alleles = repEach(paste("A,T"), size(m));', '\n\n',
                           
-                          '\t', 'header = paste("chrom"+"\\t"+"position"+"\\t"+"muID"+"\\t"+"mufreq"+"\\t"+"selCoeff"+"\\t"+"status"+"\\t"+"alleles"+"\\n");', '\n',
-                          '\t', 'mutInf = paste(chr+"\\t"+mps+"\\t"+format("%d",mi)+"\\t"+format("%.3f",mf)+"\\t"+format("%.3f",mc)+"\\t"+status+"\\t"+alleles+"\\n");', '\n',
+                          '\t', 'header = paste("chrom"+"\\t"+"position"+"\\t"+"muID"+"\\t"+"mufreq"+"\\t"+"status"+"\\t"+"selCoeff"+"\\t"+"alleles"+"\\n");', '\n',
+                          '\t', 'mutInf = paste(chr+"\\t"+mps+"\\t"+format("%d",mi)+"\\t"+format("%.3f",mf)+"\\t"+status+"\\t"+format("%.3f",mc)+"\\t"+alleles+"\\n");', '\n',
                           '\t', 'mutInf = header + mutInf;', '\n',
                           '\t', 'writeFile("', getwd(), '/', folderout, '/', output, '_', i, '_mutInfo_t1.txt", mutInf);', '\n\n',
                           
@@ -150,8 +150,8 @@ model1 <- function(ne = 1000, n = 100, mur = 2.5e-8,
                            '\t', 'status = repEach(paste("NS"), size(m));', '\n',
                            '\t', 'alleles = repEach(paste("A,T"), size(m));', '\n\n',
                            
-                           '\t', 'header = paste("chrom"+"\\t"+"position"+"\\t"+"muID"+"\\t"+"mufreq"+"\\t"+"selCoeff"+"\\t"+"status"+"\\t"+"alleles"+"\\n");', '\n',
-                           '\t', 'mutInf = paste(chr+"\\t"+mps+"\\t"+format("%d",mi)+"\\t"+format("%.3f",mf)+"\\t"+format("%.3f",mc)+"\\t"+status+"\\t"+alleles+"\\n");', '\n',
+                           '\t', 'header = paste("chrom"+"\\t"+"position"+"\\t"+"muID"+"\\t"+"mufreq"+"\\t"+"status"+"\\t"+"selCoeff"+"\\t"+"alleles"+"\\n");', '\n',
+                           '\t', 'mutInf = paste(chr+"\\t"+mps+"\\t"+format("%d",mi)+"\\t"+format("%.3f",mf)+"\\t"+status+"\\t"+format("%.3f",mc)+"\\t"+alleles+"\\n");', '\n',
                            '\t', 'mutInf = header + mutInf;', '\n',
                            '\t', 'writeFile("', getwd(), '/', folderout, '/', output, '_', i, '_mutInfo_t2.txt", mutInf);', '\n\n',
                            
