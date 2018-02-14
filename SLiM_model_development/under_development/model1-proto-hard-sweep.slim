@@ -7,11 +7,11 @@
 // Beneficial mutation also has a fixed selection coefficient;
  
 initialize() {
-	initializeMutationRate(2.5e-8); // Same as in Florian MS - u=2.5e-8 //
+	initializeMutationRate(1e-7); // Florian MS - u=2.5e-8 // Increased to have more mutations
 	initializeMutationType("m1", 0.5, "f", 0.0); // neutral //
 	initializeMutationType("m2", 0.5, "f", 0.5); // beneficial - same as in Florian MS - unrealistic cap is s=0.5 //
-	m1.mutationStackPolicy = "f"; // "f" for the first and "l" for the last //
-	m2.mutationStackPolicy = "f"; // "f" for the first and "l" for the last //
+	m1.mutationStackPolicy = "s"; // "s" for default; "f" for the first and "l" for the last //
+	m2.mutationStackPolicy = "s"; // "s" for default; "f" for the first and "l" for the last //
 	m1.convertToSubstitution = T; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 	m2.convertToSubstitution = T; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 	m1.color = "gray40";
@@ -34,8 +34,6 @@ initialize() {
 	sim.addSubpop("p0", 500); // Effective population size - Same as in Florian MS - Ne=1000 - but this is a parameter //
 }
 
-
-
 5000 late() {
 	// Wait until MD-Equilibrium to add the beneficial mutation;
 	// It explicitly sample one genome from the entire simulation and add a new/denovo benefitial mutation //
@@ -48,11 +46,11 @@ initialize() {
 	m2.convertToSubstitution = F; // add this to the main model1 code, but not before the 10*Ne equilibrium //
 }
 
-5009 late(){
+5024 late(){
 	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //
 }
 
-5010 late(){ // Here only what is going to be implemented in R //
+5025 late(){ // Here only what is going to be implemented in R //
 	
 	// BEGIN::Print mutation information //
 	u = sim.subpopulations.individuals;
@@ -92,15 +90,15 @@ initialize() {
 	// END::Print genotypes //
 }	
 
-5011 late(){
+5026 late(){
 	m1.convertToSubstitution = T; // add this to the main model1 code, but not before the first sampling //
 }
 
-5019 late(){
+5049 late(){
 	m1.convertToSubstitution = F; // add this to the main model1 code, but not before the first sampling //
 }
 
-5020 late(){ // Here only what is going to be implemented in R //
+5050 late(){ // Here only what is going to be implemented in R //
 	
 	// BEGIN::Print mutation information //
 	u = sim.subpopulations.individuals;

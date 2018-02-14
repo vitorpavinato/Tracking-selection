@@ -1,18 +1,10 @@
-##########################################################################################
-# RUNNING SLiM                                                                           #
-# This function runs each SLiM infile and saves each outfile to a .txt file.             #
-#                                                                                        #
-# slim(parm = parm, seed = random_seed, filename = 'outfile_slim', folderout = 'data/',  #
-#                                       infile = 'infile_slim', folderin = 'infiles');   #
-#                                                                                        #
-#                                                                                        #
-# parm = a vector or a  matrix containing the simulated parameters;                      #
-# seed = seed generated randomly (e.g using a uniform distribution);                     #   
-# filename = prefix of the outfiles;                                                     #
-# folderout = path where to save the generated SLiM2 outfiles;                           #
-# infile = prefix of the infiles;                                                        #
-# folderin = path to the infiles.                                                        #            
-##########################################################################################
+###############################################################################################
+# RUNNING SLiM                                                                                #
+# This function runs each SLiM infile and saves each outfile to a .txt file.                  #
+#                                                                                             #
+# slim(seed = random_seed, outfile, folderout, infile = 'infile_slim', folderin = 'infiles'); #
+#                                                                                             #                                                        #            
+###############################################################################################
 
 slim <- function(seed = 845295086, 
                  outfile, folderout, 

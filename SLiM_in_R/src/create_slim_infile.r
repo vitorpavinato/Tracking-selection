@@ -1,5 +1,5 @@
 ##########################################################################################
-# toymodel(nsim, ne = N_size, filename = 'infile_N_size', folder = 'data/');             #
+# toymodel(filename, folder);             #
 #                                                                                        #
 # This function creates the infile for a toymodel to run SLiM2 simulations.              #
 # Toymodel helped the initial stages of R/SLiM implementation                            #                             
@@ -42,17 +42,17 @@ toymodel <- function(ne = 1000, mur = 1e-7,
 };
 
 ##########################################################################################
-# MODEL 1 - HARD SWEEP                                         													 #
+# MODEL 1 - SIMPLE HARD SWEEP TEMPORAL SAMPLES                                       		 #
 # 																						                                           #
-# model1(nsim, ne = N_size, ..., filename = 'infile_slim', folder = 'infiles/');         #
+# model1(filename, folder, output, folderout);                                           #
 #                                                                                        #
 # This function creates the infile for model 1 to run SLiM2 simulations.                 #
 ##########################################################################################
 
-model1 <- function(ne = 1000, n = 100, mur = 2.5e-8,
+model1 <- function(ne = 500, n = 100, mur = 1e-7,
                    mud1 = 0.5, mufd1 = "f", mufv1 = 0.0,
                    mud2 = 0.5, mufd2 = "f", mufv2 = 0.5,
-                   ts1 = 10, int12 = 10, 
+                   ts1 = 25, int12 = 25, 
                    genomesize = 100000, rrate = 1e-8,
                    filename, folder, output, folderout)
 {
@@ -67,8 +67,8 @@ model1 <- function(ne = 1000, n = 100, mur = 2.5e-8,
                           '\t', 'initializeMutationRate(', sprintf("%1.1e", parm$mur[i]), ');', '\n',
                           '\t', 'initializeMutationType("m1", ', sprintf("%.1f", parm$mud1[i]), ', "', mufd1, '", ', sprintf("%.3f", parm$mufv1[i]), ');', '\n',
                           '\t', 'initializeMutationType("m2", ', sprintf("%.1f", parm$mud2[i]), ', "', mufd2, '", ', sprintf("%.3f", parm$mufv2[i]), ');', '\n',
-                          '\t', 'm1.mutationStackPolicy = "f";', '\n',
-                          '\t', 'm2.mutationStackPolicy = "f";', '\n',
+                          '\t', 'm1.mutationStackPolicy = "s";', '\n',
+                          '\t', 'm2.mutationStackPolicy = "s";', '\n',
                           '\t', 'm1.convertToSubstitution = T;', '\n',
                           '\t', 'm2.convertToSubstitution = T;', '\n',
                           '\t', 'initializeGenomicElementType("g1", m1, 1.0);', '\n',
@@ -102,7 +102,7 @@ model1 <- function(ne = 1000, n = 100, mur = 2.5e-8,
                           '\t', 'mc = m.selectionCoeff;', '\n\n',
                           
                           '\t', 'chr = ifelse(mp > ', genomesize/2, ', paste("chr2"), paste("chr1"));', '\n',
-                          '\t', 'mps = apply(mp, "if (applyValue > ', genomesize/2, ') paste(applyValue - ', genomesize/2, '); else paste(applyValue);");', '\n',
+                          '\t', 'mps = sapply(mp, "if (applyValue > ', genomesize/2, ') paste(applyValue - ', genomesize/2, '); else paste(applyValue);");', '\n',
                           '\t', 'status = repEach(paste("NS"), size(m));', '\n',
                           '\t', 'alleles = repEach(paste("A,T"), size(m));', '\n\n',
                           
@@ -146,7 +146,7 @@ model1 <- function(ne = 1000, n = 100, mur = 2.5e-8,
                            '\t', 'mc = m.selectionCoeff;', '\n\n',
                            
                            '\t', 'chr = ifelse(mp > ', genomesize/2, ', paste("chr2"), paste("chr1"));', '\n',
-                           '\t', 'mps = apply(mp, "if (applyValue > ', genomesize/2, ') paste(applyValue - ', genomesize/2, '); else paste(applyValue);");', '\n',
+                           '\t', 'mps = sapply(mp, "if (applyValue > ', genomesize/2, ') paste(applyValue - ', genomesize/2, '); else paste(applyValue);");', '\n',
                            '\t', 'status = repEach(paste("NS"), size(m));', '\n',
                            '\t', 'alleles = repEach(paste("A,T"), size(m));', '\n\n',
                            
