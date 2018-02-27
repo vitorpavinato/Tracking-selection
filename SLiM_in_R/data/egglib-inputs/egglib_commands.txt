@@ -3,7 +3,9 @@
 
 ## Files:
 ## artificial_input_egglib_1.txt all SNPs have 'Y' in the selection column;
-## artificial_input_egglib_2.txt some SNPs have 'Y' in this column;
+## artificial_input_egglib_2.txt some SNPs have 'Y' in this column - at the end of each chromosome;
+## artificial_input_egglib_3.txt some SNPs have 'Y' in this column - at the middle of each chromosome;
+
 
 # Test 1 -  the calculation of the summary statistics for all markers using select=all
 
