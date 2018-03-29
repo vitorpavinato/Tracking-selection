@@ -1,8 +1,4 @@
-results/egglib-inputs/pipeline-v1
-results/egglib-outputs/pipeline-v1
-results/slim-inputs/pipeline-v1
 results/*
-data/pipeline-v1
 src/.Rhistory
 .Rproj.user
 .Rhistory

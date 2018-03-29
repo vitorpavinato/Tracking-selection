@@ -1,0 +1,215 @@
+initialize() {
+	//defineConstant("simID",01);
+	//defineConstant("seed", 1520476159367);
+	//defineConstant("theta", 2e-5); //2e-4
+	//defineConstant("ne", 500);
+	defineConstant("ns", 100);
+	//defineConstant("mu", 1e-8); //1e-7
+	defineConstant("md1", 0.5);
+	defineConstant("mf1", 0.0);
+	defineConstant("md2", 1.0);
+	defineConstant("mf2", 0.5);
+	defineConstant("mp1", 1.0);
+	defineConstant("gs", 1000000);
+	defineConstant("rr", 1e-8);
+	defineConstant("ts1", 25);
+	defineConstant("ts2", 25);
+	
+	defineConstant("outputpath", "/home/pavinato/My_repositories/Tracking-selection/results/slim_output/");
+	
+	//setSeed(seed);
+	initializeMutationRate(mu);
+	initializeMutationType("m1", md1, "f", mf1);
+	initializeMutationType("m2", md2, "f", mf2);
+	m1.mutationStackPolicy = "s";
+	m2.mutationStackPolicy = "s";
+	m1.convertToSubstitution = T;
+	m2.convertToSubstitution = T;
+	initializeGenomicElementType("g1", m1, mp1);
+	initializeGenomicElementType("g2", m1, mp1);
+	initializeGenomicElement(g1, 0, (asInteger(gs/2) - 1));
+	initializeGenomicElement(g2, (asInteger(gs/2) + 1), (gs-1));
+	initializeRecombinationRate(c(rr, 0.5, rr), c((asInteger(gs/2) - 1), asInteger(gs/2), (gs-1)));
+
+}
+
+1 { 
+	cat(getSeed()+"\n");
+	
+	ne = asInteger(theta/(4*mu));
+	
+	sim.addSubpop("p1", ne); 
+	
+	te = ne*10;
+	t1 = te + ts1; t1b = t1 -2; t1a = t1 + 1;
+	t2 = t1 + ts2; t2b = t2 -2;
+	
+	sim.rescheduleScriptBlock(s1, start=te, end=te);
+	
+	sim.rescheduleScriptBlock(s2, start=t1b, end=t1b);
+	sim.rescheduleScriptBlock(s3, start=t1, end=t1);
+	sim.rescheduleScriptBlock(s4, start=t1a, end=t1a);
+	
+	sim.rescheduleScriptBlock(s5, start=t2b, end=t2b);
+	sim.rescheduleScriptBlock(s6, start=t2, end=t2);
+}
+
+s1 late() {
+	target = sample(p1.genomes, 1);
+	if (target.countOfMutationsOfType(m2) == 0)
+	{
+		 target.addNewDrawnMutation(m2, 0);
+	}
+}
+
+s2 late() {
+	m1.convertToSubstitution = F;
+	m2.convertToSubstitution = F;
+}
+
+s3 late() {
+
+	allinds = sim.subpopulations.individuals;
+	allmuts = sortBy(unique(allinds.genomes.mutations), "position");
+
+	saminds = sample(allinds, ns, F);
+	sammuts = sortBy(unique(saminds.genomes.mutations), "position");
+	
+	samindsnames = asString(sapply(seq(from=1, to=ns), "paste0('indiv' + applyValue + '@pop1');"));
+	
+	cat("#OUT: " + " " + paste(ns + " " +"inds") + " " +"T1" + "\n");
+	cat(paste0(outputpath + "output_t1_" + simID + ".txt" + "\n"));
+	
+	header = paste("chrom"+"\t"+"position"+"\t"+"status"+"\t"+"selection"+"\t"+"alleles"+"\t"+
+		 				paste(samindsnames, sep="\t")+"\t"+
+		 				"muID"+"\t"+"muDom"+"\t"+"muSel"+"\t"+"muAge"+"\t"+"muFrq1");
+	
+	tempdata = NULL;
+	for (mm in sammuts){
+	
+		genos = NULL;
+		for (ss in saminds){
+
+			genome_1 = sortBy(unique(ss.genomes[0].mutations), "position");
+			genome_2 = sortBy(unique(ss.genomes[1].mutations), "position");
+		
+			hp1 = (asInteger(match(mm.id, genome_1.id)>=0)+1);
+			hp2 = (asInteger(match(mm.id, genome_2.id)>=0)+1);
+			genotype = paste(hp1 + "" +hp2);
+		
+			genos = c(genos, genotype);
+		
+		};
+		
+		rescaled = sapply(mm.position, "(applyValue +1);");
+		mm.setValue("rescaled", rescaled);
+		
+		chromosome = sapply(mm.getValue("rescaled"), "if (applyValue > 500000) paste('chr2'); else paste('chr1');");
+		mm.setValue("chromosome", chromosome);
+		
+		newposition = sapply(mm.getValue("rescaled"), "if (applyValue > 500000) paste(applyValue - 500000); else paste(applyValue);");
+		mm.setValue("newposition", newposition);
+		
+		status = sapply(mm.mutationType, "if (applyValue == m2) paste('NS'); else paste('S');");
+		mm.setValue("status", status);
+		
+		selection = paste("Y");
+		mm.setValue("selection", selection);
+		
+		alleles = paste("A,T");
+		mm.setValue("alleles", alleles);
+
+		data = paste(mm.getValue("chromosome")+"\t"+mm.getValue("newposition")+"\t"+mm.getValue("status")+"\t"+mm.getValue("selection")+"\t"+mm.getValue("alleles")+"\t"+
+			 			 paste(genos, sep="\t")+"\t"+
+			 			 mm.id+"\t"+mm.mutationType.dominanceCoeff+"\t"+mm.selectionCoeff+"\t"+mm.originGeneration+"\t"+sim.mutationFrequencies(subpops=NULL,mutations=mm));
+	
+		tempdata = c(tempdata, data);
+	};	
+   
+   dataset = c(header, tempdata);
+   writeFile(paste0(outputpath + "slim_output_t1_" + simID + ".txt"), dataset);
+	
+	//saminds.genomes.outputVCF(filePath="/Users/vitorpavinato/Dropbox/PosDoc_INRA_2017/Project_Tracking_selection_timeseries_data/SLiM_model_design/vcf_t1.vcf");
+
+
+}
+
+s4 late() {
+	m1.convertToSubstitution = T;
+}
+
+s5 late() {
+	m1.convertToSubstitution = F;
+}
+
+s6 late() {
+	
+	allinds = sim.subpopulations.individuals;
+	allmuts = sortBy(unique(allinds.genomes.mutations), "position");
+
+	saminds = sample(allinds, ns, F);
+	sammuts = sortBy(unique(saminds.genomes.mutations), "position");
+	
+	samindsnames = asString(sapply(seq(from=1, to=ns), "paste0('indiv' + applyValue + '@pop2');"));
+	
+	cat("#OUT: " + " " + paste(ns + " " +"inds") + " " +"T2" + "\n");
+	cat(paste0(outputpath + "output_t2_" + simID + ".txt" + "\n"));
+	
+	header = paste("chrom"+"\t"+"position"+"\t"+"status"+"\t"+"selection"+"\t"+"alleles"+"\t"+
+		 				paste(samindsnames, sep="\t")+"\t"+
+		 				"muID"+"\t"+"muDom"+"\t"+"muSel"+"\t"+"muAge"+"\t"+"muFrq2");
+	
+	tempdata = NULL;
+	for (mm in sammuts){
+	
+		genos = NULL;
+		for (ss in saminds){
+
+			genome_1 = sortBy(unique(ss.genomes[0].mutations), "position");
+			genome_2 = sortBy(unique(ss.genomes[1].mutations), "position");
+		
+			hp1 = (asInteger(match(mm.id, genome_1.id)>=0)+1);
+			hp2 = (asInteger(match(mm.id, genome_2.id)>=0)+1);
+			genotype = paste(hp1 + "" +hp2);
+		
+			genos = c(genos, genotype);
+		
+		};
+		
+		rescaled = sapply(mm.position, "(applyValue +1);");
+		mm.setValue("rescaled", rescaled);
+		
+		chromosome = sapply(mm.getValue("rescaled"), "if (applyValue > 500000) paste('chr2'); else paste('chr1');");
+		mm.setValue("chromosome", chromosome);
+		
+		newposition = sapply(mm.getValue("rescaled"), "if (applyValue > 500000) paste(applyValue - 500000); else paste(applyValue);");
+		mm.setValue("newposition", newposition);
+		
+		status = sapply(mm.mutationType, "if (applyValue == m2) paste('NS'); else paste('S');");
+		mm.setValue("status", status);
+		
+		selection = paste("Y");
+		mm.setValue("selection", selection);
+		
+		alleles = paste("A,T");
+		mm.setValue("alleles", alleles);
+
+		data = paste(mm.getValue("chromosome")+"\t"+mm.getValue("newposition")+"\t"+mm.getValue("status")+"\t"+mm.getValue("selection")+"\t"+mm.getValue("alleles")+"\t"+
+			 			 paste(genos, sep="\t")+"\t"+
+			 			 mm.id+"\t"+mm.mutationType.dominanceCoeff+"\t"+mm.selectionCoeff+"\t"+mm.originGeneration+"\t"+sim.mutationFrequencies(subpops=NULL,mutations=mm));
+	
+		tempdata = c(tempdata, data);
+	};	
+   
+   dataset = c(header, tempdata);
+   writeFile(paste0(outputpath + "slim_output_t2_" + simID + ".txt"), dataset);
+	
+
+	//saminds.genomes.outputVCF(filePath="/Users/vitorpavinato/Dropbox/PosDoc_INRA_2017/Project_Tracking_selection_timeseries_data/SLiM_model_design/vcf_t2.vcf");
+
+
+	sim.simulationFinished();
+}
+
+
+
