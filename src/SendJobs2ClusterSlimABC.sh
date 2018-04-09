@@ -5,13 +5,12 @@ do
    echo "#!/bin/bash"                              > trackingselsim.$i.sh
    echo "#$ -S /bin/bash"                          >> trackingselsim.$i.sh;
    echo "#$ -N selsim.$i"                          >> trackingselsim.$i.sh;
-   echo "#$ -q mem.q"                              >> trackingselsim.$i.sh;
+   echo "#$ -q long.q"                              >> trackingselsim.$i.sh;
    echo "#$ -cwd"                                  >> trackingselsim.$i.sh;
    echo 'workingDir=$PWD'                          >> trackingselsim.$i.sh;
    echo 'mkdir $TMPDIR/results/'                   >> trackingselsim.$i.sh;
-   echo 'mkdir $TMPDIR/src/models/'                >> trackingselsim.$i.sh;
+   echo 'mkdir $TMPDIR/src/'                >> trackingselsim.$i.sh;
    echo 'mkdir $TMPDIR/bin/'                       >> trackingselsim.$i.sh;
-   echo 'cp -rp results/* $TMPDIR/results/'        >> trackingselsim.$i.sh;
    echo 'cp -rp src/* $TMPDIR/src/'                >> trackingselsim.$i.sh;
    echo 'cp -rp bin/*.py $TMPDIR/bin/'             >> trackingselsim.$i.sh;
    echo 'cp -rp Tracking-selection.Rproj $TMPDIR/' >> trackingselsim.$i.sh;
