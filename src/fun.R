@@ -1,6 +1,6 @@
 do_sim <- function(sim, nsim, model,
                    mu_rate, mu_min, mu_max, 
-                   ne_min, ne_max,
+                   ne0_min, ne0_max, ne1_min, ne1_max,
                    slim_output, egglib_input, save_extra_data, extra_output,  
                    python_path, egglib_summstat, egglib_output, remove_files){
   
@@ -19,11 +19,14 @@ do_sim <- function(sim, nsim, model,
     mu <- rlunif(1, mu_min=1e-8, mu_max=1e-5, base=exp(10))
   }
   
-  # Theta 
-  theta_min = 4*ne_min*mu
-  theta_max = 4*ne_max*mu
-  theta <- rlunif(1, min = theta_min, max =theta_max, base = exp(10))
-  ne = (theta/(4*mu))
+  # Theta calculated
+  theta_min = 4*ne0_min*mu
+  theta_max = 4*ne0_max*mu
+  theta <- rlunif(1, min = theta_min, max = theta_max, base = exp(10))
+  ne0 = (theta/(4*mu))
+  
+  # Effective population size Ne1
+  ne1 <- rlunif(1, min = ne1_min, max = ne1_max, base = exp(10))
   
   # Simulation Seed - SLiM seed
   sim_seed  <- as.integer(runif(1, 100000000, 900000000));
@@ -38,10 +41,11 @@ do_sim <- function(sim, nsim, model,
   
   # generate text with slim command
   slim_run <- paste( "/usr/local/bin/slim",
-                     "-s", sim_seed,         # seed number
-                     paste0("-d simID=", sim),
+                     "-s", sim_seed,                # seed  = simulation seed number
+                     paste0("-d simID=", sim),      # simID = simulation id number
                      paste0("-d theta=", theta),    # theta 
-                     paste0("-d mu=", mu),            # mutation rate mu
+                     paste0("-d mu=", mu),          #    mu = mutation rate 
+                     paste0("-d Ne1=", ne1),        #   ne1 = effective population size 1
                      paste0(model, ".slim")) # modelo
   
   # rum slim on system
@@ -123,7 +127,7 @@ do_sim <- function(sim, nsim, model,
   
   # global reference table
   glb_summstats <- summstats[1 , grepl( "GSS" , unique(names(summstats)) ) ]
-  glb_reftable  <- cbind(sim=sim, seed=sim_seed, theta=theta, mu=mu, Ne=ne, glb_summstats)
+  glb_reftable  <- cbind(sim=sim, seed=sim_seed, theta=theta, mu=mu, Ne0=ne0, Ne1=ne1, glb_summstats)
   
   # locus specific reference table
   bai <- extradata[which(extradata$muSel != 0.0), ] 

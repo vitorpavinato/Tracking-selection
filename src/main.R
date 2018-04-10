@@ -28,7 +28,7 @@ egglib_output    <- "results/egglib_output/"
 reftable_file    <- "results/reference_table"   # reference table file name
 seed             <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims    <- FALSE
+parallel_sims    <- TRUE
 num_of_threads   <- 3
 remove_files     <- TRUE
 
@@ -46,12 +46,16 @@ egglib_summstat <- "bin/summstats.py"
 # We are going to sample thetas from a log uniform distribution; however SLiM is set up on population size Ne;
 # Given the mutation rate, theta is calculated as THETA = Ne*mutation_rate
 # For now, only sampling theta and calculating Ne with known mutation rate mu
-ne_min = 100
-ne_max = 1000
 
 mu_rate = 0 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
 mu_min  = 1e-8
 mu_max  = 1e-5
+
+ne0_min = 10
+ne0_max = 1000
+
+ne1_min = 10
+ne1_max = 1000
 
 ###########################################
 ##    LOAD REQUIRED FUNCTIONS/PACKAGES   ##
