@@ -18,7 +18,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim             <- 10                          # number of simulations 50000
+nsim             <- 3                          # number of simulations 50000
 model            <- "src/models/model_1"
 slim_output      <- "results/slim_output/"
 save_extra_data  <- TRUE
@@ -28,7 +28,7 @@ egglib_output    <- "results/egglib_output/"
 reftable_file    <- "results/reference_table"   # reference table file name
 seed             <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims    <- TRUE
+parallel_sims    <- FALSE
 num_of_threads   <- 3
 remove_files     <- TRUE
 
@@ -86,7 +86,7 @@ if(parallel_sims){
                                                                         library(dplyr)
                                                                         do_sim(sim, nsim, model,
                                                                         mu_rate, mu_min, mu_max, 
-                                                                        ne_min, ne_max,
+                                                                        ne0_min, ne0_max, ne1_min, ne1_max,
                                                                         slim_output, egglib_input, save_extra_data, extra_output,  
                                                                         python_path, egglib_summstat, egglib_output, 
                                                                         remove_files
@@ -100,7 +100,7 @@ if(parallel_sims){
   for(sim in 1:nsim){
     ref_table[[sim]] <- do_sim(sim, nsim, model,
                                mu_rate, mu_min, mu_max, 
-                               ne_min, ne_max,
+                               ne0_min, ne0_max, ne1_min, ne1_max,
                                slim_output, egglib_input, save_extra_data, extra_output,  
                                python_path, egglib_summstat, egglib_output, 
                                remove_files)

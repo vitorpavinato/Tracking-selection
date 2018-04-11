@@ -1,5 +1,5 @@
 initialize() {
-	defineConstant("simID",01);
+	//defineConstant("simID",01);
 	//defineConstant("seed", 1520476159367);
 	//defineConstant("theta", 0.00002); //2e-4 // theta is sample from prior
 	//defineConstant("Ne0", 500);     // Ne0 is calculated as Ne0 = asInteger(theta/(4*mu))
@@ -59,7 +59,8 @@ initialize() {
 	
 	Ne0 = asInteger(theta/(4*mu));
 	sim.addSubpop("p1", Ne0); 
-	
+	cat("Theta=" + theta + "\t" + "mu=" + mu + "Ne0=" + Ne0 + "\n");
+
 	teq = Ne0*10;
 	t1 = teq + ts1; t1b1 = t1 -2; t1b2 = t1 -1; t1a = t1 +1;
 	t2 = t1 + ts2;  t2b1 = t2 -2; t2b2 = t2 -1; t2a = t2 +1;
@@ -87,6 +88,8 @@ s1 late() {
 s2 late(){
 	CS1 = asInteger(Ne1 + SS1); //the effect of it change affect the next generation - CS1 = Census Size 1
 	p1.setSubpopulationSize(CS1);
+	cat("Ne1=" + Ne1 + "\t" + "Census Size 1 =" + CS1 + "\n");
+
 }
 
 s3 late() {
@@ -177,6 +180,8 @@ s7 late() {
 s8 late(){
 	CS2 = asInteger(Ne1 + SS2); //the effect of it change affect the next generation - CS2 = Census Size 2
 	p1.setSubpopulationSize(CS2);
+	cat("Ne1=" + Ne1 + "\t" + "Census Size 2 =" + CS2 + "\n");
+
 }
 
 s9 late() {

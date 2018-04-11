@@ -23,10 +23,10 @@ do_sim <- function(sim, nsim, model,
   theta_min = 4*ne0_min*mu
   theta_max = 4*ne0_max*mu
   theta <- rlunif(1, min = theta_min, max = theta_max, base = exp(10))
-  ne0 = (theta/(4*mu))
+  ne0 = as.integer(theta/(4*mu))
   
   # Effective population size Ne1
-  ne1 <- rlunif(1, min = ne1_min, max = ne1_max, base = exp(10))
+  ne1 <- as.integer(rlunif(1, min = ne1_min, max = ne1_max, base = exp(10)))
   
   # Simulation Seed - SLiM seed
   sim_seed  <- as.integer(runif(1, 100000000, 900000000));
@@ -125,36 +125,48 @@ do_sim <- function(sim, nsim, model,
   
   extradata <- cbind(ID=paste0(extradata$chrom, ":", extradata$position), extradata[, -c(1,2)])
   
+  # number of benefitial mutations
+  aa <- extradata[which(extradata$muSel != 0.0), ] # benefitial
+  paa <- length(aa$ID)/length(extradata$ID)
+  
+  na <- extradata[which(extradata$muSel == 0.0), ] # neutral
+  
   # global reference table
   glb_summstats <- summstats[1 , grepl( "GSS" , unique(names(summstats)) ) ]
-  glb_reftable  <- cbind(sim=sim, seed=sim_seed, theta=theta, mu=mu, Ne0=ne0, Ne1=ne1, glb_summstats)
+  glb_reftable  <- cbind(sim=sim, seed=sim_seed, theta=theta, mu=mu, Ne0=ne0, Ne1=ne1, prop_adapt=paa, glb_summstats)
   
   # locus specific reference table
-  bai <- extradata[which(extradata$muSel != 0.0), ] 
-  if (is.data.frame(bai) && nrow(bai)==0){
-    bai <- NA
+  
+  if (is.data.frame(aa) && nrow(aa)==0){ #adaptive allele
+    aai <- NA
   } else {
-    bai <- bai$ID;
+    saa <- sample_n(aa, size = 1)
+    aai <- saa$ID
   } 
   
-  nii <- m[which(m$chrom == "chr2"), c("chrom", "position")];
-  nis <- sample_n(nii, size = 1); nai <- paste0(nis$chrom, ":", nis$position);
+  if (is.data.frame(na) && nrow(na)==0){
+    nai <- NA
+  } else {
+    sna <- sample_n(na, size = 1)
+    nai <- sna$ID
+  } 
   
-  if (is.na(bai)){
-    neutral <- cbind(lc_classif="N", 
-                     extradata[which(extradata$ID == nai), -1],
-                     summstats[which(summstats$ID == nai), -1])
+  if (is.na(aai)){
+    neutral  <- cbind(lc_classif="N", 
+                      extradata[which(extradata$ID == nai), -1],
+                      summstats[which(summstats$ID == nai), -1])
     loc_reftable <- neutral;
   } else {
-    benefit <- cbind(lc_classif="A",
-                     extradata[which(extradata$ID == bai), -1],
-                     summstats[which(summstats$ID == bai), -1])
-    neutral <- cbind(lc_classif="N", 
-                     extradata[which(extradata$ID == nai), -1],
-                     summstats[which(summstats$ID == nai), -1])
-    loc_reftable <- rbind(benefit,neutral);
+    adaptive <- cbind(lc_classif="A",
+                      extradata[which(extradata$ID == aai), -1],
+                      summstats[which(summstats$ID == aai), -1])
+    neutral  <- cbind(lc_classif="N", 
+                      extradata[which(extradata$ID == nai), -1],
+                      summstats[which(summstats$ID == nai), -1])
+    loc_reftable <- rbind(adaptive,neutral);
   }
   
+  # remove intermediate files 
   if (remove_files){
     file.remove(paste0(slim_output,"slim_output_t1_", sim, ".txt"))
     file.remove(paste0(slim_output,"slim_output_t2_", sim, ".txt"))
@@ -168,6 +180,7 @@ do_sim <- function(sim, nsim, model,
   
   #return(res)
   
+  # combine the global and locus-specific reference table
   res <- suppressWarnings(cbind(glb_reftable, loc_reftable))
   return(res)
   
