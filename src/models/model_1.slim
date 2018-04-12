@@ -1,22 +1,21 @@
 initialize() {
 	//defineConstant("simID",01);
 	//defineConstant("seed", 1520476159367);
-	//defineConstant("theta", 0.00002); //2e-4 // theta is sample from prior
-	//defineConstant("Ne0", 500);     // Ne0 is calculated as Ne0 = asInteger(theta/(4*mu))
+	//defineConstant("theta", 0.00002);  //2e-4 // theta is sample from prior
+	//defineConstant("Ne0", 500);        // Ne0 is calculated as Ne0 = asInteger(theta/(4*mu))
 	//defineConstant("Ne1", 30);			 // Ne1 is also sampled from a prior
-	defineConstant("SS1", 100);     	 // SS1 = sample size in T=1
-	defineConstant("SS2", 100);       // SS2 = sample size in T=2
-	//defineConstant("mu", 1e-8);       //  mu = mutation rate - mu=1e-7 for real simulations
-	defineConstant("md1", 0.5);       // md1 = dominance for m1 mutations - neutrals
-	defineConstant("mf1", 0.0);       // mf1 = fitness for m1 mutations - neutrals
-	defineConstant("md2", 0.5);       // md2 = dominance for m2 mutations - benefitials
-	defineConstant("mf2", 0.1);       // mf2 = fitness for m2 mutations - benefitials
-	defineConstant("mp1", 0.9);       // mp1 = proportion of m1 mutations
-	defineConstant("mp2", 0.1); 	    // mp2 = proportion of m2 mutations
-	defineConstant("gs", 135e+6);     // gs = genome size
-	defineConstant("rr", 4.2e-8);     // rr = recombination rate - 4.2 cM/Mbp * 1e-8
-	defineConstant("ts1", 25); 	    // ts1 = time point for the first sampling
-	defineConstant("ts2", 25); 	    // ts2 = time point for the second sampling
+	defineConstant("SS1", 100);     	    // SS1 = sample size in T=1
+	defineConstant("SS2", 100);          // SS2 = sample size in T=2
+	//defineConstant("mu", 1e-8);        //  mu = mutation rate - mu=1e-7 for real simulations
+	defineConstant("md1", 0.5);          // md1 = dominance for m1 mutations - neutrals
+	defineConstant("mf1", 0.0);          // mf1 = fitness for m1 mutations - neutrals
+	defineConstant("md2", 0.5);          // md2 = dominance for m2 mutations - benefitials
+	defineConstant("mf2", 0.01);          // mf2 = fitness for m2 mutations - benefitials
+	defineConstant("mp1", 0.95);          // mp1 = proportion of m1 mutations
+	defineConstant("mp2", 0.05); 	       // mp2 = proportion of m2 mutations
+	defineConstant("gs", 135e+6);        // gs = genome size
+	defineConstant("rr", 4.2e-8);        // rr = recombination rate - 4.2 cM/Mbp * 1e-8
+	defineConstant("ts2", 25); 	       // ts2 = time point for the second sampling
 	
 	defineConstant("outputpath", "/home/pavinato/My_repositories/Tracking-selection/results/slim_output/");
 	
@@ -59,11 +58,10 @@ initialize() {
 	
 	Ne0 = asInteger(theta/(4*mu));
 	sim.addSubpop("p1", Ne0); 
-	cat("Theta=" + theta + "\t" + "mu=" + mu + "Ne0=" + Ne0 + "\n");
+	cat("Theta=" + theta + "\t" + "mu=" + mu + "\t" + "Ne0=" + Ne0 + "\n");
 
-	teq = Ne0*10;
-	t1 = teq + ts1; t1b1 = t1 -2; t1b2 = t1 -1; t1a = t1 +1;
-	t2 = t1 + ts2;  t2b1 = t2 -2; t2b2 = t2 -1; t2a = t2 +1;
+	t1 = Ne0*10;   t1b1 = t1 -2; t1b2 = t1 -1; t1a = t1 +1;
+	t2 = t1 + ts2; t2b1 = t2 -2; t2b2 = t2 -1; t2a = t2 +1;
 	
 	sim.rescheduleScriptBlock(s1, start=t1b1, end=t1b1);
 	sim.rescheduleScriptBlock(s2, start=t1b2, end=t1b2);
@@ -88,7 +86,7 @@ s1 late() {
 s2 late(){
 	CS1 = asInteger(Ne1 + SS1); //the effect of it change affect the next generation - CS1 = Census Size 1
 	p1.setSubpopulationSize(CS1);
-	cat("Ne1=" + Ne1 + "\t" + "Census Size 1 =" + CS1 + "\n");
+	cat("Ne1=" + Ne1 + "\t" + "Census Size 1=" + CS1 + "\n");
 
 }
 
@@ -98,7 +96,6 @@ s3 late() {
 	sim.subpopulations.individuals.tag = 1;
 	
 	// tag sampled individuals 
-	//allinds = sim.subpopulations.individuals;
 	saminds = sample(sim.subpopulations.individuals, SS1, F);
 	saminds.tag = 0;
 	
@@ -180,7 +177,7 @@ s7 late() {
 s8 late(){
 	CS2 = asInteger(Ne1 + SS2); //the effect of it change affect the next generation - CS2 = Census Size 2
 	p1.setSubpopulationSize(CS2);
-	cat("Ne1=" + Ne1 + "\t" + "Census Size 2 =" + CS2 + "\n");
+	cat("Ne1=" + Ne1 + "\t" + "Census Size 2=" + CS2 + "\n");
 
 }
 
@@ -190,7 +187,6 @@ s9 late() {
 	sim.subpopulations.individuals.tag = 1;
 	
 	// tag sampled individuals 
-	//allinds = sim.subpopulations.individuals;
 	saminds = sample(sim.subpopulations.individuals, SS2, F);
 	saminds.tag = 0;
 	
