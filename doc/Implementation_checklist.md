@@ -7,6 +7,8 @@
 - Implement the proportion of fragments (g1 and g2 elements) with adaptive SNPs - prior:
 - remove SNPs with MAF < 0.05 during data conversion:
 - Implement this simulation values on the lss and gss reference table:
+- optimize the way slim output the mutation information - see item 15.3 SLiM manual:
+- re-implement output path in slim code: [done]
 
 **List of the last implementations
 - Sample theta and Ne from prior: sample theta and use it to define the population size for M-D equilibrium - Ne0, then change the population size to Ne1: done
