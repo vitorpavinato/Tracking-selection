@@ -18,17 +18,17 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim             <- 3                          # number of simulations 50000
-model            <- "src/models/model_1"
-slim_output      <- "results/slim_output/"
-save_extra_data  <- TRUE
-extra_output     <- "results/extra_output/"
-egglib_input     <- "results/egglib_input/"
-egglib_output    <- "results/egglib_output/"
-reftable_file    <- "results/reference_table"   # reference table file name
-seed             <- 1234
+nsim               <- 3                          # number of simulations 50000
+model              <- "src/models/model_1"
+slim_output_folder <- "results/slim_output/"
+save_extra_data    <- TRUE
+extra_output       <- "results/extra_output/"
+egglib_input       <- "results/egglib_input/"
+egglib_output      <- "results/egglib_output/"
+reftable_file      <- "results/reference_table"   # reference table file name
+seed               <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims    <- FALSE
+parallel_sims    <- TRUE
 num_of_threads   <- 3
 remove_files     <- TRUE
 
@@ -52,10 +52,10 @@ mu_min  = 1e-8
 mu_max  = 1e-5
 
 ne0_min = 10
-ne0_max = 1000
+ne0_max = 10000
 
 ne1_min = 10
-ne1_max = 1000
+ne1_max = 10000
 
 ###########################################
 ##    LOAD REQUIRED FUNCTIONS/PACKAGES   ##
@@ -87,7 +87,7 @@ if(parallel_sims){
                                                                         do_sim(sim, nsim, model,
                                                                         mu_rate, mu_min, mu_max, 
                                                                         ne0_min, ne0_max, ne1_min, ne1_max,
-                                                                        slim_output, egglib_input, save_extra_data, extra_output,  
+                                                                        slim_output_folder, egglib_input, save_extra_data, extra_output,  
                                                                         python_path, egglib_summstat, egglib_output, 
                                                                         remove_files
                                                                         )
@@ -101,7 +101,7 @@ if(parallel_sims){
     ref_table[[sim]] <- do_sim(sim, nsim, model,
                                mu_rate, mu_min, mu_max, 
                                ne0_min, ne0_max, ne1_min, ne1_max,
-                               slim_output, egglib_input, save_extra_data, extra_output,  
+                               slim_output_folder, egglib_input, save_extra_data, extra_output,  
                                python_path, egglib_summstat, egglib_output, 
                                remove_files)
   }

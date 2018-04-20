@@ -2,13 +2,14 @@
 
 **Priorities**
 - fix the time for first sample - Time of equilibrium teq = t1: [done]
-- Implement the hitchhiking influence on neutral markers:
-- Implement the proportion of SNPs as adaptive - taken from the prior: [done]
-- Implement the proportion of fragments (g1 and g2 elements) with adaptive SNPs - prior:
-- remove SNPs with MAF < 0.05 during data conversion:
+- Implement the measurement of the hitchhiking influence on neutral markers:
+- Implement the proportion of SNPs as being benefitial taken from the prior: [done]
+- Implement the proportion of fragments (g1 and g2 elements) that have/not have benefitial mutations from prior:
 - Implement this simulation values on the lss and gss reference table:
-- optimize the way slim output the mutation information - see item 15.3 SLiM manual:
 - re-implement output path in slim code: [done]
+- remove SNPs with MAF < 0.05 during data conversion:
+- re-think the utility of "convertToSubstitution" of neutral mutations
+- optimize the way slim output the mutation information - see item 15.3 SLiM manual:
 
 **List of the last implementations
 - Sample theta and Ne from prior: sample theta and use it to define the population size for M-D equilibrium - Ne0, then change the population size to Ne1: done

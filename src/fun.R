@@ -1,7 +1,7 @@
 do_sim <- function(sim, nsim, model,
                    mu_rate, mu_min, mu_max, 
                    ne0_min, ne0_max, ne1_min, ne1_max,
-                   slim_output, egglib_input, save_extra_data, extra_output,  
+                   slim_output_folder, egglib_input, save_extra_data, extra_output,  
                    python_path, egglib_summstat, egglib_output, remove_files){
   
   # write progress of simulation on screen 
@@ -35,18 +35,37 @@ do_sim <- function(sim, nsim, model,
   ##-------------------
   
   # check if the folder exists
-  if (!file_test("-d", slim_output)){
-    dir.create(file.path(slim_output))
+  if (!file_test("-d", slim_output_folder)){
+    dir.create(file.path(slim_output_folder))
   }
   
+  
   # generate text with slim command
+  slim_output_fullpath <- paste0("'",getwd(), "/", slim_output_folder, "'")
+  
+  slim_simID <- paste0("-d simID=", sim)
+  slim_theta <- paste0("-d theta=", theta)
+     slim_mu <- paste0("-d mu=", mu)
+    slim_Ne1 <- paste0("-d Ne1=", ne1)
+ slim_output <- paste0("-d ", '"',"outputpath=", slim_output_fullpath, '"')
+  slim_model <- paste0(model, ".slim")
+  
   slim_run <- paste( "/usr/local/bin/slim",
                      "-s", sim_seed,                # seed  = simulation seed number
-                     paste0("-d simID=", sim),      # simID = simulation id number
-                     paste0("-d theta=", theta),    # theta 
-                     paste0("-d mu=", mu),          #    mu = mutation rate 
-                     paste0("-d Ne1=", ne1),        #   ne1 = effective population size 1
-                     paste0(model, ".slim")) # modelo
+                     slim_simID,                    # simID = simulation id number
+                     slim_theta,                    # theta
+                     slim_mu,                       #    mu = mutation rate
+                     slim_Ne1,                      #   ne1 = effective population size 1   
+                     slim_output,
+                     slim_model)                    # model
+  
+  #slim_run <- paste( "/usr/local/bin/slim",
+  #                   "-s", sim_seed,                # seed  = simulation seed number
+  #                   paste0("-d simID=", sim),      # simID = simulation id number
+  #                   paste0("-d theta=", theta),    # theta
+  #                   paste0("-d mu=", mu),          #    mu = mutation rate
+  #                   paste0("-d Ne1=", ne1),        #   ne1 = effective population size 1   
+  #                   paste0(model, ".slim"))        # model
   
   # rum slim on system
   system(slim_run)
@@ -54,8 +73,8 @@ do_sim <- function(sim, nsim, model,
   ## READ SIMULATED DATA AND CONVERT TO EGGLIB FORMAT
   ##-----------------------------------------------------
   
-  ts_1 <- read.csv(file = paste0(slim_output,"slim_output_t1_", sim, ".txt"), header = T, sep = "\t", check.names = F)
-  ts_2 <- read.csv(file = paste0(slim_output,"slim_output_t2_", sim, ".txt"), header = T, sep = "\t", check.names = F)
+  ts_1 <- read.csv(file = paste0(slim_output_folder,"slim_output_t1_", sim, ".txt"), header = T, sep = "\t", check.names = F)
+  ts_2 <- read.csv(file = paste0(slim_output_folder,"slim_output_t2_", sim, ".txt"), header = T, sep = "\t", check.names = F)
   
   rwm <- merge.data.frame(ts_1, ts_2, by.x = c(1,2,3,4,5,106,107,108,109), 
                           by.y = c(1,2,3,4,5,106,107,108,109), 
@@ -136,7 +155,6 @@ do_sim <- function(sim, nsim, model,
   glb_reftable  <- cbind(sim=sim, seed=sim_seed, theta=theta, mu=mu, Ne0=ne0, Ne1=ne1, prop_adapt=paa, glb_summstats)
   
   # locus specific reference table
-  
   if (is.data.frame(aa) && nrow(aa)==0){ #adaptive allele
     aai <- NA
   } else {
@@ -168,8 +186,8 @@ do_sim <- function(sim, nsim, model,
   
   # remove intermediate files 
   if (remove_files){
-    file.remove(paste0(slim_output,"slim_output_t1_", sim, ".txt"))
-    file.remove(paste0(slim_output,"slim_output_t2_", sim, ".txt"))
+    file.remove(paste0(slim_output_folder,"slim_output_t1_", sim, ".txt"))
+    file.remove(paste0(slim_output_folder,"slim_output_t2_", sim, ".txt"))
     file.remove(paste0(egglib_input, conv_file))
     file.remove(paste0(egglib_output,"egglib_output_", sim, ".txt"))
   }
