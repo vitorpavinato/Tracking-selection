@@ -8,7 +8,8 @@
 - Implement this simulation values on the lss and gss reference table:
 - re-implement output path in slim code: [done]
 - remove SNPs with MAF < 0.05 during data conversion:
-- re-think the utility of "convertToSubstitution" of neutral mutations
+- re-think the utility of "convertToSubstitution" of neutral mutations: - model_0 [done]
+																	    - model_1 [done]
 - optimize the way slim output the mutation information - see item 15.3 SLiM manual:
 
 **List of the last implementations

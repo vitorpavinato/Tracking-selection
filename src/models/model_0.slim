@@ -1,6 +1,6 @@
 initialize() {
 	//defineConstant("simID",01);
-	//defineConstant("seed", 1520476159367);
+	//defineConstant("seed", 1526566133945); //sweep total
 	//defineConstant("theta", 2e-5); //2e-4
 	//defineConstant("ne", 500);
 	defineConstant("ns", 100);
@@ -13,7 +13,7 @@ initialize() {
 	defineConstant("gs", 1000000);
 	defineConstant("rr", 1e-8);
 	defineConstant("ts1", 25);
-	defineConstant("ts2", 25);
+	defineConstant("ts2", 175); //to force the fixation of the benefitial and neutral mutations
 	
 	defineConstant("outputpath", "/home/pavinato/My_repositories/Tracking-selection/results/slim_output/");
 	
@@ -41,16 +41,14 @@ initialize() {
 	sim.addSubpop("p1", ne); 
 	
 	te = ne*10;
-	t1 = te + ts1; t1b = t1 -2; t1a = t1 + 1;
-	t2 = t1 + ts2; t2b = t2 -2;
+	t1 = te + ts1; t1b = t1 -2;
+	t2 = t1 + ts2;
 	
 	sim.rescheduleScriptBlock(s1, start=te, end=te);
 	
 	sim.rescheduleScriptBlock(s2, start=t1b, end=t1b);
 	sim.rescheduleScriptBlock(s3, start=t1, end=t1);
-	sim.rescheduleScriptBlock(s4, start=t1a, end=t1a);
 	
-	sim.rescheduleScriptBlock(s5, start=t2b, end=t2b);
 	sim.rescheduleScriptBlock(s6, start=t2, end=t2);
 }
 
@@ -135,14 +133,6 @@ s3 late() {
 }
 
 s4 late() {
-	m1.convertToSubstitution = T;
-}
-
-s5 late() {
-	m1.convertToSubstitution = F;
-}
-
-s6 late() {
 	
 	allinds = sim.subpopulations.individuals;
 	allmuts = sortBy(unique(allinds.genomes.mutations), "position");

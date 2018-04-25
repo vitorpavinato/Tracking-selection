@@ -13,8 +13,8 @@ initialize() {
 	defineConstant("mf2", 0.01);          // mf2 = fitness for m2 mutations - benefitials
 	defineConstant("mp1", 0.95);          // mp1 = proportion of m1 mutations
 	defineConstant("mp2", 0.05); 	       // mp2 = proportion of m2 mutations
-	defineConstant("gs", 135e+6);        // gs = genome size
-	defineConstant("rr", 4.2e-8);        // rr = recombination rate - 4.2 cM/Mbp * 1e-8
+	defineConstant("gs", 135e+4);        // gs = genome size
+	defineConstant("rr", 4.2e-6);        // rr = recombination rate - 4.2 cM/Mbp * 1e-8
 	defineConstant("ts2", 25); 	       // ts2 = time point for the second sampling
 	
 	//defineConstant("outputpath", "/home/pavinato/My_repositories/Tracking-selection/results/slim_output/");
@@ -30,7 +30,7 @@ initialize() {
 	initializeGenomicElementType("g1", c(m1,m2), c(mp1,mp2));
 	initializeGenomicElement(g1, 0, (gs-1));
 	
-	//A. thaliana genome size 135Mbp (135,000,000bp)
+	//A. thaliana genome size 135Mbp (135,000,000bp) //test 1,350,000bp
 	// fragment size;
 	k = 1/(2*rr); // k = 11904762
 
@@ -60,22 +60,18 @@ initialize() {
 	sim.addSubpop("p1", Ne0); 
 	cat("Theta=" + theta + "\t" + "mu=" + mu + "\t" + "Ne0=" + Ne0 + "\n");
 
-	t1 = Ne0*10;   t1b1 = t1 -2; t1b2 = t1 -1; t1a = t1 +1;
-	t2 = t1 + ts2; t2b1 = t2 -2; t2b2 = t2 -1; t2a = t2 +1;
+	t1 = Ne0*10;   t1b1 = t1 -2; t1b2 = t1 -1;
+	t2 = t1 + ts2; t2b2 = t2 -1;
 	
 	sim.rescheduleScriptBlock(s1, start=t1b1, end=t1b1);
 	sim.rescheduleScriptBlock(s2, start=t1b2, end=t1b2);
 	sim.rescheduleScriptBlock(s3, start=t1, end=t1);
 	sim.rescheduleScriptBlock(s4, start=t1, end=t1);
 	sim.rescheduleScriptBlock(s5, start=t1, end=t1);
-	sim.rescheduleScriptBlock(s6, start=t1a, end=t1a);
 	
-	sim.rescheduleScriptBlock(s7, start=t2b1, end=t2b1);
-	sim.rescheduleScriptBlock(s8, start=t2b2, end=t2b2);
-	sim.rescheduleScriptBlock(s9, start=t2, end=t2);
-	sim.rescheduleScriptBlock(s10, start=t2, end=t2);
-	sim.rescheduleScriptBlock(s11, start=t2, end=t2);
-	sim.rescheduleScriptBlock(s12, start=t2a, end=t2a);
+	sim.rescheduleScriptBlock(s6, start=t2b2, end=t2b2);
+	sim.rescheduleScriptBlock(s7, start=t2, end=t2);
+	
 }
 
 s1 late() {
@@ -166,22 +162,14 @@ s5 late(){
 	p1.setSubpopulationSize(Ne1); //add this to force sbpopulation size to Ne1
 }
 
-s6 late() {
-	m1.convertToSubstitution = T;
-}
-
-s7 late() {
-	m1.convertToSubstitution = F;
-}
-
-s8 late(){
+s6 late(){
 	CS2 = asInteger(Ne1 + SS2); //the effect of it change affect the next generation - CS2 = Census Size 2
 	p1.setSubpopulationSize(CS2);
 	cat("Ne1=" + Ne1 + "\t" + "Census Size 2=" + CS2 + "\n");
 
 }
 
-s9 late() {
+s7 late() {
 	
 	//tag all individuals
 	sim.subpopulations.individuals.tag = 1;
@@ -243,20 +231,5 @@ s9 late() {
    dataset = c(header, tempdata);
    writeFile(paste0(outputpath + "slim_output_t2_" + simID + ".txt"), dataset);
 	
-}
-
-s10 fitness(NULL){
-	//kill sampled individuals
-	if (individual.tag == 0)
-		return 0.0;
-	else
-		return relFitness;
-}
-
-s11 late(){
-	p1.setSubpopulationSize(Ne1);
-}
-
-s12 late() {
 	sim.simulationFinished();
 }
