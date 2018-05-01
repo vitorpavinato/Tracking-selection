@@ -11,6 +11,8 @@
 - re-think the utility of "convertToSubstitution" of neutral mutations: - model_0 [done]
 																	    - model_1 [done]
 - optimize the way slim output the mutation information - see item 15.3 SLiM manual:
+	- strategy 1 - re-implement the custom output - replace for loops for apply;
+	- strategy 2 - use vcf output for individuals - try to order mutations by position;
 
 **List of the last implementations
 - Sample theta and Ne from prior: sample theta and use it to define the population size for M-D equilibrium - Ne0, then change the population size to Ne1: done
