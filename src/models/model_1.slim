@@ -10,11 +10,12 @@ initialize() {
 	defineConstant("md1", 0.5);          // md1 = dominance for m1 mutations - neutrals
 	defineConstant("mf1", 0.0);          // mf1 = fitness for m1 mutations - neutrals
 	defineConstant("md2", 0.5);          // md2 = dominance for m2 mutations - benefitials
-	defineConstant("mf2", 0.01);          // mf2 = fitness for m2 mutations - benefitials
-	defineConstant("mp1", 0.95);          // mp1 = proportion of m1 mutations
+	defineConstant("mf2", 0.01);         // mf2 = fitness for m2 mutations - benefitials
+	defineConstant("mp1", 0.95);         // mp1 = proportion of m1 mutations
 	defineConstant("mp2", 0.05); 	       // mp2 = proportion of m2 mutations
-	defineConstant("gs", 135e+4);        // gs = genome size - 135e+6
-	defineConstant("rr", 4.2e-6);        // rr = recombination rate - 4.2 cM/Mbp * 1e-8
+	defineConstant("pge2", 0.20);		    // pge2 = proportion of genomic elements that harbors genomic element type g2
+	defineConstant("gs", 135e+6);        // gs = genome size - 135e+6
+	defineConstant("rr", 4.2e-8);        // rr = recombination rate - 4.2 cM/Mbp * 1e-8
 	defineConstant("ts2", 25); 	       // ts2 = time point for the second sampling
 	
 	//defineConstant("outputpath", "/home/pavinato/My_repositories/Tracking-selection/results/slim_output/");
@@ -27,8 +28,8 @@ initialize() {
 	m2.mutationStackPolicy = "s";
 	m1.convertToSubstitution = T;
 	m2.convertToSubstitution = T;
-	initializeGenomicElementType("g1", c(m1,m2), c(mp1,mp2));
-	initializeGenomicElement(g1, 0, (gs-1));
+	initializeGenomicElementType("g1", m1, 1);
+	initializeGenomicElementType("g2", c(m1,m2), c(mp1,mp2));
 	
 	//A. thaliana genome size 135Mbp (135,000,000bp) //test 1,350,000bp
 	// fragment size;
@@ -37,21 +38,50 @@ initialize() {
 	// number of fragments;
 	nf = asInteger(gs/k); // nf = 11
 
-	// Generate a vector for nf fragments upper limits + a vector of rr
-	base = NULL;
-	rrvc = NULL;
-	for(i in 1:(nf-1)) {
-		lim = c(i*k-1, i*k);
-		base = c(base, lim);
+	// set the fragments starts and ends for the initializeGenomicElement
+	starts = 0;
+	ends   = NULL;
+	for(i in seq(from = 1, to = (nf-1))) {
+		stts    = (i*k)+1;
+		starts = c(starts, stts);
 	
-		rts = c(rr,0.5);
-		rrvc = c(rrvc, rts);
+		end = (i*k)-1;
+		ends = c(ends, end);
 	}
 
-	base = c(base, (gs-1));
-	rrvc = c(rrvc, rr);
+	starts = starts;
+	ends   = c(ends , (gs-1));
+	
+	// sample the fragments to assign each GenomicElementType
+	indexes = seq(from = 0, to = (nf-1));
+	g2_idx = sample(indexes, asInteger(pge2*nf), replace = F);
+	
+	// then assign each GenomicElementType
+	for(i in g2_idx){
+		initializeGenomicElement(g2, asInteger(starts[i]), asInteger(ends[i]));
+	}
+	
+	g1_idx = setDifference(indexes, g2_idx);
+	for(j in g1_idx){
+		initializeGenomicElement(g1, asInteger(starts[j]), asInteger(ends[j]));
+	}
+	
+	// Generate a vector for fragments upper bounds and righ racombination rate limits 
+	// Generate also a vector of recombination rates for each frag upper limites
+	upper = NULL;
+	rates = NULL;
+	for(i in seq(from = 1, to = (nf-1))) {
+		limits    = c(i*k, (i*k)+1);
+		upper = c(upper, limits);
+	
+		rts = c(rr,0.5);
+		rates = c(rates, rts);
+	}
 
-	initializeRecombinationRate(rrvc, asInteger(base));
+	upper = c(upper, (gs-1));
+	rates = c(rates, rr);
+
+	initializeRecombinationRate(rates, asInteger(upper));
 }
 
 1 { 	
