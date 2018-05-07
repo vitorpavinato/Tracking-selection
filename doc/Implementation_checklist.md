@@ -13,7 +13,7 @@
 - optimize the way slim output the mutation information - see item 15.3 SLiM manual:
 	- strategy 1 - re-implement the custom output - replace for loops for apply;
 	- strategy 2 - use vcf output for individuals - try to order mutations by position;
-		- vcf MULTIALLELIC test:
+		- vcf MULTIALLELIC test: [done - it remove ALL mutations when nm >1]
 		- vcf merge t1 and t2 vcfs:
 
 **List of the last implementations

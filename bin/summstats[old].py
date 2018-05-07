@@ -32,7 +32,6 @@ Options are all in the form <KEY>=<VALUE> with keys as listed below:
                             * thetaW      Watterson's 4Nu estimator
                             * D           Tajima's D
                             * Da          net distance between populations
-                            * ZnS         Kelly et al.'s ZnS
                             * ZZ          Rozas et al.'s ZZ
     - GSS               list of global summary statistics, taken from
                         the WSS list, plus SFS
@@ -51,9 +50,6 @@ Options are all in the form <KEY>=<VALUE> with keys as listed below:
     - select-freq       period of selected loci (if select=freq): if
                         freq=1, all loci are selected; if freq=2, each
                         second locus is selected; and so on
-    - debug             activate debug mode:
-                            * 0   default mode
-                            * 1   debug mode: exception trace displayed
 
 2. Input file
 
@@ -99,8 +95,8 @@ are denoted by "NA".
 """
 
     valid_LSS = ['He', 'Dj', 'WCst']
-    valid_WSS = valid_LSS + ['S', 'thetaW', 'D', 'Da', 'ZZ', 'ZnS']
-    valid_GSS = valid_WSS[:]
+    valid_WSS = valid_LSS + ['S', 'thetaW', 'D', 'Da', 'ZZ']
+    valid_GSS = valid_LSS + valid_WSS
     valid_select = ['all', 'rand', 'freq', 'list']
 
     def run(self, args):
@@ -128,7 +124,7 @@ are denoted by "NA".
         """
 
         # initialize parameter dict
-        self._params = {'LSS': set(), 'WSS': set(), 'GSS': set(), 'SFS': False, 'debug': 0}
+        self._params = {'LSS': set(), 'WSS': set(), 'GSS': set(), 'SFS': False}
 
         # get arguments
         for arg in args:
@@ -179,10 +175,7 @@ are denoted by "NA".
                 except ValueError: raise ValueError, 'invalid value for \'SFS-bins\': {0}'.format(value)
                 if value < 1: raise ValueError, '\'SFS-bins\' must be >0'
                 self._params['SFS-bins'] = value
-            elif key == 'debug':
-                if value == '0': self._params['debug'] = 0
-                elif value == '1': self._params['debug'] = 1
-                else: raise ValueError, 'invalud valud for \'debug\': {0}'.format(value)
+
 
         # check required parameters & consistency
         if 'input-file' not in self._params: raise ValueError, '\'input-file\' argument is required'
@@ -191,9 +184,9 @@ are denoted by "NA".
         if len(self._params['WSS']) > 0 and 'wspan' not in self._params: raise ValueError, '\'wspan\' argument is required because of required WSS'
         if len(self._params['WSS']) == 0 and 'wspan' in self._params: sys.stderr.write('warning: \'wspan\' is specified but won\'t be used\n')
         if self._params['select'] == 'rand' and 'select-num' not in self._params: raise ValueError, '\'select-num\' argument is required because \'select\' is \'rand\''
-        if self._params['select'] != 'rand' and 'select-num' in self._params: sys.stderr.write('warning: \'select-num\' is specified but won\'t be used\n')
+        if len(self._params['select']) != 'rand' and 'select-num' in self._params: sys.stderr.write('warning: \'select-num\' is specified but won\'t be used\n')
         if self._params['select'] == 'freq' and 'select-freq' not in self._params: raise ValueError, '\'select-freq\' argument is required because \'select\' is \'freq\''
-        if self._params['select'] != 'freq' and 'select-freq' in self._params: sys.stderr.write('warning: \'select-freq\' is specified but won\'t be used\n')
+        if len(self._params['select']) != 'freq' and 'select-freq' in self._params: sys.stderr.write('warning: \'select-freq\' is specified but won\'t be used\n')
         if self._params['SFS'] == True and 'SFS-bins' not in self._params: raise ValueError, '\'SFS-bins\' argument is required because \'SFS\' is requested'
         if self._params['SFS'] == False and 'SFS-bins' in self._params: sys.stderr.write('warning: \'SFS-bins\' is specified but won\'t be used\n')
 
@@ -326,15 +319,13 @@ are denoted by "NA".
         """
         if self._params['SFS']:
             self._SFS = [0] * self._params['SFS-bins']
-            cs = egglib.stats.ComputeStats(multi_hits=True)
+            cs = egglib.stats.ComputeStats(multiple=True)
             cs.add_stats('MAF')
             for site in self._sites:
-                MAF = cs.process_site(site)['MAF']
-                if MAF is not None:
-                    idx = cs.process_site(site)['MAF'] / 0.5 * self._params['SFS-bins']
-                    idx = int(idx)
-                    if idx == self._params['SFS-bins']: idx -= 1
-                    self._SFS[idx] += 1
+                idx = cs.process_site(site)['MAF'] / 0.5 * self._params['SFS-bins']
+                idx = int(idx)
+                if idx == self._params['SFS-bins']: idx -= 1
+                self._SFS[idx] += 1
 
     def compute_GSS(self):
         """
@@ -343,9 +334,11 @@ are denoted by "NA".
         if len(self._params['GSS']) == 0:
             self._GSS_stats = []
             return
-        cs = egglib.stats.ComputeStats(multi_hits=True)
+        cs = egglib.stats.ComputeStats(multiple=True)
         cs.add_stats(*self._params['GSS'])
-        self._GSS_stats = cs.process_sites(self._sites, struct=self._struct)
+        for site in self._sites:
+            cs.process_site(site, struct=self._struct, multi=True)
+        self._GSS_stats = cs.results()
 
     def compute_LSS(self):
         """
@@ -353,18 +346,18 @@ are denoted by "NA".
         """
         self._LSS_stats = []
         if len(self._params['LSS']) == 0: return
-        cs = egglib.stats.ComputeStats(multi_hits=True)
+        cs = egglib.stats.ComputeStats(multiple=True)
         cs.add_stats(*self._params['LSS'])
         for idx in self._selection:
             self._LSS_stats.append(cs.process_site(self._sites[idx], struct=self._struct))
 
     def compute_WSS(self):
         """
-        Compute window summary statistics. Store data in ``_WSS_stats``.
+        Compute window summary statistics. Store data in ``WSS_stats``.
         """
         self._WSS_stats = []
         if len(self._params['WSS']) == 0: return
-        cs = egglib.stats.ComputeStats(multi_hits=True)
+        cs = egglib.stats.ComputeStats(multiple=True)
         cs.add_stats(*self._params['WSS'])
         for idx in self._selection:
             first = idx
@@ -380,7 +373,9 @@ are denoted by "NA".
 
             print 'window: contig={0} first={1} center={2} last={3} num={4}'.format(self._chrom[idx], self._pos[first]+1, self._pos[idx]+1, self._pos[last]+1, last-first+1)
 
-            self._WSS_stats.append(cs.process_sites(self._sites[first:last+1], struct=self._struct))
+            for i in xrange(first, last+1):
+                cs.process_site(self._sites[i], struct=self._struct)
+            self._WSS_stats.append(cs.results())
 
     def export(self):
         """
@@ -399,9 +394,8 @@ are denoted by "NA".
         GSS = '\t'.join(['NA' if self._GSS_stats[ss] is None else str(self._GSS_stats[ss]) for ss in self._params['GSS']])
         if len(GSS) > 0: GSS = '\t'+GSS
 
-        print '[summstats] exporting statistics for {0} loc{1}'.format(len(self._selection), 'us' if len(self._selection) == 1 else 'i')
-        for idx, site_idx in enumerate(self._selection):
-            f.write(self._id[site_idx])
+        for idx in self._selection:
+            f.write(self._id[idx])
             for ss in self._params['LSS']:
                 if self._LSS_stats[idx][ss] is None: f.write('\tNA')
                 else: f.write('\t{0}'.format(self._LSS_stats[idx][ss]))
@@ -422,9 +416,6 @@ if __name__ == '__main__':
     except Exception as e:
         sys.stderr.write('an error occurred: {0}\n'.format(e.message))
         print '[summstats] failed'
-        if app._params['debug'] > 0:
-            print '[summstat] full traceback'
-            raise
     else:
         print '[summstats] done'
 
