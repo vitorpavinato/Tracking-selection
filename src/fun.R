@@ -202,9 +202,9 @@ do_sim <- function(sim, nsim, model,
                       paste0("output-file=", egglib_output, "egglib_output", "_", sim, ".txt"),
                       paste0("LSS=", paste0(c("He", "Dj", "WCst"), collapse = ",")),
                       paste0("WSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "D", "Da", "ZZ"), collapse = ",")),
-                      paste0("GSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "D", "Da", "ZZ", "SFS"), collapse = ",")),
+                      paste0("GSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "D", "Da", "ZZ"), collapse = ",")),
                       paste0("wspan=", wss_wspan),
-                      paste0("SFS-bins=", sfs_bins),
+                      #paste0("SFS-bins=", sfs_bins),
                       paste0("select=", "all"));
   
   # rum egglib summstat on system
@@ -232,7 +232,6 @@ do_sim <- function(sim, nsim, model,
   
   # global reference table
   glb_summstats <- summstats[1 , grepl( "GSS" , unique(names(summstats)) ) ]
-  #glb_sfs       <- 
   glb_reftable  <- cbind(sim=sim, seed=sim_seed, theta=theta, mu=mu, Ne0=ne0, Ne1=ne1, prop_adapt=pro_beneficial_muts, glb_summstats)
   
   # Sample one beneficial mutation

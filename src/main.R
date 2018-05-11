@@ -37,9 +37,9 @@ remove_files     <- FALSE
 ##########################################
 
 python_path     <- "/usr/bin/python"
-egglib_summstat <- "bin/summstats.py"
+egglib_summstat <- "bin/summstats_0.0.py"
 wss_wspan = 100
-sfs_bins = 5
+#sfs_bins = 5
 
 ############################################
 ## DEFINE PRIORS (upper and lower limits) ##
