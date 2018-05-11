@@ -19,7 +19,7 @@ ls()
 ###########################################
 
 nsim               <- 3                          # number of simulations 50000
-model              <- "src/models/model_1"
+model              <- "src/models/model_1_vcfout"
 slim_output_folder <- "results/slim_output/"
 save_extra_data    <- TRUE
 extra_output       <- "results/extra_output/"
@@ -30,7 +30,7 @@ seed               <- 1234
 set.seed(seed,"Mersenne-Twister")
 parallel_sims    <- TRUE
 num_of_threads   <- 3
-remove_files     <- TRUE
+remove_files     <- FALSE
 
 ##########################################
 ##       EGGLIB SUMMSTAT SETTINGS       ##
@@ -38,6 +38,8 @@ remove_files     <- TRUE
 
 python_path     <- "/usr/bin/python"
 egglib_summstat <- "bin/summstats.py"
+wss_wspan = 100
+sfs_bins = 5
 
 ############################################
 ## DEFINE PRIORS (upper and lower limits) ##
@@ -52,10 +54,13 @@ mu_min  = 1e-8
 mu_max  = 1e-5
 
 ne0_min = 10
-ne0_max = 10000
+ne0_max = 100
 
 ne1_min = 10
-ne1_max = 10000
+ne1_max = 100
+
+SS1     = 100
+SS2     = 100
 
 ###########################################
 ##    LOAD REQUIRED FUNCTIONS/PACKAGES   ##
@@ -86,9 +91,10 @@ if(parallel_sims){
                                                                         library(dplyr)
                                                                         do_sim(sim, nsim, model,
                                                                         mu_rate, mu_min, mu_max, 
-                                                                        ne0_min, ne0_max, ne1_min, ne1_max,
+                                                                        ne0_min, ne0_max, ne1_min, ne1_max, SS1, SS2,
                                                                         slim_output_folder, egglib_input, save_extra_data, extra_output,  
-                                                                        python_path, egglib_summstat, egglib_output, 
+                                                                        python_path, egglib_summstat, wss_wspan, sfs_bins,
+                                                                        egglib_output, 
                                                                         remove_files
                                                                         )
     }
@@ -100,9 +106,10 @@ if(parallel_sims){
   for(sim in 1:nsim){
     ref_table[[sim]] <- do_sim(sim, nsim, model,
                                mu_rate, mu_min, mu_max, 
-                               ne0_min, ne0_max, ne1_min, ne1_max,
+                               ne0_min, ne0_max, ne1_min, ne1_max, SS1, SS2,
                                slim_output_folder, egglib_input, save_extra_data, extra_output,  
-                               python_path, egglib_summstat, egglib_output, 
+                               python_path, egglib_summstat, wss_wspan, sfs_bins,
+                               egglib_output, 
                                remove_files)
   }
   ref_table <- do.call(rbind, ref_table)

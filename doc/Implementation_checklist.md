@@ -14,7 +14,7 @@
 	- strategy 1 - re-implement the custom output - replace for loops for apply;
 	- strategy 2 - use vcf output for individuals - try to order mutations by position;
 		- vcf MULTIALLELIC test: [done - it remove ALL mutations when nm >1]
-		- vcf merge t1 and t2 vcfs:
+		- vcf merge t1 and t2 vcfs: [done]
 
 **List of the last implementations
 - Sample theta and Ne from prior: sample theta and use it to define the population size for M-D equilibrium - Ne0, then change the population size to Ne1: done
