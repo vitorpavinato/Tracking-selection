@@ -14,7 +14,7 @@ initialize() {
 	defineConstant("mp1", 0.95);      // mp1 = proportion of m1 mutations
 	defineConstant("mp2", 0.05); 	    // mp2 = proportion of m2 mutations
 	defineConstant("pge2", 0.20);		 // pge2 = proportion of genomic elements that harbors genomic element type g2
-	defineConstant("gs", 135e+6);     // gs = genome size - 135e+6
+	defineConstant("gs", 135e+5);     // gs = genome size - 135e+6
 	defineConstant("rr", 4.2e-8);     // rr = recombination rate - 4.2 cM/Mbp * 1e-8
 	defineConstant("ts2", 25); 	    // ts2 = time point for the second sampling
 	
@@ -31,12 +31,16 @@ initialize() {
 	initializeGenomicElementType("g1", m1, 1);
 	initializeGenomicElementType("g2", c(m1,m2), c(mp1,mp2));
 	
-	//A. thaliana genome size 135Mbp (135,000,000bp) //test 1,350,000bp
-	// fragment size;
-	k = 1/(2*rr); // k = 11904762
+	//A. thaliana genome size 135Mbp (135,000,000bp) //test size 1,350,000bp // reduced size 13,500,000bp
+	
+	// fragment size equation;
+	k = 1/(2*rr); // k = 11904762 // nf = 11
 
+	// fragment size based on Racimo 2017
+	k = 40000; // nf = 337
+	
 	// number of fragments;
-	nf = asInteger(gs/k); // nf = 11
+	nf = asInteger(gs/k);
 
 	// set the fragments starts and ends for the initializeGenomicElement
 	starts = 0;
