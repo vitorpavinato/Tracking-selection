@@ -63,7 +63,7 @@ do_sim <- function(sim, nsim, model,
   # rum slim on system
   system(slim_run)
   
-  ## HANDLE VCF OUTPUT
+  ## HANDLE SLiM2 VCF OUTPUT FORMAT
   ##-----------------------------------------------------
   
   # sort vcf files
@@ -129,7 +129,7 @@ do_sim <- function(sim, nsim, model,
   
   slim_data_gen        <- as.data.frame(slim_data_gen)
   
-  # remove monomophormic snps (all 11 or 22) and duplicated mutations
+  # remove monomophormic mutations (all 11 or 22)
   geno_count_rr    <- apply(slim_data_gen, 1, function(x){sum(x == 11)})
   geno_count_aa    <- apply(slim_data_gen, 1, function(x){sum(x == 22)})
   
@@ -137,8 +137,12 @@ do_sim <- function(sim, nsim, model,
   
   slim_data <- cbind(slim_data_snp, slim_data_gen)
   slim_egglib <- slim_data[keeped_snps, ]
-  slim_egglib <- slim_egglib[!duplicated(slim_egglib[ ,1:2]), ] # with new version of egglib summstats it supposedly possible to work with redundant positions
-                                                                # When it starts working comment this part
+  
+  # remove duplicated mutations
+  # with new version of egglib summstats it supposedly possible to work with redundant positions
+  # When it starts working comment this part
+  slim_egglib <- slim_egglib[!duplicated(slim_egglib[ ,1:2]), ] 
+                                                                
   # re-code the status column
   slim_egglib$status <- ifelse(slim_egglib$status == 1, "S", "NS")
   
@@ -169,9 +173,11 @@ do_sim <- function(sim, nsim, model,
   write.table(slim_egglib, file = paste0(egglib_input, conv_file), quote=FALSE, sep="\t", row.names = FALSE)
   
   # remove the information of monomorphic and duplicated snps
+  # with new version of egglib summstats it supposedly possible to work with redundant positions
+  # When it starts working comment this part
   slim_data_ext <- slim_data_ext[keeped_snps, ]
-  slim_data_ext <- slim_data_ext[!duplicated(slim_data_ext[, 1:2]), ] # with new version of egglib summstats it supposedly possible to work with redundant positions
-                                                                      # When it starts working comment this part
+  slim_data_ext <- slim_data_ext[!duplicated(slim_data_ext[, 1:2]), ] 
+                                                                      
   
   #### ORIGINAL_starts
   #pre_extradata <- rwm[, c(1,2,6,7,8,9,110,211)]
@@ -205,7 +211,7 @@ do_sim <- function(sim, nsim, model,
                       paste0("output-file=", egglib_output, "egglib_output", "_", sim, ".txt"),
                       paste0("LSS=", paste0(c("He", "Dj", "WCst"), collapse = ",")),
                       paste0("WSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "D", "Da", "ZZ"), collapse = ",")),
-                      paste0("GSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "D", "Da", "ZZ"), collapse = ",")),
+                      paste0("GSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "D", "Da", "ZZ"), collapse = ",")), # summstats_1.0.py add "SFS"
                       paste0("wspan=", wss_wspan),
                       #paste0("SFS-bins=", sfs_bins),
                       paste0("select=", "all"));

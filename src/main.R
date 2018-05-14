@@ -30,7 +30,7 @@ seed               <- 1234
 set.seed(seed,"Mersenne-Twister")
 parallel_sims    <- TRUE
 num_of_threads   <- 3
-remove_files     <- FALSE
+remove_files     <- TRUE
 
 ##########################################
 ##       EGGLIB SUMMSTAT SETTINGS       ##
