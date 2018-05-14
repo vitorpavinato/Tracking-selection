@@ -130,13 +130,15 @@ do_sim <- function(sim, nsim, model,
   slim_data_gen        <- as.data.frame(slim_data_gen)
   
   # remove monomophormic snps (all 11 or 22) and duplicated mutations
-  rr_geno_count    <- apply(slim_data_gen, 1, function(x){sum(x == 11)})
-  keeped_snps     <- rr_geno_count < (SS1 + SS2) & rr_geno_count !=0
+  geno_count_rr    <- apply(slim_data_gen, 1, function(x){sum(x == 11)})
+  geno_count_aa    <- apply(slim_data_gen, 1, function(x){sum(x == 22)})
+  
+  keeped_snps     <- geno_count_rr < (SS1 + SS2) & geno_count_aa < (SS1 + SS2) 
   
   slim_data <- cbind(slim_data_snp, slim_data_gen)
   slim_egglib <- slim_data[keeped_snps, ]
-  slim_egglib <- slim_egglib[!duplicated(slim_egglib[ ,1:2]), ]
-  
+  slim_egglib <- slim_egglib[!duplicated(slim_egglib[ ,1:2]), ] # with new version of egglib summstats it supposedly possible to work with redundant positions
+                                                                # When it starts working comment this part
   # re-code the status column
   slim_egglib$status <- ifelse(slim_egglib$status == 1, "S", "NS")
   
@@ -168,7 +170,8 @@ do_sim <- function(sim, nsim, model,
   
   # remove the information of monomorphic and duplicated snps
   slim_data_ext <- slim_data_ext[keeped_snps, ]
-  slim_data_ext <- slim_data_ext[!duplicated(slim_data_ext[, 1:2]), ] 
+  slim_data_ext <- slim_data_ext[!duplicated(slim_data_ext[, 1:2]), ] # with new version of egglib summstats it supposedly possible to work with redundant positions
+                                                                      # When it starts working comment this part
   
   #### ORIGINAL_starts
   #pre_extradata <- rwm[, c(1,2,6,7,8,9,110,211)]
@@ -230,9 +233,12 @@ do_sim <- function(sim, nsim, model,
   # take only the neutral mutations
   neutral_muts <- slim_data_ext[which(slim_data_ext$muSel == 0.0), ] 
   
-  # global reference table
+  ## GLOBAL REFERENCE TABLE
   glb_summstats <- summstats[1 , grepl( "GSS" , unique(names(summstats)) ) ]
-  glb_reftable  <- cbind(sim=sim, seed=sim_seed, theta=theta, mu=mu, Ne0=ne0, Ne1=ne1, prop_adapt=pro_beneficial_muts, glb_summstats)
+  glb_reftable  <- cbind(sim=sim, seed=sim_seed, theta=theta, mu=mu, Ne0=ne0, Ne1=ne1, prop_beneficial=pro_beneficial_muts, glb_summstats)
+  
+  ## LOCI-SPECIFIC REFERENCE TABLE
+  # I need to test how this part behave with redundant mutations
   
   # Sample one beneficial mutation
   if (is.data.frame(beneficial_muts) && nrow(beneficial_muts)==0){ 
@@ -280,7 +286,7 @@ do_sim <- function(sim, nsim, model,
     file.remove(paste0(egglib_output,"egglib_output_", sim, ".txt"))
   }
   
-  # combine the global and locus-specific reference table
+  ## combine the GLOBAL and LOCUS-SPECIFIC REFERENCE TABLES
   res <- suppressWarnings(cbind(glb_reftable, loc_reftable))
   return(res)
   
