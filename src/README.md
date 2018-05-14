@@ -8,6 +8,7 @@
 
 **Thoughts about vcf MULTIALLELIC**
 - Bioinformatics processing works OK (sort, bgzip, tabix and bcftools merge and get the data we need);
+- I saw only one problem with merging 3 mutations at position 11 (same position);
 - The processing of the merged data in R also works fine - remember to comment the part that the pipeline remove redudancy;
 - egglib summstats new version (the one that works with the new version of egglib: egglib3.0.0b21) still can't handle data with redundant mutations;
 - I could not test the last part of the pipeline - prepare the locus-specific reference table;
