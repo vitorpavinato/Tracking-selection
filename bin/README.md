@@ -1,6 +1,7 @@
 [//]: # (Hello,)
 
-[//]: # (I'm done with a complete version of the summstats.py script. As we discussed, it takes an input file in the format of the "example.txt" file attached, and generates, based on option values, an output file in the format of the "test.txt" file attached. I attached the current version of the source file also (the program is complete with this single file).)
+[//]: # (I'm done with a complete version of the summstats.py script. As we discussed, it takes an input file in the format of the "example.txt" file attached,)
+[//]: # (and generates, based on option values, an output file in the format of the "test.txt" file attached. I attached the current version of the source file) [//]: # (also (the program is complete with this single file).)
 
 [//]: # (But it will be more interesting to test it with a more serious input file. Where are you with SLiM?)
 
@@ -136,7 +137,9 @@ GSS, the value of the statistics is identical for all loci. Missing data
  
 are denoted by "NA".
 
- **egglib summstats.py bug fixes**
+
+
+##egglib summstats.py bug fixes
 
 **all v0 bugs were fixed in v1**
 
