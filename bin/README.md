@@ -6,9 +6,9 @@
 
 [//]: # (To use it, you need EggLib version 3.0.0b18 because I've especially added a feature to make it easier to compute the SFS. It will be online soon.)
 
-And below is the program manual:
+Below is the program manual:
 
-1. Command line arguments
+**1. Command line arguments**
 
 The program is a single Python script. It is invoked as this:
 
@@ -18,55 +18,56 @@ python summstats.py <OPTIONS>
 
 Options are all in the form <KEY>=<VALUE> with keys as listed below:
 
-/    - input-file        name of the input file
-/
-/    - output-file       name of the output file
-/
-/    - LSS               comma-separated list of summary statistics computed on selected loci, taken from the list:
-/
-/                            * He          heterozygosity
-/
-/                            * Dj          Jost's D
-/
-/                            * WCst        Weir and Cockerham's theta
-/
-/    - WSS               list of statistics computed on a window around selected loci, taken LSS plus that list:
-/
-/                            * S           number of polymorphic sites
-/
-/                            * thetaW      Watterson's 4Nu estimator
-/
-/                            * D           Tajima's D
-/
-/                            * Da          net distance between populations
-/
-/                            * ZZ          Rozas et al.'s ZZ
-/
-/    - GSS               list of global summary statistics, taken from the WSS list, plus SFS
-/
-/    - wspan             span of windows on each side of the focal locus (in bp, such that the window size is actually 2 * wspan + 1 bp)
-/
-/    - SFS-bins          number of bins for SFS
-/
-/    - select            method to select focal loci (to compute LSS and WSS), from the list:
-/
-/                            * all         use all loci
-/
-/                            * rand        use each locus randomly
-/
-/                            * freq        use each nth locus
-/
-/                            * list        use the "selection" column of the input file
-/
-/    - select-num        number of loci to draw randomly (if select=rand)
-/
-/    - select-freq       period of selected loci (if select=freq): if
-/
-/                        freq=1, all loci are selected; if freq=2, each
-/
-/                        second locus is selected; and so on
-/
-2. Input file
+    - input-file        name of the input file
+
+    - output-file       name of the output file
+
+    - LSS               comma-separated list of summary statistics computed on selected loci, taken from the list:
+
+                            * He          heterozygosity
+
+                            * Dj          Jost's D
+
+                            * WCst        Weir and Cockerham's theta
+
+    - WSS               list of statistics computed on a window around selected loci, taken LSS plus that list:
+
+                            * S           number of polymorphic sites
+
+                            * thetaW      Watterson's 4Nu estimator
+
+                            * D           Tajima's D
+
+                            * Da          net distance between populations
+
+                            * ZZ          Rozas et al.'s ZZ
+
+    - GSS               list of global summary statistics, taken from the WSS list, plus SFS
+
+    - wspan             span of windows on each side of the focal locus (in bp, such that the window size is actually 2 * wspan + 1 bp)
+
+    - SFS-bins          number of bins for SFS
+
+    - select            method to select focal loci (to compute LSS and WSS), from the list:
+
+                            * all         use all loci
+
+                            * rand        use each locus randomly
+
+                            * freq        use each nth locus
+
+                            * list        use the "selection" column of the input file
+
+    - select-num        number of loci to draw randomly (if select=rand)
+
+    - select-freq       period of selected loci (if select=freq): if
+
+                        freq=1, all loci are selected; if freq=2, each
+
+                        second locus is selected; and so on
+
+
+**2. Input file**
 
 The input file is a text file with space/tab separated values. There is
 
@@ -80,32 +81,33 @@ must be after the columns with fixed names.
 
 List of columns:
 
-/    "chrom"       a string identifying a chromosome, contig or whatever.
-/
-/   "position"    site position, as an integer.
-/
-/    "status"      site category, chosen from "IG" (intergenic), "S"
-/
-/                 (synonymous), and "NS" (non-synonymous).
-/
-/    "alleles"     a comma-separated list of allelic values. Each allele
-/
-/                  is represented by a string or undefined length. There
-/
-/                  must be at least two alleles.
-/
-/    "selection"   a column of Y or N to indicate whether LSS statistics
-/
-/                  should be reported for each site [OPTIONAL].
-/
-/    "name@label"  one additional column per individual, where "name" is
-/
-/                  the sample name and "label" is a population label
-/
-/                  (both are strings).
-/
-/    ...           and so on for all individuals.
-/
+    "chrom"       a string identifying a chromosome, contig or whatever.
+    
+    "position"    site position, as an integer.
+
+    "status"      site category, chosen from "IG" (intergenic), "S"
+
+                 (synonymous), and "NS" (non-synonymous).
+
+    "alleles"     a comma-separated list of allelic values. Each allele
+
+                  is represented by a string or undefined length. There
+
+                  must be at least two alleles.
+
+    "selection"   a column of Y or N to indicate whether LSS statistics
+
+                  should be reported for each site [OPTIONAL].
+
+    "name@label"  one additional column per individual, where "name" is
+
+                  the sample name and "label" is a population label
+
+                  (both are strings).
+
+    ...           and so on for all individuals.
+
+
 The data (values for individual columns) are two-digit strings with
 
 integer values (diploid data only).
@@ -116,7 +118,7 @@ integer values (diploid data only).
 
     - 2 for the second allele, and so on.
 
-3. Output file
+**3. Output file**
 
 The output file is a tab-separated table, with a header line and, then,
 
@@ -134,7 +136,7 @@ GSS, the value of the statistics is identical for all loci. Missing data
  
 are denoted by "NA".
 
-## **egglib summstats.py bug fixes**
+ **egglib summstats.py bug fixes**
 
 **all v0 bugs were fixed in v1**
 
