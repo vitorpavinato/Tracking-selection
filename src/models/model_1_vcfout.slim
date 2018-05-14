@@ -34,7 +34,7 @@ initialize() {
 	//A. thaliana genome size 135Mbp (135,000,000bp) //test size 1,350,000bp // reduced size 13,500,000bp
 	
 	// fragment size equation;
-	k = 1/(2*rr); // k = 11904762 // nf = 11
+	//k = 1/(2*rr); // k = 11904762 // nf = 11
 
 	// fragment size based on Racimo 2017
 	k = 40000; // nf = 337
@@ -131,7 +131,7 @@ s3 late() {
 	cat("#OUT: " + " " + paste(SS1 + " " +"inds") + " " +"T1" + "\n");
 	cat(paste0(outputpath + "slim_output_t1_" + simID + ".vcf" + "\n"));
 	
-	saminds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_t1_" + simID + ".vcf"));
+	saminds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_t1_" + simID + ".vcf"), outputMultiallelics = F); //ensure no redundant mutations - change it when egglib summstats work with it
 }
 
 s4 fitness(NULL){
@@ -164,7 +164,7 @@ s7 late() {
 	cat("#OUT: " + " " + paste(SS2 + " " +"inds") + " " +"T2" + "\n");
 	cat(paste0(outputpath + "slim_output_t2_" + simID + ".vcf" + "\n"));
 	
-	saminds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_t2_" + simID + ".vcf"));
+	saminds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_t2_" + simID + ".vcf"), outputMultiallelics = F); //ensure no redundant mutations - change it when egglib summstats work with it
 	
 	sim.simulationFinished();
 }
