@@ -30,14 +30,19 @@ seed               <- 1234
 set.seed(seed,"Mersenne-Twister")
 parallel_sims    <- TRUE
 num_of_threads   <- 3
-remove_files     <- TRUE
+remove_files     <- FALSE
 
 ##########################################
 ##       EGGLIB SUMMSTAT SETTINGS       ##
 ##########################################
 
-python_path     <- "/usr/bin/python"
-egglib_summstat <- "bin/summstats_0.0.py"
+#python_path     <- "/usr/bin/python"
+python_path     <- "/home/pavinato/py-egglib-3.0.0b19/bin/python"
+#python_path     <- "/home/pavinato/py-egglib-3.0.0b21/bin/python"
+
+egglib_summstat <- "bin/summstats_0.0.py" # this version works with egglib-3.0.0b19
+#egglib_summstat <- "bin/summstats_1.0.py" # this version works with egglib-3.0.0b21
+
 wss_wspan = 100
 #sfs_bins = 5
 
@@ -53,11 +58,11 @@ mu_rate = 0 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
 mu_min  = 1e-8
 mu_max  = 1e-5
 
-ne0_min = 10
-ne0_max = 100
+ne0_min = 100
+ne0_max = 1000
 
-ne1_min = 10
-ne1_max = 100
+ne1_min = 100
+ne1_max = 1000
 
 SS1     = 100
 SS2     = 100
@@ -83,7 +88,7 @@ source("src/fun.R")
 ###########################################
 
 # Parallelization with doParallel and foreach
-if(parallel_sims){
+system.time(if(parallel_sims){
   cl <- makeCluster(num_of_threads)
   registerDoParallel(cl)
   clusterEvalQ(cl, library(KScorrect))
@@ -113,7 +118,7 @@ if(parallel_sims){
                                remove_files)
   }
   ref_table <- do.call(rbind, ref_table)
-}
+})
 gc()
 
 write.table(ref_table,
