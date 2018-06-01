@@ -1,136 +1,82 @@
 initialize() {
 	//defineConstant("simID",01);
-	//defineConstant("seed", 1520476159367);
-	//defineConstant("theta", 0.00002);  //2e-4 // theta is sample from prior
-	//defineConstant("Ne0", 500);        // Ne0 is calculated as Ne0 = asInteger(theta/(4*mu))
-	//defineConstant("Ne1", 30);			 // Ne1 is also sampled from a prior
-	defineConstant("SS1", 100);     	    // SS1 = sample size in T=1
-	defineConstant("SS2", 100);          // SS2 = sample size in T=2
-	//defineConstant("mu", 1e-8);        //  mu = mutation rate - mu=1e-7 for real simulations
-	defineConstant("md1", 0.5);          // md1 = dominance for m1 mutations - neutrals
-	defineConstant("mf1", 0.0);          // mf1 = fitness for m1 mutations - neutrals
-	defineConstant("md2", 0.5);          // md2 = dominance for m2 mutations - benefitials
-	defineConstant("mf2", 0.01);         // mf2 = fitness for m2 mutations - benefitials
-	defineConstant("mp1", 0.95);         // mp1 = proportion of m1 mutations
-	defineConstant("mp2", 0.05); 	       // mp2 = proportion of m2 mutations
-	defineConstant("pge2", 0.20);		    // pge2 = proportion of genomic elements that harbors genomic element type g2
-	defineConstant("gs", 135e+6);        // gs = genome size - 135e+6
-	defineConstant("rr", 4.2e-8);        // rr = recombination rate - 4.2 cM/Mbp * 1e-8
-	defineConstant("ts2", 25); 	       // ts2 = time point for the second sampling
+	//defineConstant("seed", 1526566133945); //sweep total
+	//defineConstant("theta", 2e-5); //2e-4
+	//defineConstant("ne", 500);
+	defineConstant("ns", 100);
+	//defineConstant("mu", 1e-8); //1e-7
+	defineConstant("md1", 0.5);
+	defineConstant("mf1", 0.0);
+	defineConstant("md2", 1.0);
+	defineConstant("mf2", 0.5);
+	defineConstant("mp1", 1.0);
+	defineConstant("gs", 1000000);
+	defineConstant("rr", 1e-8);
+	defineConstant("ts1", 25);
+	defineConstant("ts2", 175); //to force the fixation of the benefitial and neutral mutations
 	
-	//defineConstant("outputpath", "/home/pavinato/My_repositories/Tracking-selection/results/slim_output/");
+	defineConstant("outputpath", "/home/pavinato/My_repositories/Tracking-selection/results/slim_output/");
 	
 	//setSeed(seed);
 	initializeMutationRate(mu);
 	initializeMutationType("m1", md1, "f", mf1);
-	initializeMutationType("m2", md2, "e", mf2);
+	initializeMutationType("m2", md2, "f", mf2);
 	m1.mutationStackPolicy = "s";
 	m2.mutationStackPolicy = "s";
 	m1.convertToSubstitution = T;
 	m2.convertToSubstitution = T;
-	initializeGenomicElementType("g1", m1, 1);
-	initializeGenomicElementType("g2", c(m1,m2), c(mp1,mp2));
-	
-	//A. thaliana genome size 135Mbp (135,000,000bp) //test 1,350,000bp
-	// fragment size;
-	k = 1/(2*rr); // k = 11904762
+	initializeGenomicElementType("g1", m1, mp1);
+	initializeGenomicElementType("g2", m1, mp1);
+	initializeGenomicElement(g1, 0, (asInteger(gs/2) - 1));
+	initializeGenomicElement(g2, (asInteger(gs/2) + 1), (gs-1));
+	initializeRecombinationRate(c(rr, 0.5, rr), c((asInteger(gs/2) - 1), asInteger(gs/2), (gs-1)));
 
-	// number of fragments;
-	nf = asInteger(gs/k); // nf = 11
-
-	// set the fragments starts and ends for the initializeGenomicElement
-	starts = 0;
-	ends   = NULL;
-	for(i in seq(from = 1, to = (nf-1))) {
-		stts    = (i*k)+1;
-		starts = c(starts, stts);
-	
-		end = (i*k)-1;
-		ends = c(ends, end);
-	}
-
-	starts = starts;
-	ends   = c(ends , (gs-1));
-	
-	// sample the fragments to assign each GenomicElementType
-	indexes = seq(from = 0, to = (nf-1));
-	g2_idx = sample(indexes, asInteger(pge2*nf), replace = F);
-	
-	// then assign each GenomicElementType
-	for(i in g2_idx){
-		initializeGenomicElement(g2, asInteger(starts[i]), asInteger(ends[i]));
-	}
-	
-	g1_idx = setDifference(indexes, g2_idx);
-	for(j in g1_idx){
-		initializeGenomicElement(g1, asInteger(starts[j]), asInteger(ends[j]));
-	}
-	
-	// Generate a vector for fragments upper bounds and righ racombination rate limits 
-	// Generate also a vector of recombination rates for each frag upper limites
-	upper = NULL;
-	rates = NULL;
-	for(i in seq(from = 1, to = (nf-1))) {
-		limits    = c(i*k, (i*k)+1);
-		upper = c(upper, limits);
-	
-		rts = c(rr,0.5);
-		rates = c(rates, rts);
-	}
-
-	upper = c(upper, (gs-1));
-	rates = c(rates, rr);
-
-	initializeRecombinationRate(rates, asInteger(upper));
 }
 
-1 { 	
+1 { 
+	cat(getSeed()+"\n");
 	
-	Ne0 = asInteger(theta/(4*mu));
-	sim.addSubpop("p1", Ne0); 
-	cat("Theta=" + theta + "\t" + "mu=" + mu + "\t" + "Ne0=" + Ne0 + "\n");
-
-	t1 = Ne0*10;   t1b1 = t1 -2; t1b2 = t1 -1;
-	t2 = t1 + ts2; t2b2 = t2 -1;
+	ne = asInteger(theta/(4*mu));
 	
-	sim.rescheduleScriptBlock(s1, start=t1b1, end=t1b1);
-	sim.rescheduleScriptBlock(s2, start=t1b2, end=t1b2);
+	sim.addSubpop("p1", ne); 
+	
+	te = ne*10;
+	t1 = te + ts1; t1b = t1 -2;
+	t2 = t1 + ts2;
+	
+	sim.rescheduleScriptBlock(s1, start=te, end=te);
+	
+	sim.rescheduleScriptBlock(s2, start=t1b, end=t1b);
 	sim.rescheduleScriptBlock(s3, start=t1, end=t1);
-	sim.rescheduleScriptBlock(s4, start=t1, end=t1);
-	sim.rescheduleScriptBlock(s5, start=t1, end=t1);
 	
-	sim.rescheduleScriptBlock(s6, start=t2b2, end=t2b2);
-	sim.rescheduleScriptBlock(s7, start=t2, end=t2);
-	
+	sim.rescheduleScriptBlock(s6, start=t2, end=t2);
 }
 
 s1 late() {
-	m1.convertToSubstitution = F; //the effect of it change affect the next generation
+	target = sample(p1.genomes, 1);
+	if (target.countOfMutationsOfType(m2) == 0)
+	{
+		 target.addNewDrawnMutation(m2, 0);
+	}
+}
+
+s2 late() {
+	m1.convertToSubstitution = F;
 	m2.convertToSubstitution = F;
 }
 
-s2 late(){
-	CS1 = asInteger(Ne1 + SS1); //the effect of it change affect the next generation - CS1 = Census Size 1
-	p1.setSubpopulationSize(CS1);
-	cat("Ne1=" + Ne1 + "\t" + "Census Size 1=" + CS1 + "\n");
-
-}
-
 s3 late() {
-	
-	//tag all individuals
-	sim.subpopulations.individuals.tag = 1;
-	
-	// tag sampled individuals 
-	saminds = sample(sim.subpopulations.individuals, SS1, F);
-	saminds.tag = 0;
-	
-	samindsnames = asString(sapply(seq(from=1, to=SS1), "paste0('indiv' + applyValue + '@pop1');"));
 
+	allinds = sim.subpopulations.individuals;
+	allmuts = sortBy(unique(allinds.genomes.mutations), "position");
+
+	saminds = sample(allinds, ns, F);
 	sammuts = sortBy(unique(saminds.genomes.mutations), "position");
 	
-	cat("#OUT: " + " " + paste(SS1 + " " +"inds") + " " +"T1" + "\n");
-	cat(paste0(outputpath + "slim_output_t1_" + simID + ".txt" + "\n"));
+	samindsnames = asString(sapply(seq(from=1, to=ns), "paste0('indiv' + applyValue + '@pop1');"));
+	
+	cat("#OUT: " + " " + paste(ns + " " +"inds") + " " +"T1" + "\n");
+	cat(paste0(outputpath + "output_t1_" + simID + ".txt" + "\n"));
 	
 	header = paste("chrom"+"\t"+"position"+"\t"+"status"+"\t"+"selection"+"\t"+"alleles"+"\t"+
 		 				paste(samindsnames, sep="\t")+"\t"+
@@ -140,10 +86,10 @@ s3 late() {
 	for (mm in sammuts){
 	
 		genos = NULL;
-		for (si in saminds){
+		for (ss in saminds){
 
-			genome_1 = sortBy(unique(si.genomes[0].mutations), "position");
-			genome_2 = sortBy(unique(si.genomes[1].mutations), "position");
+			genome_1 = sortBy(unique(ss.genomes[0].mutations), "position");
+			genome_2 = sortBy(unique(ss.genomes[1].mutations), "position");
 		
 			hp1 = (asInteger(match(mm.id, genome_1.id)>=0)+1);
 			hp2 = (asInteger(match(mm.id, genome_2.id)>=0)+1);
@@ -155,9 +101,12 @@ s3 late() {
 		
 		rescaled = sapply(mm.position, "(applyValue +1);");
 		mm.setValue("rescaled", rescaled);
-				
-		chromosome = paste('chr1');
+		
+		chromosome = sapply(mm.getValue("rescaled"), "if (applyValue > 500000) paste('chr2'); else paste('chr1');");
 		mm.setValue("chromosome", chromosome);
+		
+		newposition = sapply(mm.getValue("rescaled"), "if (applyValue > 500000) paste(applyValue - 500000); else paste(applyValue);");
+		mm.setValue("newposition", newposition);
 		
 		status = sapply(mm.mutationType, "if (applyValue == m2) paste('NS'); else paste('S');");
 		mm.setValue("status", status);
@@ -168,7 +117,7 @@ s3 late() {
 		alleles = paste("A,T");
 		mm.setValue("alleles", alleles);
 
-		data = paste(mm.getValue("chromosome")+"\t"+mm.getValue("rescaled")+"\t"+mm.getValue("status")+"\t"+mm.getValue("selection")+"\t"+mm.getValue("alleles")+"\t"+
+		data = paste(mm.getValue("chromosome")+"\t"+mm.getValue("newposition")+"\t"+mm.getValue("status")+"\t"+mm.getValue("selection")+"\t"+mm.getValue("alleles")+"\t"+
 			 			 paste(genos, sep="\t")+"\t"+
 			 			 mm.id+"\t"+mm.mutationType.dominanceCoeff+"\t"+mm.selectionCoeff+"\t"+mm.originGeneration+"\t"+sim.mutationFrequencies(subpops=NULL,mutations=mm));
 	
@@ -177,42 +126,24 @@ s3 late() {
    
    dataset = c(header, tempdata);
    writeFile(paste0(outputpath + "slim_output_t1_" + simID + ".txt"), dataset);
+	
+	//saminds.genomes.outputVCF(filePath="/Users/vitorpavinato/Dropbox/PosDoc_INRA_2017/Project_Tracking_selection_timeseries_data/SLiM_model_design/vcf_t1.vcf");
+
 
 }
 
-s4 fitness(NULL){
-	//kill sampled individuals
-	if (individual.tag == 0)
-		return 0.0;
-	else
-		return relFitness;
-}
+s4 late() {
+	
+	allinds = sim.subpopulations.individuals;
+	allmuts = sortBy(unique(allinds.genomes.mutations), "position");
 
-s5 late(){
-	p1.setSubpopulationSize(Ne1); //add this to force sbpopulation size to Ne1
-}
-
-s6 late(){
-	CS2 = asInteger(Ne1 + SS2); //the effect of it change affect the next generation - CS2 = Census Size 2
-	p1.setSubpopulationSize(CS2);
-	cat("Ne1=" + Ne1 + "\t" + "Census Size 2=" + CS2 + "\n");
-}
-
-s7 late() {
-	
-	//tag all individuals
-	sim.subpopulations.individuals.tag = 1;
-	
-	// tag sampled individuals 
-	saminds = sample(sim.subpopulations.individuals, SS2, F);
-	saminds.tag = 0;
-	
-	samindsnames = asString(sapply(seq(from=1, to=SS2), "paste0('indiv' + applyValue + '@pop2');"));
-	
+	saminds = sample(allinds, ns, F);
 	sammuts = sortBy(unique(saminds.genomes.mutations), "position");
 	
-	cat("#OUT: " + " " + paste(SS2 + " " +"inds") + " " +"T2" + "\n");
-	cat(paste0(outputpath + "slim_output_t2_" + simID + ".txt" + "\n"));
+	samindsnames = asString(sapply(seq(from=1, to=ns), "paste0('indiv' + applyValue + '@pop2');"));
+	
+	cat("#OUT: " + " " + paste(ns + " " +"inds") + " " +"T2" + "\n");
+	cat(paste0(outputpath + "output_t2_" + simID + ".txt" + "\n"));
 	
 	header = paste("chrom"+"\t"+"position"+"\t"+"status"+"\t"+"selection"+"\t"+"alleles"+"\t"+
 		 				paste(samindsnames, sep="\t")+"\t"+
@@ -222,10 +153,10 @@ s7 late() {
 	for (mm in sammuts){
 	
 		genos = NULL;
-		for (si in saminds){
+		for (ss in saminds){
 
-			genome_1 = sortBy(unique(si.genomes[0].mutations), "position");
-			genome_2 = sortBy(unique(si.genomes[1].mutations), "position");
+			genome_1 = sortBy(unique(ss.genomes[0].mutations), "position");
+			genome_2 = sortBy(unique(ss.genomes[1].mutations), "position");
 		
 			hp1 = (asInteger(match(mm.id, genome_1.id)>=0)+1);
 			hp2 = (asInteger(match(mm.id, genome_2.id)>=0)+1);
@@ -237,10 +168,13 @@ s7 late() {
 		
 		rescaled = sapply(mm.position, "(applyValue +1);");
 		mm.setValue("rescaled", rescaled);
-				
-		chromosome = paste('chr1');
+		
+		chromosome = sapply(mm.getValue("rescaled"), "if (applyValue > 500000) paste('chr2'); else paste('chr1');");
 		mm.setValue("chromosome", chromosome);
-				
+		
+		newposition = sapply(mm.getValue("rescaled"), "if (applyValue > 500000) paste(applyValue - 500000); else paste(applyValue);");
+		mm.setValue("newposition", newposition);
+		
 		status = sapply(mm.mutationType, "if (applyValue == m2) paste('NS'); else paste('S');");
 		mm.setValue("status", status);
 		
@@ -250,7 +184,7 @@ s7 late() {
 		alleles = paste("A,T");
 		mm.setValue("alleles", alleles);
 
-		data = paste(mm.getValue("chromosome")+"\t"+mm.getValue("rescaled")+"\t"+mm.getValue("status")+"\t"+mm.getValue("selection")+"\t"+mm.getValue("alleles")+"\t"+
+		data = paste(mm.getValue("chromosome")+"\t"+mm.getValue("newposition")+"\t"+mm.getValue("status")+"\t"+mm.getValue("selection")+"\t"+mm.getValue("alleles")+"\t"+
 			 			 paste(genos, sep="\t")+"\t"+
 			 			 mm.id+"\t"+mm.mutationType.dominanceCoeff+"\t"+mm.selectionCoeff+"\t"+mm.originGeneration+"\t"+sim.mutationFrequencies(subpops=NULL,mutations=mm));
 	
@@ -260,5 +194,12 @@ s7 late() {
    dataset = c(header, tempdata);
    writeFile(paste0(outputpath + "slim_output_t2_" + simID + ".txt"), dataset);
 	
+
+	//saminds.genomes.outputVCF(filePath="/Users/vitorpavinato/Dropbox/PosDoc_INRA_2017/Project_Tracking_selection_timeseries_data/SLiM_model_design/vcf_t2.vcf");
+
+
 	sim.simulationFinished();
 }
+
+
+
