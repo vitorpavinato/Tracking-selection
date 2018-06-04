@@ -1,6 +1,7 @@
 do_sim <- function(sim, nsim, model,
                    mu_rate, mu_min, mu_max, 
-                   ne0_min, ne0_max, ne1_min, ne1_max, SS1, SS2,
+                   ne0_min, ne0_max, ne1_min, ne1_max, pge2_min, pge2_max, mpb_min, mpb_max, 
+                   gamma_min, gamma_max, rr_rate, rr_min, rr_max, SS1, SS2, ts2,
                    slim_output_folder, egglib_input, save_extra_data, extra_output,  
                    python_path, egglib_summstat, wss_wspan, sfs_bins,
                    egglib_output, 
@@ -11,27 +12,49 @@ do_sim <- function(sim, nsim, model,
     cat(paste(sim,"of",nsim))  
   }
   
-  ## SAMPLE FROM PRIOR
+  #######################
+  ##   SAMPLED VALUES  ##
+  #######################
   ##-------------------
   
-  # mutation Rate: mu
+  # SLiM SEED
+  sim_seed  <- as.integer(runif(1, 100000000, 900000000));
+  
+  # MUTATION RATE
   if (mu_rate == 0){
     mu <- 1e-7
   } else {
-    mu <- rlunif(1, mu_min=1e-8, mu_max=1e-5, base=exp(10))
+    mu <- rlunif(1, min = mu_min, max = mu_max, base=exp(10))
   }
   
-  # theta calculation
+  # THETA
   theta_min = 4*ne0_min*mu
   theta_max = 4*ne0_max*mu
   theta <- rlunif(1, min = theta_min, max = theta_max, base = exp(10))
+  
+  # EFFECTIVE POPULATION SIZE 0 - Ne0
   ne0 = as.integer(theta/(4*mu))
   
-  # effective population size Ne1
+  # EFFECTIVE POPULATION SIZE 1 - Ne1
   ne1 <- as.integer(rlunif(1, min = ne1_min, max = ne1_max, base = exp(10)))
   
-  # simulation seed - SLiM seed
-  sim_seed  <- as.integer(runif(1, 100000000, 900000000));
+  # SAMPLING VALUES FOR SLiM GAMMA DISTRIBUTION OF FITNESS EFFECTS
+  gamma_values = sort(runif(2, min = gamma_min, max = gamma_max))
+  gamma2_M = gamma_values[1]
+  gamma2_k = gamma_values[2]
+  
+  # PROPORTION OF GENOMIC ELEMENTS G2 
+  pge2 = runif(1, min = pge2_min, max = pge2_max)
+  
+  # PROPORTION OF BENEFICIAL MUTATION IN GENOMIC ELEMENTS G2
+  mpb = runif(1, min = mpb_min, max = mbp_max)
+  
+  # RECOMBINATION RATE
+  if (rr_rate == 0){
+    rr <- 4.2 * 1e-7
+  } else {
+    mu <- rlunif(1, min = rr_min, max = rr_max, base=exp(10))
+  }
   
   ## RUM SLiM2
   ##-------------------
@@ -44,11 +67,19 @@ do_sim <- function(sim, nsim, model,
   # generate text with slim command
   slim_output_fullpath <- paste0("'",getwd(), "/", slim_output_folder, "'")
   
-  slim_simID <- paste0("-d simID=", sim)
-  slim_theta <- paste0("-d theta=", theta)
-     slim_mu <- paste0("-d mu=", mu)
-    slim_Ne1 <- paste0("-d Ne1=", ne1)
- slim_output <- paste0("-d ", '"',"outputpath=", slim_output_fullpath, '"')
+  slim_simID    <- paste0("-d simID=", sim)
+  slim_theta    <- paste0("-d theta=", theta)
+  slim_mu       <- paste0("-d mu=", mu)
+  slim_Ne1      <- paste0("-d Ne1=", ne1)
+  slim_gamma2_M <- paste0("-d gamma2_M=", gamma2_M)
+  slim_gamma2_k <- paste0("-d gamma2_k=", gamma2_k)
+  slim_pge2     <- paste0("-d pge2=", pge2)
+  slim_mpb      <- paste0("-d mpb=", mpb)
+  slim_rr       <- paste0("-d rr=", rr)
+  slim_SS1      <- paste0("-d SS1", SS1)
+  slim_SS2      <- paste0("-d SS1", SS2)
+  slim_ts2      <- paste0("-d ts2", ts2)
+  slim_output <- paste0("-d ", '"',"outputpath=", slim_output_fullpath, '"')
   slim_model <- paste0(model, ".slim")
   
   slim_run <- paste( "/usr/local/bin/slim",
@@ -56,14 +87,22 @@ do_sim <- function(sim, nsim, model,
                      slim_simID,                    # simID = simulation id number
                      slim_theta,                    # theta
                      slim_mu,                       #    mu = mutation rate
-                     slim_Ne1,                      #   ne1 = effective population size 1   
+                     slim_Ne1,                      #   ne1 = effective population size 1  
+                     slim_gamma2_M,
+                     slim_gamma2_k,
+                     slim_pge2,
+                     slim_mpb,
+                     slim_rr,
+                     slim_SS1,
+                     slim_SS2,
+                     slim_ts2,
                      slim_output,
                      slim_model)                    # model
   
   # rum slim on system
   system(slim_run)
   
-  ## HANDLE SLiM2 VCF OUTPUT FORMAT
+  ## HANDLE SLiM2 OUTPUT 1 - GENETIC DATA
   ##-----------------------------------------------------
   
   # sort vcf files
@@ -96,29 +135,57 @@ do_sim <- function(sim, nsim, model,
   bcftools_query <- paste("bcftools merge --force-samples",
                           paste0(slim_output_t1_sorted, ".gz"),
                           paste0(slim_output_t2_sorted, ".gz"),
-                          "| bcftools query -f 'chr%CHROM\t%POS\t%MT\tY\t%REF,%ALT[\t%GT]\t%MID\t%DOM\t%S\t%PO\t%GO\t%AC\n'",
+                          "| bcftools query -f 'chr%CHROM\t%POS\t%MT\tY\t%REF,%ALT[\t%GT]\t%MID\t%DOM\t%S\t%GO\n'",
                           ">", slim_output_merged) 
   
   system(bcftools_query)
   
-  ## READ SIMULATED DATA AND CONVERT TO EGGLIB FORMAT
-  ##-----------------------------------------------------
+  ## READ SLiM2 OUTPUT 2 - GENETIC LOAD AND SWEEP DATA
+  ##----------------------------------------------------------
+  
+  slim_Pres_output_t1        <- paste0(slim_output_folder,"slim_Pres_output_t1_", sim, ".txt")
+  slim_Pres_output_t2        <- paste0(slim_output_folder,"slim_Pres_output_t2_", sim, ".txt")
+  
+  # imported the data
+  slim_Pres_data_t1 <- read.table(file = slim_Pres_output_t1, header = T, check.names = F, na.strings = "./.")
+  slim_Pres_data_t2 <- read.table(file = slim_Pres_output_t2, header = T, check.names = F, na.strings = "./.")
+  
+  Pres_data_merged  <- merge.data.frame(ts_1, ts_2, by.x = c(1,2,3,4,5,106,107,108,109), 
+                                        by.y = c(1,2,3,4,5,106,107,108,109), 
+                                        all = T, sort = T);
+  
+  
+  ## READ SLiM OUTPUT 1 AND CONVERT TO EGGLIB INPUT
+  ##-----------------------------------------------
   
   # assembly the header
   header_1       <- c("chrom", "position", "status", "selection","alleles")
   sample_names_1 <- paste0("indiv", seq(from=1, to=SS1, by=1), "@pop1", "")
   sample_names_2 <- paste0("indiv", seq(from=1, to=SS2, by=1), "@pop2", "")
-  header_2       <- c("muID", "muDom", "muSel", "muPop", "muAge", "muFrq")
+  header_2       <- c("MID", "DOM", "S", "GO")
   
   full_header <- c(header_1, sample_names_1, sample_names_2, header_2)
   
   # imported the data
   slim_data_raw <- read.table(file = slim_output_merged, header = F, col.names = full_header, check.names = F, na.strings = "./.")
   
+  # remove temporary SLiM outputs from the folder
+  if (remove_files){
+    file.remove(paste0(slim_output_t1))
+    file.remove(paste0(slim_output_t1_sorted))
+    file.remove(paste0(slim_output_t1_sorted, ".gz"))
+    file.remove(paste0(slim_output_t1_sorted, ".gz.tbi"))
+    file.remove(paste0(slim_output_t2))
+    file.remove(paste0(slim_output_t2_sorted))
+    file.remove(paste0(slim_output_t2_sorted, ".gz"))
+    file.remove(paste0(slim_output_t2_sorted, ".gz.tbi"))
+    file.remove(paste0(slim_output_merged))
+  }
+  
   # split the data
   slim_data_gen <- slim_data_raw[, 6:(SS1+SS2+5)]
   slim_data_snp <- slim_data_raw[, 1:5]
-  slim_data_ext <- slim_data_raw[, c(1:2, (SS1+SS2+6):(SS1+SS2+11))]
+  slim_data_ext <- slim_data_raw[, c(1:2, (SS1+SS2+6):(SS1+SS2+9))]
   
   # change the genotypes annotation
   slim_data_gen <- as.matrix(slim_data_gen)
@@ -130,18 +197,18 @@ do_sim <- function(sim, nsim, model,
   slim_data_gen        <- as.data.frame(slim_data_gen)
   
   # remove monomophormic mutations (all 11 or 22)
-  geno_count_rr    <- apply(slim_data_gen, 1, function(x){sum(x == 11)})
-  geno_count_aa    <- apply(slim_data_gen, 1, function(x){sum(x == 22)})
+  geno_count_ref    <- apply(slim_data_gen, 1, function(x){sum(x == 11)})
+  geno_count_alt    <- apply(slim_data_gen, 1, function(x){sum(x == 22)})
   
-  keeped_snps     <- geno_count_rr < (SS1 + SS2) & geno_count_aa < (SS1 + SS2) 
+  kept_snps     <- geno_count_ref < (SS1 + SS2) & geno_count_alt < (SS1 + SS2) # REMOVE FIXED MUTATIONS
   
   slim_data <- cbind(slim_data_snp, slim_data_gen)
-  slim_egglib <- slim_data[keeped_snps, ]
+  slim_egglib <- slim_data[kept_snps, ]
   
   # remove duplicated mutations
   # with new version of egglib summstats it supposedly possible to work with redundant positions
   # When it starts working comment this part
-  slim_egglib <- slim_egglib[!duplicated(slim_egglib[ ,1:2]), ] 
+  slim_egglib <- slim_egglib[!duplicated(slim_egglib[ ,1:2]), ] # REMOVE DUPLICATED CHROM-POS
                                                                 
   # re-code the status column
   slim_egglib$status <- ifelse(slim_egglib$status == 1, "S", "NS")
@@ -175,7 +242,7 @@ do_sim <- function(sim, nsim, model,
   # remove the information of monomorphic and duplicated snps
   # with new version of egglib summstats it supposedly possible to work with redundant positions
   # When it starts working comment this part
-  slim_data_ext <- slim_data_ext[keeped_snps, ]
+  slim_data_ext <- slim_data_ext[kept_snps, ]
   slim_data_ext <- slim_data_ext[!duplicated(slim_data_ext[, 1:2]), ] 
                                                                       
   
@@ -279,15 +346,6 @@ do_sim <- function(sim, nsim, model,
   
   # remove all intermediate files but the reference table 
   if (remove_files){
-    file.remove(paste0(slim_output_t1))
-    file.remove(paste0(slim_output_t1_sorted))
-    file.remove(paste0(slim_output_t1_sorted, ".gz"))
-    file.remove(paste0(slim_output_t1_sorted, ".gz.tbi"))
-    file.remove(paste0(slim_output_t2))
-    file.remove(paste0(slim_output_t2_sorted))
-    file.remove(paste0(slim_output_t2_sorted, ".gz"))
-    file.remove(paste0(slim_output_t2_sorted, ".gz.tbi"))
-    file.remove(paste0(slim_output_merged))
     file.remove(paste0(egglib_input, conv_file))
     file.remove(paste0(egglib_output,"egglib_output_", sim, ".txt"))
   }

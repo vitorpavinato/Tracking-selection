@@ -19,7 +19,7 @@ ls()
 ###########################################
 
 nsim               <- 3                          # number of simulations 50000
-model              <- "src/models/model_1_vcfout"
+model              <- "src/models/model_2_v2.slim"
 slim_output_folder <- "results/slim_output/"
 save_extra_data    <- TRUE
 extra_output       <- "results/extra_output/"
@@ -36,7 +36,6 @@ remove_files     <- FALSE
 ##       EGGLIB SUMMSTAT SETTINGS       ##
 ##########################################
 
-#python_path     <- "/usr/bin/python"
 python_path     <- "/home/pavinato/py-egglib-3.0.0b19/bin/python"
 #python_path     <- "/home/pavinato/py-egglib-3.0.0b21/bin/python"
 
@@ -44,12 +43,14 @@ egglib_summstat <- "bin/summstats_0.0.py" # this version works with egglib-3.0.0
 #egglib_summstat <- "bin/summstats_1.0.py" # this version works with egglib-3.0.0b21
 
 wss_wspan = 100
-#sfs_bins = 5
+sfs_bins = 5
 
 ############################################
+##             SAMPLED VALUES             ##
 ## DEFINE PRIORS (upper and lower limits) ##
 ############################################
 
+# THETA:
 # We are going to sample thetas from a log uniform distribution; however SLiM is set up on population size Ne;
 # Given the mutation rate, theta is calculated as THETA = Ne*mutation_rate
 # For now, only sampling theta and calculating Ne with known mutation rate mu
@@ -58,14 +59,33 @@ mu_rate = 0 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
 mu_min  = 1e-8
 mu_max  = 1e-5
 
-ne0_min = 100
+ne0_min = 1
 ne0_max = 1000
 
-ne1_min = 100
+ne1_min = 1
 ne1_max = 1000
 
-SS1     = 100
-SS2     = 100
+pge2_min = 0
+pge2_max = 0.5
+
+mpb_min = 0
+mpb_max = 1
+
+gamma_min = 0.001 # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
+gamma_max = 1
+
+rr_rate = 0 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
+rr_min  = 4.2 * 1e-8
+rr_max  = 4.2 * 1e-5
+
+############################################
+##              FIXED VALUES              ##
+############################################
+
+SS1 = 80
+SS2 = 115
+
+ts2 = 8
 
 ###########################################
 ##    LOAD REQUIRED FUNCTIONS/PACKAGES   ##
@@ -95,13 +115,14 @@ system.time(if(parallel_sims){
   ref_table <- foreach(sim=seq_len(nsim),.combine=rbind) %dopar% {
                                                                         library(dplyr)
                                                                         do_sim(sim, nsim, model,
-                                                                        mu_rate, mu_min, mu_max, 
-                                                                        ne0_min, ne0_max, ne1_min, ne1_max, SS1, SS2,
-                                                                        slim_output_folder, egglib_input, save_extra_data, extra_output,  
-                                                                        python_path, egglib_summstat, wss_wspan, sfs_bins,
-                                                                        egglib_output, 
-                                                                        remove_files
-                                                                        )
+                                                                               mu_rate, mu_min, mu_max, 
+                                                                               ne0_min, ne0_max, ne1_min, ne1_max, pge2_min, pge2_max, mpb_min, mpb_max, 
+                                                                               gamma_min, gamma_max, rr_rate, rr_min, rr_max, SS1, SS2, ts2,
+                                                                               slim_output_folder, egglib_input, save_extra_data, extra_output,  
+                                                                               python_path, egglib_summstat, wss_wspan, sfs_bins,
+                                                                               egglib_output, 
+                                                                               remove_files
+                                                                               )
     }
 
   stopCluster(cl)
@@ -111,11 +132,13 @@ system.time(if(parallel_sims){
   for(sim in 1:nsim){
     ref_table[[sim]] <- do_sim(sim, nsim, model,
                                mu_rate, mu_min, mu_max, 
-                               ne0_min, ne0_max, ne1_min, ne1_max, SS1, SS2,
+                               ne0_min, ne0_max, ne1_min, ne1_max, pge2_min, pge2_max, mpb_min, mpb_max, 
+                               gamma_min, gamma_max, rr_rate, rr_min, rr_max, SS1, SS2, ts2,
                                slim_output_folder, egglib_input, save_extra_data, extra_output,  
                                python_path, egglib_summstat, wss_wspan, sfs_bins,
                                egglib_output, 
-                               remove_files)
+                               remove_files
+                               )
   }
   ref_table <- do.call(rbind, ref_table)
 })
