@@ -27,9 +27,9 @@ initialize() {
 	defineConstant("mf1", 0.0);       // mf1 => the fitness for all neutral mutations "m1" - it is fixed with value 0
 	defineConstant("md2", 0.5);       // md2 => the dominance for all beneficial mutations "m2"
 
-	defineConstant("SS1", 80);     	 // SS1 => the sample size of the first sampling in T=1
-	defineConstant("SS2", 115);       // SS2 => the sample size of the second sampling in T=2
-	defineConstant("ts2", 8); 	       // ts2 => the distance in gerenration from the first sampling
+	//defineConstant("SS1", 80);     	 // SS1 => the sample size of the first sampling in T=1
+	//defineConstant("SS2", 115);       // SS2 => the sample size of the second sampling in T=2
+	//defineConstant("ts2", 8); 	       // ts2 => the distance in gerenration from the first sampling
 	
 	defineConstant("genomeS", 135e+6);// genomeS => the genome size - A. thaliana genome size is 135Mbp (135,000,000bp)
 	
@@ -41,7 +41,7 @@ initialize() {
 	defineConstant("chromosome", asInteger(genomeS - (genN * genS)));
 		
 	// the "outputpath" variable will be defined in the main.R script
-	defineConstant("outputpath", "/Users/vitorpavinato/Dropbox/PosDoc_INRA_2017/Project/SLiM/SLiM_model_sketch/");
+	//defineConstant("outputpath", "/Users/vitorpavinato/Dropbox/PosDoc_INRA_2017/Project/SLiM/SLiM_model_sketch/");
 	
 	setSeed(seed);
 	initializeMutationRate(mu);
@@ -193,15 +193,12 @@ s3 late() {
 	sam_inds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_t1_" + simID + ".vcf"), outputMultiallelics = F); 
 	// outputMultiallelics = F ensure no redundant mutations - change it when egglib summstats work with it
 	
-	//////////////////////////////////////
-	// OUTPUT_2 T=1 - GENETIC LOAD DATA //
-	//////////////////////////////////////
+	///////////////////////////////
+	// OUTPUT_2 T=1 - SWEEP DATA //
+	///////////////////////////////
 
+	// GLOBAL GENETIC LOAD
 	L = (max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL));
-	
-	///////////////////////////////
-	// OUTPUT_3 T=1 - SWEEP DATA //
-	///////////////////////////////
 	
 	// Record all the unique mutations in the sampled individuals
 	sam_muts = sortBy(unique(sam_inds.genomes.mutations), "position");
@@ -242,13 +239,13 @@ s3 late() {
 			
 		// Produde the table
 		if (!isNULL(PPr_es_1)){
-			Es_table = paste(paste(1) + "\t" + (genes_muts[mid_1].position +1) + "\t" +  midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + genes_muts[mid_1].id + "\t" + genes_muts[mid_1].selectionCoeff + "\t" + genes_muts[mid_1].mutationType.dominanceCoeff + "\t" + genes_muts[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=genes_muts[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
+			Es_table = paste("chr1" + "\t" + (genes_muts[mid_1].position +1) + "\t" +  midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + genes_muts[mid_1].id + "\t" + genes_muts[mid_1].selectionCoeff + "\t" + genes_muts[mid_1].mutationType.dominanceCoeff + "\t" + genes_muts[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=genes_muts[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
 		} else {
-			Es_table = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L );
+			Es_table = paste("chr1" + "\t" + paste(rep("NA", 10), "\t") + "\t" + L );
 		}
 		
 		// Prepare the header of the table
-		Es_head = paste("#CHROM"+"\t"+"POS"+"\t"+"MIDPOINT"+"\t"+"D2MIDPOINT"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF1"+ "\t" + "ALPHA1" + "\t" + "PRES1" + "\t" + "POPLOAD1");
+		Es_head = paste("chrom"+"\t"+"position"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF1"+ "\t" + "alpha1" + "\t" + "Pres1" + "\t" + "POPload1");
 		
 		// Export the output
 		Es_output = c(Es_head, Es_table);
@@ -289,9 +286,9 @@ s3 late() {
 		}
 			
 		if (!isNULL(PPr_es_1)){
-			Es_gene_1 = paste(paste(1) + "\t" + (gene_1[mid_1].position +1) + "\t" + midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + gene_1[mid_1].id + "\t" + gene_1[mid_1].selectionCoeff + "\t" + gene_1[mid_1].mutationType.dominanceCoeff + "\t" + gene_1[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_1[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
+			Es_gene_1 = paste("chr1" + "\t" + (gene_1[mid_1].position +1) + "\t" + midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + gene_1[mid_1].id + "\t" + gene_1[mid_1].selectionCoeff + "\t" + gene_1[mid_1].mutationType.dominanceCoeff + "\t" + gene_1[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_1[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
 		} else {
-				Es_gene_1 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
+				Es_gene_1 = paste("chr1" + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}
 		
 		////////////
@@ -316,9 +313,9 @@ s3 late() {
 		}
 		
 		if (!isNULL(PPr_es_2)){
-			Es_gene_2 = paste(paste(1) + "\t" + (gene_2[mid_2].position +1) + "\t" + midpoint_2 + "\t" + dis2midpoint_2[mid_2] + "\t" + gene_2[mid_2].id + "\t" + gene_2[mid_2].selectionCoeff + "\t" + gene_2[mid_2].mutationType.dominanceCoeff + "\t" + gene_2[mid_2].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_2[mid_2]) + "\t" + alphas_2[mid_2] + "\t" + PPr_es_2 + "\t" + L);	
+			Es_gene_2 = paste("chr1" + "\t" + (gene_2[mid_2].position +1) + "\t" + midpoint_2 + "\t" + dis2midpoint_2[mid_2] + "\t" + gene_2[mid_2].id + "\t" + gene_2[mid_2].selectionCoeff + "\t" + gene_2[mid_2].mutationType.dominanceCoeff + "\t" + gene_2[mid_2].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_2[mid_2]) + "\t" + alphas_2[mid_2] + "\t" + PPr_es_2 + "\t" + L);	
 		} else {
-			Es_gene_2 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
+			Es_gene_2 = paste("chr1" + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}	
 			
 		////////////
@@ -343,9 +340,9 @@ s3 late() {
 		}
 		
 		if (!isNULL(PPr_es_3)){
-			Es_gene_3 = paste(paste(1) + "\t" + (gene_3[mid_3].position +1) + "\t" + midpoint_3 + "\t" + dis2midpoint_3[mid_3] + "\t" + gene_3[mid_3].id + "\t" + gene_3[mid_3].selectionCoeff + "\t" + gene_3[mid_3].mutationType.dominanceCoeff + "\t" + gene_3[mid_3].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_3[mid_3]) + "\t" + alphas_3[mid_3] + "\t" + PPr_es_3 + "\t" + L);
+			Es_gene_3 = paste("chr1" + "\t" + (gene_3[mid_3].position +1) + "\t" + midpoint_3 + "\t" + dis2midpoint_3[mid_3] + "\t" + gene_3[mid_3].id + "\t" + gene_3[mid_3].selectionCoeff + "\t" + gene_3[mid_3].mutationType.dominanceCoeff + "\t" + gene_3[mid_3].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_3[mid_3]) + "\t" + alphas_3[mid_3] + "\t" + PPr_es_3 + "\t" + L);
 		} else {
-			Es_gene_3 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
+			Es_gene_3 = paste("chr1" + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}	
 			
 		////////////
@@ -370,15 +367,15 @@ s3 late() {
 			}
 			
 		if (!isNULL(PPr_es_4)){
-			Es_gene_4 = paste(paste(1) + "\t" + (gene_4[mid_4].position +1) + "\t" + midpoint_4 + "\t" + dis2midpoint_4[mid_4] + "\t" + gene_4[mid_4].id + "\t" + gene_4[mid_4].selectionCoeff + "\t" + gene_4[mid_4].mutationType.dominanceCoeff + "\t" + gene_4[mid_4].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_4[mid_4]) + "\t" + alphas_4[mid_4] + "\t" + PPr_es_4 + "\t" + L);
+			Es_gene_4 = paste("chr1" + "\t" + (gene_4[mid_4].position +1) + "\t" + midpoint_4 + "\t" + dis2midpoint_4[mid_4] + "\t" + gene_4[mid_4].id + "\t" + gene_4[mid_4].selectionCoeff + "\t" + gene_4[mid_4].mutationType.dominanceCoeff + "\t" + gene_4[mid_4].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_4[mid_4]) + "\t" + alphas_4[mid_4] + "\t" + PPr_es_4 + "\t" + L);
 		} else {
-			Es_gene_4 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
+			Es_gene_4 = paste("chr1" + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}			 	 	
 	
 		Es_table = c(Es_gene_1, Es_gene_2, Es_gene_3, Es_gene_4);
 		
 		// Prepare the header of the table
-		Es_head = paste("#CHROM"+"\t"+"POS"+"\t"+"MIDPOINT"+"\t"+"D2MIDPOINT"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF1"+ "\t" + "ALPHA1" + "\t" + "PRES1" + "\t" + "POPLOAD1");
+		Es_head = paste("chrom"+"\t"+"position"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF1"+ "\t" + "alpha1" + "\t" + "Pres1" + "\t" + "POPload1");
 		
 		// Export the output
 		Es_output = c(Es_head, Es_table);
@@ -428,15 +425,12 @@ s7 late() {
 	sam_inds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_t2_" + simID + ".vcf"), outputMultiallelics = F); 
 	// outputMultiallelics = F ensure no redundant mutations - change it when egglib summstats work with it
 	
-	//////////////////////////////////////
-	// OUTPUT_2 T=1 - GENETIC LOAD DATA //
-	//////////////////////////////////////
-
-	L = (max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL));
-	
 	///////////////////////////////
 	// OUTPUT_3 T=2 - SWEEP DATA //
 	///////////////////////////////
+
+	// GLOBAL GENETIC LOAD
+	L = (max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL));
 	
 	// Record all the unique mutations in the sampled individuals
 	sam_muts = sortBy(unique(sam_inds.genomes.mutations), "position");
@@ -477,14 +471,14 @@ s7 late() {
 			
 		// Produde the table
 		if (!isNULL(PPr_es_1)){
-			Es_table = paste(paste(1) + "\t" + (genes_muts[mid_1].position +1) + "\t" +  midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + genes_muts[mid_1].id + "\t" + genes_muts[mid_1].selectionCoeff + "\t" + genes_muts[mid_1].mutationType.dominanceCoeff + "\t" + genes_muts[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=genes_muts[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
+			Es_table = paste("chr1" + "\t" + (genes_muts[mid_1].position +1) + "\t" +  midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + genes_muts[mid_1].id + "\t" + genes_muts[mid_1].selectionCoeff + "\t" + genes_muts[mid_1].mutationType.dominanceCoeff + "\t" + genes_muts[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=genes_muts[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
 		} else {
-			Es_table = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
+			Es_table = paste("chr1" + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		
 		}
 		
 		// Prepare the header of the table
-		Es_head = paste("#CHROM"+"\t"+"POS"+"\t"+"MIDPOINT"+"\t"+"D2MIDPOINT"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF2"+ "\t" + "ALPHA2" + "\t" + "PRES2" + "\t" + "POPLOAD2");
+		Es_head = paste("chrom"+"\t"+"position"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF2"+ "\t" + "alpha2" + "\t" + "Pres2" + "\t" + "POPload2");
 		
 		// Export the output
 		Es_output = c(Es_head, Es_table);
@@ -525,9 +519,9 @@ s7 late() {
 		}
 			
 		if (!isNULL(PPr_es_1)){
-			Es_gene_1 = paste(paste(1) + "\t" + (gene_1[mid_1].position +1) + "\t" + midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + gene_1[mid_1].id + "\t" + gene_1[mid_1].selectionCoeff + "\t" + gene_1[mid_1].mutationType.dominanceCoeff + "\t" + gene_1[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_1[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
+			Es_gene_1 = paste("chr1" + "\t" + (gene_1[mid_1].position +1) + "\t" + midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + gene_1[mid_1].id + "\t" + gene_1[mid_1].selectionCoeff + "\t" + gene_1[mid_1].mutationType.dominanceCoeff + "\t" + gene_1[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_1[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
 		} else {
-				Es_gene_1 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
+				Es_gene_1 = paste("chr1" + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}
 		
 		////////////
@@ -552,9 +546,9 @@ s7 late() {
 		}
 		
 		if (!isNULL(PPr_es_2)){
-			Es_gene_2 = paste(paste(1) + "\t" + (gene_2[mid_2].position +1) + "\t" + midpoint_2 + "\t" + dis2midpoint_2[mid_2] + "\t" + gene_2[mid_2].id + "\t" + gene_2[mid_2].selectionCoeff + "\t" + gene_2[mid_2].mutationType.dominanceCoeff + "\t" + gene_2[mid_2].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_2[mid_2]) + "\t" + alphas_2[mid_2] + "\t" + PPr_es_2 + "\t" + L);
+			Es_gene_2 = paste("chr1" + "\t" + (gene_2[mid_2].position +1) + "\t" + midpoint_2 + "\t" + dis2midpoint_2[mid_2] + "\t" + gene_2[mid_2].id + "\t" + gene_2[mid_2].selectionCoeff + "\t" + gene_2[mid_2].mutationType.dominanceCoeff + "\t" + gene_2[mid_2].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_2[mid_2]) + "\t" + alphas_2[mid_2] + "\t" + PPr_es_2 + "\t" + L);
 		} else {
-			Es_gene_2 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
+			Es_gene_2 = paste("chr1" + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}	
 			
 		////////////
@@ -579,9 +573,9 @@ s7 late() {
 		}
 		
 		if (!isNULL(PPr_es_3)){
-			Es_gene_3 = paste(paste(1) + "\t" + (gene_3[mid_3].position +1) + "\t" + midpoint_3 + "\t" + dis2midpoint_3[mid_3] + "\t" + gene_3[mid_3].id + "\t" + gene_3[mid_3].selectionCoeff + "\t" + gene_3[mid_3].mutationType.dominanceCoeff + "\t" + gene_3[mid_3].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_3[mid_3]) + "\t" + alphas_3[mid_3] + "\t" + PPr_es_3 + "\t" + L);
+			Es_gene_3 = paste("chr1" + "\t" + (gene_3[mid_3].position +1) + "\t" + midpoint_3 + "\t" + dis2midpoint_3[mid_3] + "\t" + gene_3[mid_3].id + "\t" + gene_3[mid_3].selectionCoeff + "\t" + gene_3[mid_3].mutationType.dominanceCoeff + "\t" + gene_3[mid_3].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_3[mid_3]) + "\t" + alphas_3[mid_3] + "\t" + PPr_es_3 + "\t" + L);
 		} else {
-			Es_gene_3 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
+			Es_gene_3 = paste("chr1" + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}	
 			
 		////////////
@@ -606,15 +600,15 @@ s7 late() {
 			}
 			
 		if (!isNULL(PPr_es_4)){
-			Es_gene_4 = paste(paste(1) + "\t" + (gene_4[mid_4].position +1) + "\t" + midpoint_4 + "\t" + dis2midpoint_4[mid_4] + "\t" + gene_4[mid_4].id + "\t" + gene_4[mid_4].selectionCoeff + "\t" + gene_4[mid_4].mutationType.dominanceCoeff + "\t" + gene_4[mid_4].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_4[mid_4]) + "\t" + alphas_4[mid_4] + "\t" + PPr_es_4 + "\t" + L);
+			Es_gene_4 = paste("chr1" + "\t" + (gene_4[mid_4].position +1) + "\t" + midpoint_4 + "\t" + dis2midpoint_4[mid_4] + "\t" + gene_4[mid_4].id + "\t" + gene_4[mid_4].selectionCoeff + "\t" + gene_4[mid_4].mutationType.dominanceCoeff + "\t" + gene_4[mid_4].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_4[mid_4]) + "\t" + alphas_4[mid_4] + "\t" + PPr_es_4 + "\t" + L);
 		} else {
-			Es_gene_4 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
+			Es_gene_4 = paste("chr1" + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}			 	 	
 	
 		Es_table = c(Es_gene_1, Es_gene_2, Es_gene_3, Es_gene_4);
 		
 		// Prepare the header of the table
-		Es_head = paste("#CHROM"+"\t"+"POS"+"\t"+"MIDPOINT"+"\t"+"D2MIDPOINT"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF2"+ "\t" + "ALPHA2" + "\t" + "PRES2" + "\t" + "POPLOAD2");
+		Es_head = paste("chrom"+"\t"+"position"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF2"+ "\t" + "alpha2" + "\t" + "Pres2" + "\t" + "POPload2");
 		
 		// Export the output
 		Es_output = c(Es_head, Es_table);
