@@ -1,24 +1,24 @@
 initialize() {
 	
 	// SIMULATION ID
-	defineConstant("simID",01);
+	//defineConstant("simID",01);
 	
 	// SAMPLED VALUES
-	defineConstant("seed", 1520476159367);
+	//defineConstant("seed", 1520476159367);
 	
-	defineConstant("theta", 0.00002); // 2e-4 // theta is sample from prior;
+	//defineConstant("theta", 0.00002); // 2e-4 // theta is sample from prior;
 	//defineConstant("Ne0", 500);     // Ne0 is calculated as Ne0 = asInteger(theta/(4*mu));
-	defineConstant("Ne1", 30);			 // Ne1 sampled from a prior;
-	defineConstant("mu", 1e-8);       // mu => mutation rate - mu=1e-7 for real simulations;
+	//defineConstant("Ne1", 30);			 // Ne1 sampled from a prior;
+	//defineConstant("mu", 1e-8);       // mu => mutation rate - mu=1e-7 for real simulations;
 	
-	defineConstant("gamma2_M", 0.03); // gamma2_M => the mean of a gamma distribution for the DFE of beneficial mutations "m2";
-	defineConstant("gamma2_k", 0.20); // gamma2_k => the shaper parameter k or alpha of the gamma distribution for the DFE of beneficial mutations "m2";
+	//defineConstant("gamma2_M", 0.03); // gamma2_M => the mean of a gamma distribution for the DFE of beneficial mutations "m2";
+	//defineConstant("gamma2_k", 0.20); // gamma2_k => the shaper parameter k or alpha of the gamma distribution for the DFE of beneficial mutations "m2";
 	
-	defineConstant("pge2", 0.25);		 // pge2 => the proportion of "GenomicElementType" "g2" - it contains the mutations "m1" and "m2";
-	defineConstant("mpb", 0.50);      // mpb => the proportion of beneficial mutations "m2" in the "GenomicElementType" "g2", 1-mbp is the proportion of 
+	//defineConstant("pge2", 0.25);		 // pge2 => the proportion of "GenomicElementType" "g2" - it contains the mutations "m1" and "m2";
+	//defineConstant("mpb", 0.50);      // mpb => the proportion of beneficial mutations "m2" in the "GenomicElementType" "g2", 1-mbp is the proportion of 
 	
 	
-	defineConstant("rr", 4.2e-8);     // rr => the recombination rate define as 4.2 cM/Mbp * 1e-8
+	//defineConstant("rr", 4.2e-8);     // rr => the recombination rate define as 4.2 cM/Mbp * 1e-8
 	
 	//defineConstant("sr", 0.20);       // self => the selfing rate
 	
@@ -31,7 +31,7 @@ initialize() {
 	defineConstant("SS2", 115);       // SS2 => the sample size of the second sampling in T=2
 	defineConstant("ts2", 8); 	       // ts2 => the distance in gerenration from the first sampling
 	
-	defineConstant("genomeS", 135e+5);// genomeS => the genome size - A. thaliana genome size is 135Mbp (135,000,000bp)
+	defineConstant("genomeS", 135e+6);// genomeS => the genome size - A. thaliana genome size is 135Mbp (135,000,000bp)
 	
 	defineConstant("chrN", 4);			 // ChrN => the number of chromosomes to simulate
 	defineConstant("genN", 4);			 // genN => the number of "genes" to simulate
@@ -46,8 +46,7 @@ initialize() {
 	setSeed(seed);
 	initializeMutationRate(mu);
 	initializeMutationType("m1", md1, "f", mf1);
-	//initializeMutationType("m2", md2, "g", gamma2_M, gamma2_k);
-	initializeMutationType("m2", md2, "e", 0.1);
+	initializeMutationType("m2", md2, "g", gamma2_M, gamma2_k);
 	m1.mutationStackPolicy = "s";
 	m2.mutationStackPolicy = "s";
 	m1.convertToSubstitution = T;
@@ -234,7 +233,7 @@ s3 late() {
 		// Get the position of only BENEFICIAL mutations in "GENE"
 		pss_1 = sapply(genes_muts[gene_1], " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; "); // pss => position of selected sites
 	
-		// Probability of escaping a selective sweep - Pes
+		// Product of the probability of escaping a selective sweep of a BENEFICIAL mutation - PPR_ES
 		if (!isNULL(pss_1)){
 			PPr_es_1 = sapply(genes_muts[mid_1], " paste( c( product(1 - exp( -( alphas_1[!isNAN(alphas_1)] * sqrt(((applyValue.position+1)-pss_1)^2) ) ) ) ), '\\t' ); ");
 			} else {
@@ -243,13 +242,13 @@ s3 late() {
 			
 		// Produde the table
 		if (!isNULL(PPr_es_1)){
-			Es_table = paste("chr1" + "\t" + (genes_muts[mid_1].position +1) + "\t" + genes_muts[mid_1].id + "\t" + midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + genes_muts[mid_1].selectionCoeff + "\t" + genes_muts[mid_1].mutationType.dominanceCoeff + "\t" + genes_muts[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=genes_muts[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
+			Es_table = paste(paste(1) + "\t" + (genes_muts[mid_1].position +1) + "\t" +  midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + genes_muts[mid_1].id + "\t" + genes_muts[mid_1].selectionCoeff + "\t" + genes_muts[mid_1].mutationType.dominanceCoeff + "\t" + genes_muts[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=genes_muts[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
 		} else {
-			Es_table = paste("chr1" + "\t" + paste(rep("NA", 8), "\t"));
+			Es_table = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L );
 		}
 		
 		// Prepare the header of the table
-		Es_head = paste("chrom"+"\t"+"position"+"\t"+"muID"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"muSel"+"\t"+"muDom"+"\t"+"muAge"+"\t"+"muFrq_t1"+ "\t" + "alpha" + "\t" + "PPr_es" + "\t" + "overall_L");
+		Es_head = paste("#CHROM"+"\t"+"POS"+"\t"+"MIDPOINT"+"\t"+"D2MIDPOINT"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF1"+ "\t" + "ALPHA1" + "\t" + "PRES1" + "\t" + "POPLOAD1");
 		
 		// Export the output
 		Es_output = c(Es_head, Es_table);
@@ -281,7 +280,7 @@ s3 late() {
 		
 		alphas_1 = sapply(gene_1, " if (applyValue.selectionCoeff > (1/Ne1)) rr*log(2*Ne1)/(applyValue.selectionCoeff); else NAN; ");
 
-		pss_1 = sapply(gene_1, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; "); // pss => position of selected sites
+		pss_1 = sapply(gene_1, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; ");
 	
 		if (!isNULL(pss_1)){
 				PPr_es_1 = sapply(gene_1[mid_1], " paste( c( product(1 - exp( -( alphas_1[!isNAN(alphas_1)] * sqrt(((applyValue.position+1)-pss_1)^2) ) ) ) ), '\\t' ); ");
@@ -290,10 +289,9 @@ s3 late() {
 		}
 			
 		if (!isNULL(PPr_es_1)){
-			Es_gene_1 = paste("chr1" + "\t" + (gene_1[mid_1].position +1) + "\t" + gene_1[mid_1].id + "\t" + midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + gene_1[mid_1].selectionCoeff + "\t" + gene_1[mid_1].mutationType.dominanceCoeff + "\t" + gene_1[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_1[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
+			Es_gene_1 = paste(paste(1) + "\t" + (gene_1[mid_1].position +1) + "\t" + midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + gene_1[mid_1].id + "\t" + gene_1[mid_1].selectionCoeff + "\t" + gene_1[mid_1].mutationType.dominanceCoeff + "\t" + gene_1[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_1[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
 		} else {
-				//Es_gene_1 = c("chr1", rep("NA", 8));
-				Es_gene_1 = paste("chr1" + "\t" + paste(rep("NA", 8), "\t"));
+				Es_gene_1 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}
 		
 		////////////
@@ -309,7 +307,7 @@ s3 late() {
 		
 		alphas_2 = sapply(gene_2, " if (applyValue.selectionCoeff > (1/Ne1)) rr*log(2*Ne1)/(applyValue.selectionCoeff); else NAN; ");
 			
-		pss_2 = sapply(gene_2, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; "); // pss => position of selected sites
+		pss_2 = sapply(gene_2, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; ");
 	
 		if (!isNULL(pss_2)){
 			PPr_es_2 = sapply(gene_2[mid_2], " paste( c( product(1 - exp( -( alphas_2[!isNAN(alphas_2)] * sqrt(((applyValue.position+1)-pss_2)^2) ) ) ) ), '\\t' ); ");
@@ -318,10 +316,9 @@ s3 late() {
 		}
 		
 		if (!isNULL(PPr_es_2)){
-			Es_gene_2 = paste("chr1" + "\t" + (gene_2[mid_2].position +1) + "\t" + gene_2[mid_2].id + "\t" + midpoint_2 + "\t" + dis2midpoint_2[mid_2] + "\t" + gene_2[mid_2].selectionCoeff + "\t" + gene_2[mid_2].mutationType.dominanceCoeff + "\t" + gene_2[mid_2].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_2[mid_2]) + "\t" + alphas_2[mid_2] + "\t" + PPr_es_2 + "\t" + L);
+			Es_gene_2 = paste(paste(1) + "\t" + (gene_2[mid_2].position +1) + "\t" + midpoint_2 + "\t" + dis2midpoint_2[mid_2] + "\t" + gene_2[mid_2].id + "\t" + gene_2[mid_2].selectionCoeff + "\t" + gene_2[mid_2].mutationType.dominanceCoeff + "\t" + gene_2[mid_2].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_2[mid_2]) + "\t" + alphas_2[mid_2] + "\t" + PPr_es_2 + "\t" + L);	
 		} else {
-			//Es_gene_2 = c("chr1", rep("NA", 8));
-			Es_gene_2 = paste("chr1" + "\t" + paste(rep("NA", 8), "\t"));
+			Es_gene_2 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}	
 			
 		////////////
@@ -337,7 +334,7 @@ s3 late() {
 		
 		alphas_3 = sapply(gene_3, " if (applyValue.selectionCoeff > (1/Ne1)) rr*log(2*Ne1)/(applyValue.selectionCoeff); else NAN; ");
 
-		pss_3 = sapply(gene_3, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; "); // pss => position of selected sites
+		pss_3 = sapply(gene_3, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; ");
 	
 		if (!isNULL(pss_3)){
 				PPr_es_3 = sapply(gene_3[mid_3], " paste( c( product(1 - exp( -( alphas_3[!isNAN(alphas_3)] * sqrt(((applyValue.position+1)-pss_3)^2) ) ) ) ), '\\t' ); ");
@@ -346,10 +343,9 @@ s3 late() {
 		}
 		
 		if (!isNULL(PPr_es_3)){
-			Es_gene_3 = paste("chr1" + "\t" + (gene_3[mid_3].position +1) + "\t" + gene_3[mid_3].id + "\t" + midpoint_3 + "\t" + dis2midpoint_3[mid_3] + "\t" + gene_3[mid_3].selectionCoeff + "\t" + gene_3[mid_3].mutationType.dominanceCoeff + "\t" + gene_3[mid_3].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_3[mid_3]) + "\t" + alphas_3[mid_3] + "\t" + PPr_es_3 + "\t" + L);
+			Es_gene_3 = paste(paste(1) + "\t" + (gene_3[mid_3].position +1) + "\t" + midpoint_3 + "\t" + dis2midpoint_3[mid_3] + "\t" + gene_3[mid_3].id + "\t" + gene_3[mid_3].selectionCoeff + "\t" + gene_3[mid_3].mutationType.dominanceCoeff + "\t" + gene_3[mid_3].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_3[mid_3]) + "\t" + alphas_3[mid_3] + "\t" + PPr_es_3 + "\t" + L);
 		} else {
-			//Es_gene_3 = c("chr1", rep("NA", 8));
-			Es_gene_3 = paste("chr1" + "\t" + paste(rep("NA", 8), "\t"));
+			Es_gene_3 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}	
 			
 		////////////
@@ -365,7 +361,7 @@ s3 late() {
 		
 		alphas_4 = sapply(gene_4, " if (applyValue.selectionCoeff > (1/Ne1)) rr*log(2*Ne1)/(applyValue.selectionCoeff); else NAN; ");
 
-		pss_4 = sapply(gene_4, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; "); // pss => position of selected sites
+		pss_4 = sapply(gene_4, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; ");
 	
 		if (!isNULL(pss_4)){
 				PPr_es_4 = sapply(gene_4[mid_4], " paste( c( product(1 - exp( -( alphas_4[!isNAN(alphas_4)] * sqrt(((applyValue.position+1)-pss_4)^2) ) ) ) ), '\\t' ); ");
@@ -374,16 +370,15 @@ s3 late() {
 			}
 			
 		if (!isNULL(PPr_es_4)){
-			Es_gene_4 = paste("chr1" + "\t" + (gene_4[mid_4].position +1) + "\t" + gene_4[mid_4].id + "\t" + midpoint_4 + "\t" + dis2midpoint_4[mid_4] + "\t" + gene_4[mid_4].selectionCoeff + "\t" + gene_4[mid_4].mutationType.dominanceCoeff + "\t" + gene_4[mid_4].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_4[mid_4]) + "\t" + alphas_4[mid_4] + "\t" + PPr_es_4 + "\t" + L);
+			Es_gene_4 = paste(paste(1) + "\t" + (gene_4[mid_4].position +1) + "\t" + midpoint_4 + "\t" + dis2midpoint_4[mid_4] + "\t" + gene_4[mid_4].id + "\t" + gene_4[mid_4].selectionCoeff + "\t" + gene_4[mid_4].mutationType.dominanceCoeff + "\t" + gene_4[mid_4].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_4[mid_4]) + "\t" + alphas_4[mid_4] + "\t" + PPr_es_4 + "\t" + L);
 		} else {
-			//Es_gene_4 = c("chr1", rep("NA", 8));
-			Es_gene_4 = paste("chr1" + "\t" + paste(rep("NA", 8), "\t"));
+			Es_gene_4 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}			 	 	
 	
 		Es_table = c(Es_gene_1, Es_gene_2, Es_gene_3, Es_gene_4);
 		
 		// Prepare the header of the table
-		Es_head = paste("chrom"+"\t"+"position"+"\t"+"muID"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"muSel"+"\t"+"muDom"+"\t"+"muAge"+"\t"+"muFrq_t1"+ "\t" + "alpha" + "\t" + "PPr_es" + "\t" + "overall_L");
+		Es_head = paste("#CHROM"+"\t"+"POS"+"\t"+"MIDPOINT"+"\t"+"D2MIDPOINT"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF1"+ "\t" + "ALPHA1" + "\t" + "PRES1" + "\t" + "POPLOAD1");
 		
 		// Export the output
 		Es_output = c(Es_head, Es_table);
@@ -473,7 +468,7 @@ s7 late() {
 		// Get the position of only BENEFICIAL mutations in "GENE"
 		pss_1 = sapply(genes_muts[gene_1], " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; "); // pss => position of selected sites
 	
-		// Probability of escaping a selective sweep - Pes
+		// Product of the probability of escaping a selective sweep of a BENEFICIAL mutation - PPR_ES
 		if (!isNULL(pss_1)){
 			PPr_es_1 = sapply(genes_muts[mid_1], " paste( c( product(1 - exp( -( alphas_1[!isNAN(alphas_1)] * sqrt(((applyValue.position+1)-pss_1)^2) ) ) ) ), '\\t' ); ");
 			} else {
@@ -482,15 +477,14 @@ s7 late() {
 			
 		// Produde the table
 		if (!isNULL(PPr_es_1)){
-			Es_table = paste("chr1" + "\t" + (genes_muts[mid_1].position +1) + "\t" + genes_muts[mid_1].id + "\t" + midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + genes_muts[mid_1].selectionCoeff + "\t" + genes_muts[mid_1].mutationType.dominanceCoeff + "\t" + genes_muts[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=genes_muts[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
+			Es_table = paste(paste(1) + "\t" + (genes_muts[mid_1].position +1) + "\t" +  midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + genes_muts[mid_1].id + "\t" + genes_muts[mid_1].selectionCoeff + "\t" + genes_muts[mid_1].mutationType.dominanceCoeff + "\t" + genes_muts[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=genes_muts[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
 		} else {
-			//Es_table = c("chr1", rep("NA", 8));
-			Es_table = paste("chr1" + "\t" + paste(rep("NA", 8), "\t"));
+			Es_table = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		
 		}
 		
 		// Prepare the header of the table
-		Es_head = paste("chrom"+"\t"+"position"+"\t"+"muID"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"muSel"+"\t"+"muDom"+"\t"+"muAge"+"\t"+"muFrq_t1"+ "\t" + "alpha" + "\t" + "PPr_es" + "\t" + "overall_L");
+		Es_head = paste("#CHROM"+"\t"+"POS"+"\t"+"MIDPOINT"+"\t"+"D2MIDPOINT"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF2"+ "\t" + "ALPHA2" + "\t" + "PRES2" + "\t" + "POPLOAD2");
 		
 		// Export the output
 		Es_output = c(Es_head, Es_table);
@@ -522,7 +516,7 @@ s7 late() {
 		
 		alphas_1 = sapply(gene_1, " if (applyValue.selectionCoeff > (1/Ne1)) rr*log(2*Ne1)/(applyValue.selectionCoeff); else NAN; ");
 
-		pss_1 = sapply(gene_1, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; "); // pss => position of selected sites
+		pss_1 = sapply(gene_1, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; ");
 	
 		if (!isNULL(pss_1)){
 				PPr_es_1 = sapply(gene_1[mid_1], " paste( c( product(1 - exp( -( alphas_1[!isNAN(alphas_1)] * sqrt(((applyValue.position+1)-pss_1)^2) ) ) ) ), '\\t' ); ");
@@ -531,10 +525,9 @@ s7 late() {
 		}
 			
 		if (!isNULL(PPr_es_1)){
-			Es_gene_1 = paste("chr1" + "\t" + (gene_1[mid_1].position +1) + "\t" + gene_1[mid_1].id + "\t" + midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + gene_1[mid_1].selectionCoeff + "\t" + gene_1[mid_1].mutationType.dominanceCoeff + "\t" + gene_1[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_1[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
+			Es_gene_1 = paste(paste(1) + "\t" + (gene_1[mid_1].position +1) + "\t" + midpoint_1 + "\t" + dis2midpoint_1[mid_1] + "\t" + gene_1[mid_1].id + "\t" + gene_1[mid_1].selectionCoeff + "\t" + gene_1[mid_1].mutationType.dominanceCoeff + "\t" + gene_1[mid_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_1[mid_1]) + "\t" + alphas_1[mid_1] + "\t" + PPr_es_1 + "\t" + L);
 		} else {
-				//Es_gene_1 = c("chr1", rep("NA", 8));
-				Es_gene_1 = paste("chr1" + "\t" + paste(rep("NA", 8), "\t"));
+				Es_gene_1 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}
 		
 		////////////
@@ -550,7 +543,7 @@ s7 late() {
 		
 		alphas_2 = sapply(gene_2, " if (applyValue.selectionCoeff > (1/Ne1)) rr*log(2*Ne1)/(applyValue.selectionCoeff); else NAN; ");
 			
-		pss_2 = sapply(gene_2, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; "); // pss => position of selected sites
+		pss_2 = sapply(gene_2, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; ");
 	
 		if (!isNULL(pss_2)){
 			PPr_es_2 = sapply(gene_2[mid_2], " paste( c( product(1 - exp( -( alphas_2[!isNAN(alphas_2)] * sqrt(((applyValue.position+1)-pss_2)^2) ) ) ) ), '\\t' ); ");
@@ -559,10 +552,9 @@ s7 late() {
 		}
 		
 		if (!isNULL(PPr_es_2)){
-			Es_gene_2 = paste("chr1" + "\t" + (gene_2[mid_2].position +1) + "\t" + gene_2[mid_2].id + "\t" + midpoint_2 + "\t" + dis2midpoint_2[mid_2] + "\t" + gene_2[mid_2].selectionCoeff + "\t" + gene_2[mid_2].mutationType.dominanceCoeff + "\t" + gene_2[mid_2].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_2[mid_2]) + "\t" + alphas_2[mid_2] + "\t" + PPr_es_2 + "\t" + L);
+			Es_gene_2 = paste(paste(1) + "\t" + (gene_2[mid_2].position +1) + "\t" + midpoint_2 + "\t" + dis2midpoint_2[mid_2] + "\t" + gene_2[mid_2].id + "\t" + gene_2[mid_2].selectionCoeff + "\t" + gene_2[mid_2].mutationType.dominanceCoeff + "\t" + gene_2[mid_2].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_2[mid_2]) + "\t" + alphas_2[mid_2] + "\t" + PPr_es_2 + "\t" + L);
 		} else {
-			//Es_gene_2 = c("chr1", rep("NA", 8));
-			Es_gene_2 = paste("chr1" + "\t" + paste(rep("NA", 8), "\t"));
+			Es_gene_2 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}	
 			
 		////////////
@@ -578,7 +570,7 @@ s7 late() {
 		
 		alphas_3 = sapply(gene_3, " if (applyValue.selectionCoeff > (1/Ne1)) rr*log(2*Ne1)/(applyValue.selectionCoeff); else NAN; ");
 
-		pss_3 = sapply(gene_3, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; "); // pss => position of selected sites
+		pss_3 = sapply(gene_3, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; ");
 	
 		if (!isNULL(pss_3)){
 				PPr_es_3 = sapply(gene_3[mid_3], " paste( c( product(1 - exp( -( alphas_3[!isNAN(alphas_3)] * sqrt(((applyValue.position+1)-pss_3)^2) ) ) ) ), '\\t' ); ");
@@ -587,10 +579,9 @@ s7 late() {
 		}
 		
 		if (!isNULL(PPr_es_3)){
-			Es_gene_3 = paste("chr1" + "\t" + (gene_3[mid_3].position +1) + "\t" + gene_3[mid_3].id + "\t" + midpoint_3 + "\t" + dis2midpoint_3[mid_3]+ "\t" + gene_3[mid_3].selectionCoeff + "\t" + gene_3[mid_3].mutationType.dominanceCoeff + "\t" + gene_3[mid_3].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_3[mid_3]) + "\t" + alphas_3[mid_3] + "\t" + PPr_es_3 + "\t" + L);
+			Es_gene_3 = paste(paste(1) + "\t" + (gene_3[mid_3].position +1) + "\t" + midpoint_3 + "\t" + dis2midpoint_3[mid_3] + "\t" + gene_3[mid_3].id + "\t" + gene_3[mid_3].selectionCoeff + "\t" + gene_3[mid_3].mutationType.dominanceCoeff + "\t" + gene_3[mid_3].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_3[mid_3]) + "\t" + alphas_3[mid_3] + "\t" + PPr_es_3 + "\t" + L);
 		} else {
-			//Es_gene_3 = c("chr1", rep("NA", 8));
-			Es_gene_3 = paste("chr1" + "\t" + paste(rep("NA", 8), "\t"));
+			Es_gene_3 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}	
 			
 		////////////
@@ -606,7 +597,7 @@ s7 late() {
 		
 		alphas_4 = sapply(gene_4, " if (applyValue.selectionCoeff > (1/Ne1)) rr*log(2*Ne1)/(applyValue.selectionCoeff); else NAN; ");
 
-		pss_4 = sapply(gene_4, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; "); // pss => position of selected sites
+		pss_4 = sapply(gene_4, " if (applyValue.selectionCoeff > (1/Ne1)) applyValue.position +1; ");
 	
 		if (!isNULL(pss_4)){
 				PPr_es_4 = sapply(gene_4[mid_4], " paste( c( product(1 - exp( -( alphas_4[!isNAN(alphas_4)] * sqrt(((applyValue.position+1)-pss_4)^2) ) ) ) ), '\\t' ); ");
@@ -615,16 +606,15 @@ s7 late() {
 			}
 			
 		if (!isNULL(PPr_es_4)){
-			Es_gene_4 = paste("chr1" + "\t" + (gene_4[mid_4].position +1) + "\t" + gene_4[mid_4].id + "\t" + midpoint_4 + "\t" + dis2midpoint_4[mid_4] + "\t" + gene_4[mid_4].selectionCoeff + "\t" + gene_4[mid_4].mutationType.dominanceCoeff + "\t" + gene_4[mid_4].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_4[mid_4]) + "\t" + alphas_4[mid_4] + "\t" + PPr_es_4 + "\t" + L);
+			Es_gene_4 = paste(paste(1) + "\t" + (gene_4[mid_4].position +1) + "\t" + midpoint_4 + "\t" + dis2midpoint_4[mid_4] + "\t" + gene_4[mid_4].id + "\t" + gene_4[mid_4].selectionCoeff + "\t" + gene_4[mid_4].mutationType.dominanceCoeff + "\t" + gene_4[mid_4].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_4[mid_4]) + "\t" + alphas_4[mid_4] + "\t" + PPr_es_4 + "\t" + L);
 		} else {
-			//Es_gene_4 = c("chr1", rep("NA", 8));
-			Es_gene_4 = paste("chr1" + "\t" + paste(rep("NA", 8), "\t"));
+			Es_gene_4 = paste(paste(1) + "\t" + paste(rep("NA", 10), "\t") + "\t" + L);
 		}			 	 	
 	
 		Es_table = c(Es_gene_1, Es_gene_2, Es_gene_3, Es_gene_4);
 		
 		// Prepare the header of the table
-		Es_head = paste("chrom"+"\t"+"position"+"\t"+"muID"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"muSel"+"\t"+"muDom"+"\t"+"muAge"+"\t"+"muFrq_t1"+ "\t" + "alpha" + "\t" + "PPr_es" + "\t" + "overall_L");
+		Es_head = paste("#CHROM"+"\t"+"POS"+"\t"+"MIDPOINT"+"\t"+"D2MIDPOINT"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF2"+ "\t" + "ALPHA2" + "\t" + "PRES2" + "\t" + "POPLOAD2");
 		
 		// Export the output
 		Es_output = c(Es_head, Es_table);
