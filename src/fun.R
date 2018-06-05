@@ -148,13 +148,13 @@ do_sim <- function(sim, nsim, model,
   
   # imported the data
   slim_Pres_data_t1 <- read.table(file = slim_Pres_output_t1, header = T, check.names = F)
-  slim_Pres_data_t1 <- slim_Pres_data_t1[, -c(12)]
+  slim_Pres_data_t1 <- slim_Pres_data_t1[, -c(13)]
   
   slim_Pres_data_t2 <- read.table(file = slim_Pres_output_t2, header = T, check.names = F)
-  slim_Pres_data_t2 <- slim_Pres_data_t2[, -c(12)]
+  slim_Pres_data_t2 <- slim_Pres_data_t2[, -c(13)]
   
-  Pres_data_merged  <- merge.data.frame(slim_Pres_data_t1, by.x = c(1,2,3,4,5,6,7,8),
-                                        slim_Pres_data_t2, by.y = c(1,2,3,4,5,6,7,8), 
+  Pres_data_merged  <- merge.data.frame(slim_Pres_data_t1, by.x = c(1,2,3,4,5,6,7,8,9),
+                                        slim_Pres_data_t2, by.y = c(1,2,3,4,5,6,7,8,9), 
                                         all = T, sort = T);
   
   ## READ SLiM OUTPUT 1 AND CONVERT TO EGGLIB INPUT

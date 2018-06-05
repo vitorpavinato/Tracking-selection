@@ -71,8 +71,8 @@ pge2_max = 0.5
 mpb_min = 0
 mpb_max = 1
 
-gamma_min = 0.001 # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
-gamma_max = 1
+gamma_min = 0.00001 # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
+gamma_max = 0.1
 
 rr_rate = 0 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
 rr_min  = 4.2 * 1e-8
