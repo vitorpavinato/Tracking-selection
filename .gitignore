@@ -1,4 +1,6 @@
 results/*
 src/.Rhistory
+src/workflow_work_vcf_files.txt
+src/hitchhiking_allelefreq.R
 .Rproj.user
 .Rhistory
