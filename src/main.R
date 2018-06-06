@@ -14,18 +14,21 @@
 rm(list=ls())
 ls()
 
+################
+## R PACKAGES ##
+################
+#install.packages(c("KScorrect", "moments", "foreach", "parallel", "doParallel"), dependencies = T)
+
 ###########################################
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim               <- 3                          # number of simulations 50000
-model              <- "src/models/model_2_v2.slim"
+nsim               <- 3                              # number of simulations 1000
+model              <- "src/models/model_2_v2.1.slim"
 slim_output_folder <- "results/slim_output/"
-save_extra_data    <- TRUE
-extra_output       <- "results/extra_output/"
 egglib_input       <- "results/egglib_input/"
 egglib_output      <- "results/egglib_output/"
-reftable_file      <- "results/reference_table"   # reference table file name
+reftable_file      <- "results/reference_table"       # reference table file name
 seed               <- 1234
 set.seed(seed,"Mersenne-Twister")
 parallel_sims    <- TRUE
@@ -93,7 +96,10 @@ ts2 = 8
 
 # load required libraries
 library(KScorrect) # for the log uniform distribution
-library(dplyr)     # for sample markers in chromossome 2 (sample_n)
+#library(plyr)     # for sample markers in chromossome 2 (sample_n)
+#library(dplyr)
+#library(mon)
+library(moments)
 if(parallel_sims){
   library(foreach)    #
   library(parallel)   # -> fo    r simulating in parallel
@@ -113,7 +119,9 @@ system.time(if(parallel_sims){
   registerDoParallel(cl)
   clusterEvalQ(cl, library(KScorrect))
   ref_table <- foreach(sim=seq_len(nsim),.combine=rbind) %dopar% {
-                                                                        library(dplyr)
+                                                                        #library(plyr)
+                                                                        #library(dplyr)
+                                                                        library(moments)
                                                                         do_sim(sim, nsim, model,
                                                                                mu_rate, mu_min, mu_max, 
                                                                                ne0_min, ne0_max, ne1_min, ne1_max, pge2_min, pge2_max, mpb_min, mpb_max, 
