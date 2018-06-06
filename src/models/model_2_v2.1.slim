@@ -469,7 +469,7 @@ s7 late() {
 	sim.subpopulations.individuals.tag = 1;
 	
 	// Tag sampled individuals - to "kill" then later since it simulate a destructive sampling
-	sam_inds = sample(sim.subpopulations.individuals, SS1, F);
+	sam_inds = sample(sim.subpopulations.individuals, SS2, F);
 	sam_inds.tag = 0;
 	
 	////////////////////////////////////////////////////
@@ -541,7 +541,7 @@ s7 late() {
 		// POPULATION's BENEFICIAL MUTATIONS //
 		///////////////////////////////////////
 
-		beneficial_muts = pop_genes_muts.selectionCoeff > 0;
+		beneficial_muts = pop_genes_muts.selectionCoeff > 1/Ne1;
 		
 		///////////////////////
 		// "SELECTION" TABLE //
@@ -594,7 +594,7 @@ s7 late() {
 		
 		// POPULATION's BENEFICIAL MUTATIONS //
 
-		beneficial_muts_1 = ((pop_genes_muts.position +1) < genes[0,1] & pop_genes_muts.selectionCoeff > 0);
+		beneficial_muts_1 = ((pop_genes_muts.position +1) < genes[0,1] & pop_genes_muts.selectionCoeff > 1/Ne1);
 		
 		// Produde the table
 		if (sum(beneficial_muts_1) != 0){
@@ -623,7 +623,7 @@ s7 late() {
 		
 		// POPULATION's BENEFICIAL MUTATIONS //
 
-		beneficial_muts_2 = ((pop_genes_muts.position +1) > genes[1,0] & (pop_genes_muts.position +1) < genes[1,1] & pop_genes_muts.selectionCoeff > 0);
+		beneficial_muts_2 = ((pop_genes_muts.position +1) > genes[1,0] & (pop_genes_muts.position +1) < genes[1,1] & pop_genes_muts.selectionCoeff > 1/Ne1);
 				
 		// Produde the table
 		if (sum(beneficial_muts_2) != 0){
@@ -652,7 +652,7 @@ s7 late() {
 		
 		// POPULATION's BENEFICIAL MUTATIONS //
 
-		beneficial_muts_3 = ((pop_genes_muts.position +1) > genes[2,0] & (pop_genes_muts.position +1) < genes[2,1] & pop_genes_muts.selectionCoeff > 0);
+		beneficial_muts_3 = ((pop_genes_muts.position +1) > genes[2,0] & (pop_genes_muts.position +1) < genes[2,1] & pop_genes_muts.selectionCoeff > 1/Ne1);
 		
 		// Produde the table
 		if (sum(beneficial_muts_3) != 0){
@@ -694,7 +694,7 @@ s7 late() {
 	
 		// POPULATION's BENEFICIAL MUTATIONS //
 
-		beneficial_muts_4 = ((pop_genes_muts.position +1) > genes[(size(gene_upper)-1),0] & pop_genes_muts.selectionCoeff > 0);
+		beneficial_muts_4 = ((pop_genes_muts.position +1) > genes[(size(gene_upper)-1),0] & pop_genes_muts.selectionCoeff > 1/Ne1);
 		
 		///////////////////////
 		// "SELECTION" TABLE //
