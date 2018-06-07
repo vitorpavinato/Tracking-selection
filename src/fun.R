@@ -1,7 +1,8 @@
 do_sim <- function(sim, nsim, model,
                    mu_rate, mu_min, mu_max, 
                    ne0_min, ne0_max, ne1_min, ne1_max, pge2_min, pge2_max, mpb_min, mpb_max, 
-                   gamma_min, gamma_max, rr_rate, rr_min, rr_max, SS1, SS2, ts2,
+                   gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
+                   rr_rate, rr_min, rr_max, SS1, SS2, ts2,
                    slim_output_folder, egglib_input, save_extra_data, extra_output,  
                    python_path, egglib_summstat, wss_wspan, sfs_bins,
                    egglib_output, 
@@ -24,7 +25,7 @@ do_sim <- function(sim, nsim, model,
   if (mu_rate == 0){
     mu <- 1e-7
   } else {
-    mu <- rlunif(1, min = mu_min, max = mu_max, base=exp(10))
+    mu <- rlunif(1, min = mu_min, max = mu_max, base = exp(10))
   }
   
   # THETA
@@ -39,15 +40,21 @@ do_sim <- function(sim, nsim, model,
   ne1 <- as.integer(rlunif(1, min = ne1_min, max = ne1_max, base = exp(10)))
   
   # SAMPLING VALUES FOR SLiM GAMMA DISTRIBUTION OF FITNESS EFFECTS
-  gamma_values = sort(runif(2, min = gamma_min, max = gamma_max))
-  gamma2_M = gamma_values[1]
-  gamma2_k = gamma_values[2]
+  # GAMMA MEAN
+  gammaM = round(rlunif(1, min = gammaM_min, max = gammaM_max, base = exp(10)), digits = 4)
   
-  # PROPORTION OF GENOMIC ELEMENTS G2 
-  pge2 = runif(1, min = pge2_min, max = pge2_max)
+  # GAMMA SHAPE 
+  if (gammaM_gammak){
+    gammak = gammaM
+  } else {
+    gammak = round(rlunif(1, min = gammak_min, max = gammak_max, base = exp(10)), digits = 4)
+  }
+  
+  # PROPORTION OF GENOMIC ELEMENTS G2
+  pge2 = round(rlunif(1, min = pge2_min, max = pge2_max, base = exp(10)), digits = 6)
   
   # PROPORTION OF BENEFICIAL MUTATION IN GENOMIC ELEMENTS G2
-  mpb = runif(1, min = mpb_min, max = mpb_max)
+  mpb = round(rlunif(1, min = mpb_min, max = mpb_max, base = exp(10)), digits = 6)
   
   # RECOMBINATION RATE
   if (rr_rate == 0){
@@ -71,14 +78,14 @@ do_sim <- function(sim, nsim, model,
   slim_theta    <- paste0("-d theta=", theta)
   slim_mu       <- paste0("-d mu=", mu)
   slim_Ne1      <- paste0("-d Ne1=", ne1)
-  slim_gamma2_M <- paste0("-d gamma2_M=", gamma2_M)
-  slim_gamma2_k <- paste0("-d gamma2_k=", gamma2_k)
-  slim_pge2     <- paste0("-d pge2=", sprintf("%.4f", pge2))
-  slim_mpb      <- paste0("-d mpb=", sprintf("%.4f", mpb))
-  slim_rr       <- paste0("-d rr=", sprintf("%1.e", rr))
-  slim_SS1      <- paste0("-d SS1", SS1)
-  slim_SS2      <- paste0("-d SS1", SS2)
-  slim_ts2      <- paste0("-d ts2", ts2)
+  slim_gamma2_M <- paste0("-d gamma2_M=", gammaM)
+  slim_gamma2_k <- paste0("-d gamma2_k=", gammak)
+  slim_pge2     <- paste0("-d pge2=", sprintf("%.6f", pge2))
+  slim_mpb      <- paste0("-d mpb=", sprintf("%.6f", mpb))
+  slim_rr       <- paste0("-d rr=", rr)
+  slim_SS1      <- paste0("-d SS1=", SS1)
+  slim_SS2      <- paste0("-d SS2=", SS2)
+  slim_ts2      <- paste0("-d ts2=", ts2)
   slim_output <- paste0("-d ", '"',"outputpath=", slim_output_fullpath, '"')
   slim_model <- paste0(model, ".slim")
   
@@ -162,11 +169,11 @@ do_sim <- function(sim, nsim, model,
       dist_sel  = sqrt((midpoint_segr$position - slim_sel_data_t2$position)^2)
       PPr_es = prod(1 - exp(-alpha_sel*dist_sel)) 
       midpoint_segr$PPr_es <- PPr_es
-    }else {
-      PPr_es = 1
-      midpoint_segr$PPr_es <- PPr_es
-    }
-  } 
+     } else {
+        PPr_es = 1
+        midpoint_segr$PPr_es <- PPr_es
+     }
+  }  
   
   # Format the the output to produce the reference table
   if (!is.null(midpoint_segr)){
@@ -322,13 +329,13 @@ do_sim <- function(sim, nsim, model,
     if (dim(ref_locus)[1] == 1){
     ref_locus_stats <- cbind(midpoint_segr, ref_locus)
     } else {
-      ref_locus_stats <- rep(NA, 25)
+      ref_locus_stats <- as.data.frame(matrix(NA, nrow = 1, ncol = 25))
       names(ref_locus_stats) <- c("ID","MID","S","DOM","GO","MF1","MF2","PPr_es",
                                "LSS_He","LSS_Dj","LSS_WCst","WSS_He","WSS_Dj","WSS_WCst","WSS_S","WSS_thetaW","WSS_D","WSS_Da",
                                "GSS_He","GSS_Dj","GSS_WCst","GSS_S","GSS_thetaW","GSS_D","GSS_Da")
     }
   } else {
-    ref_locus_stats <- rep(NA, 25)
+    ref_locus_stats <- as.data.frame(matrix(NA, nrow = 1, ncol = 25))
     names(ref_locus_stats) <- c("ID","MID","S","DOM","GO","MF1","MF2","PPr_es",
                           "LSS_He","LSS_Dj","LSS_WCst","WSS_He","WSS_Dj","WSS_WCst","WSS_S","WSS_thetaW","WSS_D","WSS_Da",
                           "GSS_He","GSS_Dj","GSS_WCst","GSS_S","GSS_thetaW","GSS_D","GSS_Da")
@@ -365,10 +372,11 @@ do_sim <- function(sim, nsim, model,
                            as.data.frame(t(skew_global_stats)), as.data.frame(t(q05_global_stats)), as.data.frame(t(q95_global_stats)))
   
   ## REFERENCE TABLE
-  raw_reftable  <- cbind(sim=sim, seed=sim_seed, theta=theta, mu=mu, Ne0=ne0, Ne1=ne1, gammaMean=gamma2_M, gammak=gamma_k,
+  raw_reftable  <- cbind(sim=sim, seed=sim_seed, theta=theta, mu=mu, Ne0=ne0, Ne1=ne1, gammaMean=gammaM, gammak=gammak,
                          PropGSel=sprintf("%.4f", pge2), PropMSel=sprintf("%.4f", mpb), rr=sprintf("%1.e", rr),
                          genetic_load, global_stats, add_global_stats,
                          ref_locus_stats)
+  
   
   # remove all intermediate files 
   if (remove_files){

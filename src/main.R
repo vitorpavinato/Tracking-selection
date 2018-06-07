@@ -23,8 +23,8 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim               <- 3                              # number of simulations 1000
-model              <- "src/models/model_2_v2.1.slim"
+nsim               <- 1000                              # number of simulations 1000
+model              <- "src/models/model_2_v2.1"
 slim_output_folder <- "results/slim_output/"
 egglib_input       <- "results/egglib_input/"
 egglib_output      <- "results/egglib_output/"
@@ -32,8 +32,8 @@ reftable_file      <- "results/reference_table"       # reference table file nam
 seed               <- 1234
 set.seed(seed,"Mersenne-Twister")
 parallel_sims    <- TRUE
-num_of_threads   <- 3
-remove_files     <- FALSE
+num_of_threads   <- 25
+remove_files     <- TRUE
 
 ##########################################
 ##       EGGLIB SUMMSTAT SETTINGS       ##
@@ -58,7 +58,7 @@ sfs_bins = 5
 # Given the mutation rate, theta is calculated as THETA = Ne*mutation_rate
 # For now, only sampling theta and calculating Ne with known mutation rate mu
 
-mu_rate = 0 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
+mu_rate = 1 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
 mu_min  = 1e-8
 mu_max  = 1e-5
 
@@ -68,14 +68,19 @@ ne0_max = 1000
 ne1_min = 1
 ne1_max = 1000
 
-pge2_min = 0
+pge2_min = 0.00001 
 pge2_max = 0.5
 
-mpb_min = 0
-mpb_max = 1
+mpb_min = 0.00001 
+mpb_max = 0.5
 
-gamma_min = 0.00001 # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
-gamma_max = 0.1
+gammaM_gammak = TRUE # if TRUE, rate=1, then only gammaM will be sample from prior
+
+gammaM_min = 0.001
+gammaM_max = 1
+
+gammak_min = 0.001 # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
+gammak_max = 1
 
 rr_rate = 0 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
 rr_min  = 4.2 * 1e-8
@@ -96,9 +101,6 @@ ts2 = 8
 
 # load required libraries
 library(KScorrect) # for the log uniform distribution
-#library(plyr)     # for sample markers in chromossome 2 (sample_n)
-#library(dplyr)
-#library(mon)
 library(moments)
 if(parallel_sims){
   library(foreach)    #
@@ -114,7 +116,7 @@ source("src/fun.R")
 ###########################################
 
 # Parallelization with doParallel and foreach
-system.time(if(parallel_sims){
+if(parallel_sims){
   cl <- makeCluster(num_of_threads)
   registerDoParallel(cl)
   clusterEvalQ(cl, library(KScorrect))
@@ -125,7 +127,8 @@ system.time(if(parallel_sims){
                                                                         do_sim(sim, nsim, model,
                                                                                mu_rate, mu_min, mu_max, 
                                                                                ne0_min, ne0_max, ne1_min, ne1_max, pge2_min, pge2_max, mpb_min, mpb_max, 
-                                                                               gamma_min, gamma_max, rr_rate, rr_min, rr_max, SS1, SS2, ts2,
+                                                                               gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
+                                                                               rr_rate, rr_min, rr_max, SS1, SS2, ts2,
                                                                                slim_output_folder, egglib_input, save_extra_data, extra_output,  
                                                                                python_path, egglib_summstat, wss_wspan, sfs_bins,
                                                                                egglib_output, 
@@ -141,7 +144,8 @@ system.time(if(parallel_sims){
     ref_table[[sim]] <- do_sim(sim, nsim, model,
                                mu_rate, mu_min, mu_max, 
                                ne0_min, ne0_max, ne1_min, ne1_max, pge2_min, pge2_max, mpb_min, mpb_max, 
-                               gamma_min, gamma_max, rr_rate, rr_min, rr_max, SS1, SS2, ts2,
+                               gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
+                               rr_rate, rr_min, rr_max, SS1, SS2, ts2,
                                slim_output_folder, egglib_input, save_extra_data, extra_output,  
                                python_path, egglib_summstat, wss_wspan, sfs_bins,
                                egglib_output, 
@@ -149,7 +153,7 @@ system.time(if(parallel_sims){
                                )
   }
   ref_table <- do.call(rbind, ref_table)
-})
+}
 gc()
 
 write.table(ref_table,
