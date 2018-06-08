@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in {1..500};
+for ((i=1;i<=500;i++));
 do
   echo "#!/bin/bash"                              > trackingselsim.$i.sh
   echo "#$ -S /bin/bash"                          >> trackingselsim.$i.sh
@@ -22,3 +22,5 @@ do
   echo 'cp -rp $TMPDIR/* $workingDir/batch.$i'    >> trackingselsim.$i.sh
   qsub trackingselsim.$i.sh
 done
+
+
