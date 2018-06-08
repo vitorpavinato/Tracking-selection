@@ -238,7 +238,7 @@ do_sim <- function(sim, nsim, model,
   if (remove_files){
     file.remove(paste0(slim_segr_output_t1))
     file.remove(paste0(slim_segr_output_t2))
-    file.remove(paste0(slim_sel_data_t2))
+    file.remove(paste0(slim_sel_output_t2))
     file.remove(paste0(slim_output_t1))
     file.remove(paste0(slim_output_t1_sorted))
     file.remove(paste0(slim_output_t1_sorted, ".gz"))
