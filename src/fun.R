@@ -25,42 +25,50 @@ do_sim <- function(sim, nsim, model,
   if (mu_rate == 0){
     mu <- 1e-7
   } else {
-    mu <- rlunif(1, min = mu_min, max = mu_max, base = exp(10))
+    #mu <- rlunif(1, min = mu_min, max = mu_max, base = exp(10)) 
+    mu <- 10^runif(1, min = log10(mu_min), max = log10(mu_max)) # with works if you're unable to install KScorrect package
   }
   
   # THETA
   theta_min = 4*ne0_min*mu
   theta_max = 4*ne0_max*mu
-  theta <- rlunif(1, min = theta_min, max = theta_max, base = exp(10))
+  #theta <- rlunif(1, min = theta_min, max = theta_max, base = exp(10))
+  theta <- 10^runif(1, min = log10(theta_min), max = log10(theta_max))
   
   # EFFECTIVE POPULATION SIZE 0 - Ne0
   ne0 = as.integer(theta/(4*mu))
   
   # EFFECTIVE POPULATION SIZE 1 - Ne1
-  ne1 <- as.integer(rlunif(1, min = ne1_min, max = ne1_max, base = exp(10)))
+  #ne1 <- as.integer(rlunif(1, min = ne1_min, max = ne1_max, base = exp(10)))
+  ne1 <- as.integer(10^runif(1, min = log10(ne1_min), max = log10(ne1_max)))
   
   # SAMPLING VALUES FOR SLiM GAMMA DISTRIBUTION OF FITNESS EFFECTS
   # GAMMA MEAN
-  gammaM = round(rlunif(1, min = gammaM_min, max = gammaM_max, base = exp(10)), digits = 4)
+  #gammaM = round(rlunif(1, min = gammaM_min, max = gammaM_max, base = exp(10)), digits = 4)
+  gammaM = round(10^runif(1, min = log10(gammaM_min), max = log10(gammaM_max)), digits = 4)
   
   # GAMMA SHAPE 
   if (gammaM_gammak){
     gammak = gammaM
   } else {
-    gammak = round(rlunif(1, min = gammak_min, max = gammak_max, base = exp(10)), digits = 4)
+    #gammak = round(rlunif(1, min = gammak_min, max = gammak_max, base = exp(10)), digits = 4)
+    gammak = round(10^runif(1, min = log10(gammak_min), max = log10(gammak_max)), digits = 4)
   }
   
   # PROPORTION OF GENOMIC ELEMENTS G2
-  pge2 = round(rlunif(1, min = pge2_min, max = pge2_max, base = exp(10)), digits = 6)
+  #pge2 = round(rlunif(1, min = pge2_min, max = pge2_max, base = exp(10)), digits = 6)
+  pge2 = round(10^runif(1, min = log10(pge2_min), max = log10(pge2_max)), digits = 6)
   
   # PROPORTION OF BENEFICIAL MUTATION IN GENOMIC ELEMENTS G2
-  mpb = round(rlunif(1, min = mpb_min, max = mpb_max, base = exp(10)), digits = 6)
+  #mpb = round(rlunif(1, min = mpb_min, max = mpb_max, base = exp(10)), digits = 6)
+  mpb = round(10^runif(1, min = log10(mpb_min), max = log10(mpb_max)), digits = 6)
   
   # RECOMBINATION RATE
   if (rr_rate == 0){
     rr <- 4.2 * 1e-7
   } else {
-    rr <- 4.2 * (rlunif(1, min = rr_min, max = rr_max, base=exp(10)))
+    #rr <- 4.2 * (rlunif(1, min = rr_min, max = rr_max, base=exp(10)))
+    rr <- 4.2 * (10^runif(1, min = log10(rr_min), max = log10(rr_max)))
   }
   
   ## RUM SLiM2

@@ -101,7 +101,7 @@ ts2 = 8
 ###########################################
 
 # load required libraries
-library(KScorrect) # for the log uniform distribution
+#library(KScorrect) # for the log uniform distribution
 library(moments)
 if(parallel_sims){
   library(foreach)    #
