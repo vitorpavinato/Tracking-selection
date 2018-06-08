@@ -19,6 +19,6 @@ do
   echo 'Rscript ./src/main.R $RANDOM'             >>trackingselsim.$i.sh;
   echo 'set +x'                                   >> trackingselsim.$i.sh
   echo 'mkdir $workingDir/batch.$i'
-  echo 'cp -rp $TMPDIR/* $workingDir/batch.$i'            >> trackingselsim.$i.sh
+  echo 'cp -rp $TMPDIR/* $workingDir/batch.$i'    >> trackingselsim.$i.sh
   qsub trackingselsim.$i.sh
 done
