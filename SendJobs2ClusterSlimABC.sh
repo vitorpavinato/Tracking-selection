@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in {1..27};
+for i in {1..500};
 do
   echo "#!/bin/bash"                              > trackingselsim.$i.sh
   echo "#$ -S /bin/bash"                          >> trackingselsim.$i.sh
@@ -16,8 +16,9 @@ do
   
   echo 'cd $TMPDIR'                               >> trackingselsim.$i.sh
   echo 'set -x'                                   >> trackingselsim.$i.sh
-  echo "Rscript ./src/main.R"                     >>trackingselsim.$i.sh;
+  echo 'Rscript ./src/main.R $RANDOM'             >>trackingselsim.$i.sh;
   echo 'set +x'                                   >> trackingselsim.$i.sh
-  echo 'cp -rp $TMPDIR/* $workingDir/'            >> trackingselsim.$i.sh
+  echo 'mkdir $workingDir/batch.$i'
+  echo 'cp -rp $TMPDIR/* $workingDir/batch.$i'            >> trackingselsim.$i.sh
   qsub trackingselsim.$i.sh
 done

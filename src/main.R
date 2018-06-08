@@ -23,15 +23,16 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim               <- 1000                              # number of simulations 1000
+nsim               <- 100                              # number of simulations 1000
 model              <- "src/models/model_2_v2.1"
 slim_output_folder <- "results/slim_output/"
 egglib_input       <- "results/egglib_input/"
 egglib_output      <- "results/egglib_output/"
 reftable_file      <- "results/reference_table"       # reference table file name
-seed               <- 1234
+arg <- commandArgs(TRUE)
+seed               <- arg
 set.seed(seed,"Mersenne-Twister")
-parallel_sims    <- TRUE
+parallel_sims    <- FALSE
 num_of_threads   <- 25
 remove_files     <- TRUE
 
@@ -156,15 +157,15 @@ if(parallel_sims){
 }
 gc()
 
-write.table(ref_table,
-            file      = paste0(reftable_file,".txt"),
-            sep       = "\t",
-            quote     = FALSE,
-            col.names = TRUE,
-            row.names = FALSE,
-            append    = FALSE)
+#write.table(ref_table,
+#            file      = paste0(reftable_file,".txt"),
+#            sep       = "\t",
+#            quote     = FALSE,
+#            col.names = TRUE,
+#            row.names = FALSE,
+#            append    = FALSE)
 
-ref_table <- read.table(paste0(reftable_file,".txt"),header=T)
+#ref_table <- read.table(paste0(reftable_file,".txt"),header=T)
 #dim(ref_table)
 #head(ref_table)
 #summary(ref_table)
