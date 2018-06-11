@@ -197,8 +197,8 @@ s3 late() {
 	pop_muts = sortBy(unique(sim.subpopulations.individuals.genomes.mutations), "position");
 	
 	// Get TRUE only for all mutations in "GENE" region to subset only these mutations
-	pop_muts_in_genes = (pop_muts.position +1) > chromosome;
-	pop_genes_muts = pop_muts[pop_muts_in_genes];
+	pop_muts_in_gene = (pop_muts.position +1) > chromosome;
+	pop_gene_muts = pop_muts[pop_muts_in_gene];
 	
 	///////////////////////
 	// SAMPLED MUTATIONS //
@@ -208,226 +208,40 @@ s3 late() {
 	sam_muts = sortBy(unique(sam_inds.genomes.mutations), "position");
 	
 	// Get TRUE only for all mutations in "GENE" region to subset only these mutations
-	sam_muts_in_genes = (sam_muts.position +1) > chromosome;
-	sam_genes_muts = sam_muts[sam_muts_in_genes];
+	sam_muts_in_gene = (sam_muts.position +1) > chromosome;
+	sam_gene_muts = sam_muts[sam_muts_in_gene];
 	
 	// Define "GENE" lower and upper bounds and assign an ID
-	if (genN == 1){
-		gene_upper = c((genomeS-1));
-		gene_lower = c(chromosome);
+	gene_upper = c((genomeS-1));
+	gene_lower = c(chromosome);
 		
-		genes = cbind(gene_lower, gene_upper);
-	
-		////////////
-		// GENE 1 //
-		////////////
-		
-		/////////////////////////
-		// SAMPLE's  MUTATIONS //
-		/////////////////////////
-		
-		midpoint_1 = (genes[0] + genes[1])/2;
-		dis2midpoint_1 = sapply((sam_genes_muts.position +1), " asInteger(sqrt(((applyValue)-midpoint_1)^2)) ;");
-		
-		/////////////////////////
-		// "SEGRETATION" TABLE //
-		/////////////////////////
+	gene = cbind(gene_lower, gene_upper);
 			
-		// Produde the table
-		if (!isNULL(dis2midpoint_1)){
-			segr_table = paste("chr1" + "\t" + "gene1" + "\t" + (sam_genes_muts.position +1) + "\t" +  midpoint_1 + "\t" + dis2midpoint_1 + "\t" + sam_genes_muts.id + "\t" + sam_genes_muts.selectionCoeff + "\t" + sam_genes_muts.mutationType.dominanceCoeff + "\t" + sam_genes_muts.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=sam_genes_muts) + "\n");
-		} else {
-			segr_table = paste("chr1" + "\t" + "gene1" + "\t" + paste(rep("NA", 8), "\t"));
-		}
+	/////////////////////////
+	// SAMPLE's  MUTATIONS //
+	/////////////////////////
 		
-		// Prepare the header of the table
-		segr_head = paste("chrom"+"\t"+"gene"+"\t"+"position"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF1");
+	midpoint_1 = (gene[0] + gene[1])/2;
+	dis2midpoint_1 = sapply((sam_gene_muts.position +1), " asInteger(sqrt(((applyValue)-midpoint_1)^2)) ;");
 		
-		// Export the output
-		segr_output = c(segr_head, segr_table);
-   	writeFile(paste0(outputpath + "slim_segr_output_t1_" + simID + ".txt"), segr_output);
-
-		///////////////////////////////////////
-		// POPULATION's BENEFICIAL MUTATIONS //
-		///////////////////////////////////////
-
-		//beneficial_muts = pop_genes_muts.selectionCoeff > 0;
-		
-		///////////////////////
-		// "SELECTION" TABLE //
-		///////////////////////
-		
-		// Produde the table
-		//if (sum(beneficial_muts) != 0){
-		//	sel_table = paste("chr1" + "\t" + "gene1" + "\t" + (pop_genes_muts[beneficial_muts].position +1) + "\t" +  pop_genes_muts[beneficial_muts].id + "\t" + pop_genes_muts[beneficial_muts].selectionCoeff + "\t" + pop_genes_muts[beneficial_muts].mutationType.dominanceCoeff + "\t" + pop_genes_muts[beneficial_muts].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=pop_genes_muts[beneficial_muts]) + "\t" + L + "\n");
-		//} else {
-		//	sel_table = paste("chr1" + "\t" + "gene1" + "\t" + paste(rep("NA", 6), "\t") + "\t" + L);
-		//}
-
-		// Prepare the header of the table
-		//sel_head = paste("chrom"+"\t"+"gene"+"\t"+"position"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF1"+"\t"+"POPload1");
-		
-		// Export the output
-		//sel_output = c(sel_head, sel_table);
-   	//writeFile(paste0(outputpath + "slim_sel_output_t1_" + simID + ".txt"), sel_output);	
-				
+	/////////////////////////
+	// "SEGRETATION" TABLE //
+	/////////////////////////
+			
+	// Produde the table
+	if (!isNULL(dis2midpoint_1)){
+		segr_table = paste("chr1" + "\t" + "gene1" + "\t" + (sam_gene_muts.position +1) + "\t" +  midpoint_1 + "\t" + dis2midpoint_1 + "\t" + sam_gene_muts.id + "\t" + sam_gene_muts.selectionCoeff + "\t" + sam_gene_muts.mutationType.dominanceCoeff + "\t" + sam_gene_muts.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=sam_gene_muts) + "\n");
 	} else {
-		gene_upper = NULL;
-		for(i in seq(from = 1, to = (genN-1))) {
-			gene_limits    = c((i*genS)-2);
-			
-			gene_upper = c(gene_upper, gene_limits);
-			}
-		gene_upper = c(chromosome + gene_upper, (genomeS-1));
-		gene_lower = c(chromosome, gene_upper[0:(size(gene_upper)-2)]);
-		
-		genes = cbind(gene_lower, gene_upper);	
-		
-		////////////
-		// GENE 1 //
-		////////////
-		
-		// SAMPLE's  MUTATIONS //
-		
-		sam_muts_in_gene_1 = ((sam_genes_muts.position +1) < genes[0,1]);
-		gene_1 = sam_genes_muts[sam_muts_in_gene_1];
-		
-		midpoint_1 = (genes[0,0] + genes[0,1])/2;
-		dis2midpoint_1 = sapply((gene_1.position +1), " asInteger(sqrt(((applyValue)-midpoint_1)^2)) ;");
-							
-		
-		if (!isNULL(dis2midpoint_1)){
-			segr_gene_1 = paste("chr1" + "\t" + "gene1" + "\t" + (gene_1.position +1) + "\t" + midpoint_1 + "\t" + dis2midpoint_1 + "\t" + gene_1.id + "\t" + gene_1.selectionCoeff + "\t" + gene_1.mutationType.dominanceCoeff + "\t" + gene_1.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_1), "\n");
-		} else {
-				segr_gene_1 = paste("chr1" + "\t" + "gene1" + "\t" + paste(rep("NA", 8), "\t"));
-		}
-		
-		// POPULATION's BENEFICIAL MUTATIONS //
-
-		//beneficial_muts_1 = ((pop_genes_muts.position +1) < genes[0,1] & pop_genes_muts.selectionCoeff > 0);
-		
-		// Produde the table
-		//if (sum(beneficial_muts_1) != 0){
-		//	sel_gene_1 = paste("chr1" + "\t" + "gene1" + "\t" + (pop_genes_muts[beneficial_muts_1].position +1) + "\t" +  pop_genes_muts[beneficial_muts_1].id + "\t" + pop_genes_muts[beneficial_muts_1].selectionCoeff + "\t" + pop_genes_muts[beneficial_muts_1].mutationType.dominanceCoeff + "\t" + pop_genes_muts[beneficial_muts_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=pop_genes_muts[beneficial_muts_1]) + "\t" + L, "\n");
-		//} else {
-		//	sel_gene_1 = paste("chr1" + "\t" + "gene1" + "\t" + paste(rep("NA", 6), "\t") + "\t" + L);
-		//}
-
-		////////////
-		// GENE 2 //
-		////////////
-		
-		// SAMPLE's  MUTATIONS //
-		
-		sam_muts_in_gene_2 = ((sam_genes_muts.position +1) > genes[1,0] & (sam_genes_muts.position +1) < genes[1,1]);
-		gene_2 = sam_genes_muts[sam_muts_in_gene_2];
-		
-		midpoint_2 = (genes[1,0] + genes[1,1])/2;
-		dis2midpoint_2 = sapply((gene_2.position +1), " asInteger(sqrt(((applyValue)-midpoint_2)^2)) ;");
-				
-		if (!isNULL(dis2midpoint_2)){
-			segr_gene_2 = paste("chr1" + "\t" + "gene2" + "\t" + (gene_2.position +1) + "\t" + midpoint_2 + "\t" + dis2midpoint_2 + "\t" + gene_2.id + "\t" + gene_2.selectionCoeff + "\t" + gene_2.mutationType.dominanceCoeff + "\t" + gene_2.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_2), "\n");	
-		} else {
-			segr_gene_2 = paste("chr1" + "\t" + "gene2" + "\t" + paste(rep("NA", 8), "\t"));
-		}	
-		
-		// POPULATION's BENEFICIAL MUTATIONS //
-
-		//beneficial_muts_2 = ((pop_genes_muts.position +1) > genes[1,0] & (pop_genes_muts.position +1) < genes[1,1] & pop_genes_muts.selectionCoeff > 0);
-				
-		// Produde the table
-		//if (sum(beneficial_muts_2) != 0){
-		//	sel_gene_2 = paste("chr1" + "\t" + "gene2" + "\t" + (pop_genes_muts[beneficial_muts_2].position +1) + "\t" +  pop_genes_muts[beneficial_muts_2].id + "\t" + pop_genes_muts[beneficial_muts_2].selectionCoeff + "\t" + pop_genes_muts[beneficial_muts_2].mutationType.dominanceCoeff + "\t" + pop_genes_muts[beneficial_muts_2].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=pop_genes_muts[beneficial_muts_2]) + "\t" + L, "\n");
-		//} else {
-		//	sel_gene_2 = paste("chr1" + "\t" + "gene2" + "\t" + paste(rep("NA", 6), "\t") + "\t" + L);
-		//}
-	
-		////////////
-		// GENE 3 //
-		////////////
-
-		// SAMPLE's  MUTATIONS //
-		
-		sam_muts_in_gene_3 = ((sam_genes_muts.position +1) > genes[2,0] & (sam_genes_muts.position +1) < genes[2,1]);
-		gene_3 = sam_genes_muts[sam_muts_in_gene_3];
-		
-		midpoint_3 = (genes[2,0] + genes[2,1])/2;
-		dis2midpoint_3 = sapply((gene_3.position +1), " asInteger(sqrt(((applyValue)-midpoint_3)^2)) ;");
-		
-		if (!isNULL(dis2midpoint_3)){
-			segr_gene_3 = paste("chr1" + "\t" + "gene3" + "\t" + (gene_3.position +1) + "\t" + midpoint_3 + "\t" + dis2midpoint_3 + "\t" + gene_3.id + "\t" + gene_3.selectionCoeff + "\t" + gene_3.mutationType.dominanceCoeff + "\t" + gene_3.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_3), "\n");
-		} else {
-			segr_gene_3 = paste("chr1" + "\t" + "gene3" + "\t" + paste(rep("NA", 8), "\t"));
-		}	
-		
-		// POPULATION's BENEFICIAL MUTATIONS //
-
-		//beneficial_muts_3 = ((pop_genes_muts.position +1) > genes[2,0] & (pop_genes_muts.position +1) < genes[2,1] & pop_genes_muts.selectionCoeff > 0);
-		
-		// Produde the table
-		//if (sum(beneficial_muts_3) != 0){
-			//sel_gene_3 = paste("chr1" + "\t" + "gene3" + "\t" + (pop_genes_muts[beneficial_muts_3].position +1) + "\t" +  pop_genes_muts[beneficial_muts_3].id + "\t" + pop_genes_muts[beneficial_muts_3].selectionCoeff + "\t" + pop_genes_muts[beneficial_muts_3].mutationType.dominanceCoeff + "\t" + pop_genes_muts[beneficial_muts_3].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=pop_genes_muts[beneficial_muts_3]) + "\t" + L, "\n");
-		//} else {
-		//	sel_gene_3 = paste("chr1" + "\t" + "gene3" + "\t" + paste(rep("NA", 6), "\t") + "\t" + L);
-		//}
-
-		////////////
-		// GENE 4 //
-		////////////
-		
-		// SAMPLE's  MUTATIONS //
-		
-		sam_muts_in_gene_4 = ((sam_genes_muts.position +1) > genes[(size(gene_upper)-1),0]);
-		gene_4 = sam_genes_muts[sam_muts_in_gene_4];
-		
-		midpoint_4 = (genes[3,0] + genes[3,1])/2;
-		dis2midpoint_4 = sapply((gene_4.position +1), " asInteger(sqrt(((applyValue)-midpoint_4)^2)) ;");
-		
-		/////////////////////////
-		// "SEGRETATION" TABLE //
-		/////////////////////////
-		
-		if (!isNULL(dis2midpoint_4)){
-			segr_gene_4 = paste("chr1" + "\t" + "gene4" + "\t" + (gene_4.position +1) + "\t" + midpoint_4 + "\t" + dis2midpoint_4 + "\t" + gene_4.id + "\t" + gene_4.selectionCoeff + "\t" + gene_4.mutationType.dominanceCoeff + "\t" + gene_4.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_4), "\n");
-		} else {
-			segr_gene_4 = paste("chr1" + "\t" + "gene4" + "\t" + paste(rep("NA", 8), "\t"));
-		}			 	 	
-	
-		segr_table = c(segr_gene_1, segr_gene_2, segr_gene_3, segr_gene_4);
-		
-		// Prepare the header of the table
-		segr_head = paste("chrom"+"\t"+"gene"+"\t"+"position"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF1");
-		
-		// Export the output
-		segr_output = c(segr_head, segr_table);
-   	writeFile(paste0(outputpath + "slim_segr_output_t1_" + simID + ".txt"), segr_output);
-	
-		// POPULATION's BENEFICIAL MUTATIONS //
-
-		//beneficial_muts_4 = ((pop_genes_muts.position +1) > genes[(size(gene_upper)-1),0] & pop_genes_muts.selectionCoeff > 0);
-		
-		///////////////////////
-		// "SELECTION" TABLE //
-		///////////////////////
-		
-		// Produde the table
-		//if (sum(beneficial_muts_4) != 0){
-		//	sel_gene_4 = paste("chr1" + "\t" + "gene4" + "\t" + (pop_genes_muts[beneficial_muts_4].position +1) + "\t" +  pop_genes_muts[beneficial_muts_4].id + "\t" + pop_genes_muts[beneficial_muts_4].selectionCoeff + "\t" + pop_genes_muts[beneficial_muts_4].mutationType.dominanceCoeff + "\t" + pop_genes_muts[beneficial_muts_4].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=pop_genes_muts[beneficial_muts_4]) + "\t" + L, "\n");
-		//} else {
-		//	sel_gene_4 = paste("chr1" + "\t" + "gene4" + "\t" + paste(rep("NA", 6), "\t") + "\t" + L);
-		//}
-		
-		//sel_table = c(sel_gene_1, sel_gene_2, sel_gene_3, sel_gene_4);
-		
-		// Prepare the header of the table
-		//sel_head = paste("chrom"+"\t"+"gene"+"\t"+"position"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF1"+"\t"+"POPload1");
-		
-		// Export the output
-		//sel_output = c(sel_head, sel_table);
-   	//writeFile(paste0(outputpath + "slim_sel_output_t1_" + simID + ".txt"), sel_output);	
-	
+		segr_table = paste("chr1" + "\t" + "gene1" + "\t" + paste(rep("NA", 8), "\t"));
 	}
-	
+		
+	// Prepare the header of the table
+	segr_head = paste("chrom"+"\t"+"gene"+"\t"+"position"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF1");
+		
+	// Export the output
+	segr_output = c(segr_head, segr_table);
+   writeFile(paste0(outputpath + "slim_segr_output_t1_" + simID + ".txt"), segr_output);
+
 	//////////////////////////////////
 	// OUTPUT_3 T=1  - GENETIC DATA //
 	//////////////////////////////////
@@ -487,8 +301,8 @@ s7 late() {
 	pop_muts = sortBy(unique(sim.subpopulations.individuals.genomes.mutations), "position");
 	
 	// Get TRUE only for all mutations in "GENE" region to subset only these mutations
-	pop_muts_in_genes = (pop_muts.position +1) > chromosome;
-	pop_genes_muts = pop_muts[pop_muts_in_genes];
+	pop_muts_in_gene = (pop_muts.position +1) > chromosome;
+	pop_gene_muts = pop_muts[pop_muts_in_gene];
 	
 	///////////////////////
 	// SAMPLED MUTATIONS //
@@ -498,225 +312,64 @@ s7 late() {
 	sam_muts = sortBy(unique(sam_inds.genomes.mutations), "position");
 	
 	// Get TRUE only for all mutations in "GENE" region to subset only these mutations
-	sam_muts_in_genes = (sam_muts.position +1) > chromosome;
-	sam_genes_muts = sam_muts[sam_muts_in_genes];
+	sam_muts_in_gene = (sam_muts.position +1) > chromosome;
+	sam_gene_muts = sam_muts[sam_muts_in_gene];
 	
 	// Define "GENE" lower and upper bounds and assign an ID
-	if (genN == 1){
-		gene_upper = c((genomeS-1));
-		gene_lower = c(chromosome);
+	gene_upper = c((genomeS-1));
+	gene_lower = c(chromosome);
 		
-		genes = cbind(gene_lower, gene_upper);
+	gene = cbind(gene_lower, gene_upper);
 	
-		////////////
-		// GENE 1 //
-		////////////
+	/////////////////////////
+	// SAMPLE's  MUTATIONS //
+	/////////////////////////
 		
-		/////////////////////////
-		// SAMPLE's  MUTATIONS //
-		/////////////////////////
+	midpoint_1 = (gene[0] + gene[1])/2;
+	dis2midpoint_1 = sapply((sam_gene_muts.position +1), " asInteger(sqrt(((applyValue)-midpoint_1)^2)) ;");
 		
-		midpoint_1 = (genes[0] + genes[1])/2;
-		dis2midpoint_1 = sapply((sam_genes_muts.position +1), " asInteger(sqrt(((applyValue)-midpoint_1)^2)) ;");
-		
-		/////////////////////////
-		// "SEGRETATION" TABLE //
-		/////////////////////////
+	/////////////////////////
+	// "SEGRETATION" TABLE //
+	/////////////////////////
 			
-		// Produde the table
-		if (!isNULL(dis2midpoint_1)){
-			segr_table = paste("chr1" + "\t" + "gene1" + "\t" + (sam_genes_muts.position +1) + "\t" +  midpoint_1 + "\t" + dis2midpoint_1 + "\t" + sam_genes_muts.id + "\t" + sam_genes_muts.selectionCoeff + "\t" + sam_genes_muts.mutationType.dominanceCoeff + "\t" + sam_genes_muts.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=sam_genes_muts) + "\n");
-		} else {
-			segr_table = paste("chr1" + "\t" + "gene1" + "\t" + paste(rep("NA", 8), "\t"));
-		}
-		
-		// Prepare the header of the table
-		segr_head = paste("chrom"+"\t"+"gene"+"\t"+"position"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF2");
-		
-		// Export the output
-		segr_output = c(segr_head, segr_table);
-   	writeFile(paste0(outputpath + "slim_segr_output_t2_" + simID + ".txt"), segr_output);
-
-		///////////////////////////////////////
-		// POPULATION's BENEFICIAL MUTATIONS //
-		///////////////////////////////////////
-
-		beneficial_muts = pop_genes_muts.selectionCoeff > 1/Ne1;
-		
-		///////////////////////
-		// "SELECTION" TABLE //
-		///////////////////////
-		
-		// Produde the table
-		if (sum(beneficial_muts) != 0){
-			sel_table = paste("chr1" + "\t" + "gene1" + "\t" + (pop_genes_muts[beneficial_muts].position +1) + "\t" +  pop_genes_muts[beneficial_muts].id + "\t" + pop_genes_muts[beneficial_muts].selectionCoeff + "\t" + pop_genes_muts[beneficial_muts].mutationType.dominanceCoeff + "\t" + pop_genes_muts[beneficial_muts].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=pop_genes_muts[beneficial_muts]) + "\t" + L + "\n");
-		} else {
-			sel_table = paste("chr1" + "\t" + "gene1" + "\t" + paste(rep("NA", 6), "\t") + "\t" + L);
-		}
-
-		// Prepare the header of the table
-		sel_head = paste("chrom"+"\t"+"gene"+"\t"+"position"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF2"+"\t"+"POPload2");
-		
-		// Export the output
-		sel_output = c(sel_head, sel_table);
-   	writeFile(paste0(outputpath + "slim_sel_output_t2_" + simID + ".txt"), sel_output);	
-				
+	// Produde the table
+	if (!isNULL(dis2midpoint_1)){
+		segr_table = paste("chr1" + "\t" + "gene1" + "\t" + (sam_gene_muts.position +1) + "\t" +  midpoint_1 + "\t" + dis2midpoint_1 + "\t" + sam_gene_muts.id + "\t" + sam_gene_muts.selectionCoeff + "\t" + sam_gene_muts.mutationType.dominanceCoeff + "\t" + sam_gene_muts.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=sam_gene_muts) + "\n");
 	} else {
-		gene_upper = NULL;
-		for(i in seq(from = 1, to = (genN-1))) {
-			gene_limits    = c((i*genS)-2);
-			
-			gene_upper = c(gene_upper, gene_limits);
-			}
-		gene_upper = c(chromosome + gene_upper, (genomeS-1));
-		gene_lower = c(chromosome, gene_upper[0:(size(gene_upper)-2)]);
+		segr_table = paste("chr1" + "\t" + "gene1" + "\t" + paste(rep("NA", 8), "\t"));
+	}
 		
-		genes = cbind(gene_lower, gene_upper);	
-		
-		////////////
-		// GENE 1 //
-		////////////
-		
-		// SAMPLE's  MUTATIONS //
-		
-		sam_muts_in_gene_1 = ((sam_genes_muts.position +1) < genes[0,1]);
-		gene_1 = sam_genes_muts[sam_muts_in_gene_1];
-		
-		midpoint_1 = (genes[0,0] + genes[0,1])/2;
-		dis2midpoint_1 = sapply((gene_1.position +1), " asInteger(sqrt(((applyValue)-midpoint_1)^2)) ;");
-							
-		
-		if (!isNULL(dis2midpoint_1)){
-			segr_gene_1 = paste("chr1" + "\t" + "gene1" + "\t" + (gene_1.position +1) + "\t" + midpoint_1 + "\t" + dis2midpoint_1 + "\t" + gene_1.id + "\t" + gene_1.selectionCoeff + "\t" + gene_1.mutationType.dominanceCoeff + "\t" + gene_1.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_1), "\n");
-		} else {
-				segr_gene_1 = paste("chr1" + "\t" + "gene1" + "\t" + paste(rep("NA", 8), "\t"));
-		}
-		
-		// POPULATION's BENEFICIAL MUTATIONS //
-
-		beneficial_muts_1 = ((pop_genes_muts.position +1) < genes[0,1] & pop_genes_muts.selectionCoeff > 1/Ne1);
-		
-		// Produde the table
-		if (sum(beneficial_muts_1) != 0){
-			sel_gene_1 = paste("chr1" + "\t" + "gene1" + "\t" + (pop_genes_muts[beneficial_muts_1].position +1) + "\t" +  pop_genes_muts[beneficial_muts_1].id + "\t" + pop_genes_muts[beneficial_muts_1].selectionCoeff + "\t" + pop_genes_muts[beneficial_muts_1].mutationType.dominanceCoeff + "\t" + pop_genes_muts[beneficial_muts_1].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=pop_genes_muts[beneficial_muts_1]) + "\t" + L, "\n");
-		} else {
-			sel_gene_1 = paste("chr1" + "\t" + "gene1" + "\t" + paste(rep("NA", 6), "\t") + "\t" + L);
-		}
-
-		////////////
-		// GENE 2 //
-		////////////
-		
-		// SAMPLE's  MUTATIONS //
-		
-		sam_muts_in_gene_2 = ((sam_genes_muts.position +1) > genes[1,0] & (sam_genes_muts.position +1) < genes[1,1]);
-		gene_2 = sam_genes_muts[sam_muts_in_gene_2];
-		
-		midpoint_2 = (genes[1,0] + genes[1,1])/2;
-		dis2midpoint_2 = sapply((gene_2.position +1), " asInteger(sqrt(((applyValue)-midpoint_2)^2)) ;");
-				
-		if (!isNULL(dis2midpoint_2)){
-			segr_gene_2 = paste("chr1" + "\t" + "gene2" + "\t" + (gene_2.position +1) + "\t" + midpoint_2 + "\t" + dis2midpoint_2 + "\t" + gene_2.id + "\t" + gene_2.selectionCoeff + "\t" + gene_2.mutationType.dominanceCoeff + "\t" + gene_2.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_2), "\n");	
-		} else {
-			segr_gene_2 = paste("chr1" + "\t" + "gene2" + "\t" + paste(rep("NA", 8), "\t"));
-		}	
-		
-		// POPULATION's BENEFICIAL MUTATIONS //
-
-		beneficial_muts_2 = ((pop_genes_muts.position +1) > genes[1,0] & (pop_genes_muts.position +1) < genes[1,1] & pop_genes_muts.selectionCoeff > 1/Ne1);
-				
-		// Produde the table
-		if (sum(beneficial_muts_2) != 0){
-			sel_gene_2 = paste("chr1" + "\t" + "gene2" + "\t" + (pop_genes_muts[beneficial_muts_2].position +1) + "\t" +  pop_genes_muts[beneficial_muts_2].id + "\t" + pop_genes_muts[beneficial_muts_2].selectionCoeff + "\t" + pop_genes_muts[beneficial_muts_2].mutationType.dominanceCoeff + "\t" + pop_genes_muts[beneficial_muts_2].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=pop_genes_muts[beneficial_muts_2]) + "\t" + L, "\n");
-		} else {
-			sel_gene_2 = paste("chr1" + "\t" + "gene2" + "\t" + paste(rep("NA", 6), "\t") + "\t" + L);
-		}
-	
-		////////////
-		// GENE 3 //
-		////////////
-
-		// SAMPLE's  MUTATIONS //
-		
-		sam_muts_in_gene_3 = ((sam_genes_muts.position +1) > genes[2,0] & (sam_genes_muts.position +1) < genes[2,1]);
-		gene_3 = sam_genes_muts[sam_muts_in_gene_3];
-		
-		midpoint_3 = (genes[2,0] + genes[2,1])/2;
-		dis2midpoint_3 = sapply((gene_3.position +1), " asInteger(sqrt(((applyValue)-midpoint_3)^2)) ;");
-		
-		if (!isNULL(dis2midpoint_3)){
-			segr_gene_3 = paste("chr1" + "\t" + "gene3" + "\t" + (gene_3.position +1) + "\t" + midpoint_3 + "\t" + dis2midpoint_3 + "\t" + gene_3.id + "\t" + gene_3.selectionCoeff + "\t" + gene_3.mutationType.dominanceCoeff + "\t" + gene_3.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_3), "\n");
-		} else {
-			segr_gene_3 = paste("chr1" + "\t" + "gene3" + "\t" + paste(rep("NA", 8), "\t"));
-		}	
-		
-		// POPULATION's BENEFICIAL MUTATIONS //
-
-		beneficial_muts_3 = ((pop_genes_muts.position +1) > genes[2,0] & (pop_genes_muts.position +1) < genes[2,1] & pop_genes_muts.selectionCoeff > 1/Ne1);
-		
-		// Produde the table
-		if (sum(beneficial_muts_3) != 0){
-			sel_gene_3 = paste("chr1" + "\t" + "gene3" + "\t" + (pop_genes_muts[beneficial_muts_3].position +1) + "\t" +  pop_genes_muts[beneficial_muts_3].id + "\t" + pop_genes_muts[beneficial_muts_3].selectionCoeff + "\t" + pop_genes_muts[beneficial_muts_3].mutationType.dominanceCoeff + "\t" + pop_genes_muts[beneficial_muts_3].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=pop_genes_muts[beneficial_muts_3]) + "\t" + L, "\n");
-		} else {
-			sel_gene_3 = paste("chr1" + "\t" + "gene3" + "\t" + paste(rep("NA", 6), "\t") + "\t" + L);
-		}
-
-		////////////
-		// GENE 4 //
-		////////////
-		
-		// SAMPLE's  MUTATIONS //
-		
-		sam_muts_in_gene_4 = ((sam_genes_muts.position +1) > genes[(size(gene_upper)-1),0]);
-		gene_4 = sam_genes_muts[sam_muts_in_gene_4];
-		
-		midpoint_4 = (genes[3,0] + genes[3,1])/2;
-		dis2midpoint_4 = sapply((gene_4.position +1), " asInteger(sqrt(((applyValue)-midpoint_4)^2)) ;");
-		
-		/////////////////////////
-		// "SEGRETATION" TABLE //
-		/////////////////////////
-		
-		if (!isNULL(dis2midpoint_4)){
-			segr_gene_4 = paste("chr1" + "\t" + "gene4" + "\t" + (gene_4.position +1) + "\t" + midpoint_4 + "\t" + dis2midpoint_4 + "\t" + gene_4.id + "\t" + gene_4.selectionCoeff + "\t" + gene_4.mutationType.dominanceCoeff + "\t" + gene_4.originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=gene_4), "\n");
-		} else {
-			segr_gene_4 = paste("chr1" + "\t" + "gene4" + "\t" + paste(rep("NA", 8), "\t"));
-		}			 	 	
-	
-		segr_table = c(segr_gene_1, segr_gene_2, segr_gene_3, segr_gene_4);
-		
-		// Prepare the header of the table
+	// Prepare the header of the table
 		segr_head = paste("chrom"+"\t"+"gene"+"\t"+"position"+"\t"+"midpoint"+"\t"+"d2midpoint"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF2");
 		
-		// Export the output
+	// Export the output
 		segr_output = c(segr_head, segr_table);
    	writeFile(paste0(outputpath + "slim_segr_output_t2_" + simID + ".txt"), segr_output);
-	
-		// POPULATION's BENEFICIAL MUTATIONS //
 
-		beneficial_muts_4 = ((pop_genes_muts.position +1) > genes[(size(gene_upper)-1),0] & pop_genes_muts.selectionCoeff > 1/Ne1);
+	///////////////////////////////////////
+	// POPULATION's BENEFICIAL MUTATIONS //
+	///////////////////////////////////////
+
+	beneficial_muts = pop_gene_muts.selectionCoeff > 1/Ne1;
 		
-		///////////////////////
-		// "SELECTION" TABLE //
-		///////////////////////
+	///////////////////////
+	// "SELECTION" TABLE //
+	///////////////////////
 		
-		// Produde the table
-		if (sum(beneficial_muts_4) != 0){
-			sel_gene_4 = paste("chr1" + "\t" + "gene4" + "\t" + (pop_genes_muts[beneficial_muts_4].position +1) + "\t" +  pop_genes_muts[beneficial_muts_4].id + "\t" + pop_genes_muts[beneficial_muts_4].selectionCoeff + "\t" + pop_genes_muts[beneficial_muts_4].mutationType.dominanceCoeff + "\t" + pop_genes_muts[beneficial_muts_4].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=pop_genes_muts[beneficial_muts_4]) + "\t" + L, "\n");
-		} else {
-			sel_gene_4 = paste("chr1" + "\t" + "gene4" + "\t" + paste(rep("NA", 6), "\t") + "\t" + L);
-		}
-		
-		sel_table = c(sel_gene_1, sel_gene_2, sel_gene_3, sel_gene_4);
-		
-		// Prepare the header of the table
-		sel_head = paste("chrom"+"\t"+"gene"+"\t"+"position"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF2"+"\t"+"POPload2");
-		
-		// Export the output
-		sel_output = c(sel_head, sel_table);
-   	writeFile(paste0(outputpath + "slim_sel_output_t2_" + simID + ".txt"), sel_output);	
-	
+	// Produde the table
+	if (sum(beneficial_muts) != 0){
+		sel_table = paste("chr1" + "\t" + "gene1" + "\t" + (pop_gene_muts[beneficial_muts].position +1) + "\t" +  pop_gene_muts[beneficial_muts].id + "\t" + pop_gene_muts[beneficial_muts].selectionCoeff + "\t" + pop_gene_muts[beneficial_muts].mutationType.dominanceCoeff + "\t" + pop_gene_muts[beneficial_muts].originGeneration + "\t" + sim.mutationFrequencies(subpops=NULL,mutations=pop_gene_muts[beneficial_muts]) + "\t" + L + "\n");
+	} else {
+		sel_table = paste("chr1" + "\t" + "gene1" + "\t" + paste(rep("NA", 6), "\t") + "\t" + L);
 	}
+
+	// Prepare the header of the table
+	sel_head = paste("chrom"+"\t"+"gene"+"\t"+"position"+"\t"+"MID"+"\t"+"S"+"\t"+"DOM"+"\t"+"GO"+"\t"+"MF2"+"\t"+"POPload2");
+		
+	// Export the output
+	sel_output = c(sel_head, sel_table);
+   writeFile(paste0(outputpath + "slim_sel_output_t2_" + simID + ".txt"), sel_output);	
+				
 	
 	//////////////////////////////////
 	// OUTPUT_3 T=2  - GENETIC DATA //
