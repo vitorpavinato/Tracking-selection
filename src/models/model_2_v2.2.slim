@@ -1,24 +1,24 @@
 initialize() {
 	
 	// SIMULATION ID
-	defineConstant("simID",01);
+	//defineConstant("simID",01);
 	
 	// SAMPLED VALUES
 	//defineConstant("seed", 1529149281572);
 	
-	defineConstant("theta", 0.00004);  // 2e-4 // theta is sample from prior;
+	//defineConstant("theta", 0.00004);  // 2e-4 // theta is sample from prior;
 	//defineConstant("Ne0", 1000);     // Ne0 is calculated as Ne0 = asInteger(theta/(4*mu));
-	defineConstant("Ne1", 30);			 // Ne1 sampled from a prior;
-	defineConstant("mu", 1e-8);       // mu => mutation rate - mu=1e-7 for real simulations;
+	//defineConstant("Ne1", 1000);			 // Ne1 sampled from a prior;
+	//defineConstant("mu", 1e-8);       // mu => mutation rate - mu=1e-7 for real simulations;
 	
-	defineConstant("gamma2_M", 0.03); // gamma2_M => the mean of a gamma distribution for the DFE of beneficial mutations "m2";
-	defineConstant("gamma2_k", 0.20); // gamma2_k => the shaper parameter k or alpha of the gamma distribution for the DFE of beneficial mutations "m2";
+	//defineConstant("gamma2_M", 0.03); // gamma2_M => the mean of a gamma distribution for the DFE of beneficial mutations "m2";
+	//defineConstant("gamma2_k", 0.20); // gamma2_k => the shaper parameter k or alpha of the gamma distribution for the DFE of beneficial mutations "m2";
 	
-	defineConstant("pge2", 0.50);		 // pge2 => the proportion of "GenomicElementType" "g2" - it contains the mutations "m1" and "m2";
-	defineConstant("mpb", 0.50);      // mpb => the proportion of beneficial mutations "m2" in the "GenomicElementType" "g2", 1-mbp is the proportion of 
+	//defineConstant("pge2", 0.50);		 // pge2 => the proportion of "GenomicElementType" "g2" - it contains the mutations "m1" and "m2";
+	//defineConstant("mpb", 0.50);      // mpb => the proportion of beneficial mutations "m2" in the "GenomicElementType" "g2", 1-mbp is the proportion of 
 	
 	
-	defineConstant("rr", 4.2e-8);     // rr => the recombination rate define as 4.2 cM/Mbp * 1e-8
+	//defineConstant("rr", 4.2e-8);     // rr => the recombination rate define as 4.2 cM/Mbp * 1e-8
 	
 	//defineConstant("sr", 0.20);       // self => the selfing rate
 	
@@ -27,9 +27,9 @@ initialize() {
 	defineConstant("mf1", 0.0);       // mf1 => the fitness for all neutral mutations "m1" - it is fixed with value 0
 	defineConstant("md2", 0.5);       // md2 => the dominance for all beneficial mutations "m2"
 
-	defineConstant("SS1", 80);     	 // SS1 => the sample size of the first sampling in T=1
-	defineConstant("SS2", 115);       // SS2 => the sample size of the second sampling in T=2
-	defineConstant("ts2", 8); 	       // ts2 => the distance in gerenration from the first sampling
+	//defineConstant("SS1", 80);     	 // SS1 => the sample size of the first sampling in T=1
+	//defineConstant("SS2", 115);       // SS2 => the sample size of the second sampling in T=2
+	//defineConstant("ts2", 8); 	       // ts2 => the distance in gerenration from the first sampling
 	
 	defineConstant("genomeS", 135e+6);// genomeS => the genome size - A. thaliana genome size is 135Mbp (135,000,000bp)
 	
@@ -39,7 +39,13 @@ initialize() {
 	
 	// Obtain the fraction of genome that are going to be divided in chromosomes
 	defineConstant("chromosome", asInteger(genomeS - (genN * genS)));
-		
+	
+	// Chromosome size
+	defineConstant("chrS", asInteger((chromosome/chrN)/10));
+	
+	// Simulated fragment
+	defineConstant("fragS", asInteger(chrS + genS));	
+	
 	// the "outputpath" variable will be defined in the main.R script
 	//defineConstant("outputpath", "/Users/vitorpavinato/Dropbox/PosDoc_INRA_2017/Project/SLiM/SLiM_model_sketch/");
 	
@@ -54,11 +60,8 @@ initialize() {
 	initializeGenomicElementType("g1", m1, 1);
 	initializeGenomicElementType("g2", c(m1,m2), c((1 - mpb), mpb));
 	
-	// Chromosome size
-	chrS = asInteger(chromosome/chrN);
-	
 	// Number of the GenomicElementType fragments
-	nf = asInteger(genomeS/genS); 
+	nf = asInteger(fragS/genS); 
 
 	// Set the fragments starts and ends for the initializeGenomicElement
 	f_starts = 0;
@@ -72,7 +75,7 @@ initialize() {
 	}
 
 	f_starts = f_starts;
-	f_ends   = c(f_ends , (genomeS-1));
+	f_ends   = c(f_ends , (fragS-1));
 	
 	// Sample the fragments to assign each GenomicElementType
 	indexes = seq(from = 0, to = (nf-1));
@@ -88,30 +91,9 @@ initialize() {
 		initializeGenomicElement(g1, asInteger(f_starts[j]), asInteger(f_ends[j]));
 	}
 	
-	//"CHROMOSOMES"
-	// Generate a vector for chromosomes upper bounds limits and 0.5 racombination rate limits 
-	// Generate also a vector of recombination rates for each chromosome upper limites
-	Chr_upper = NULL;
-	Chr_rates = NULL;
-	for(i in seq(from = 1, to = chrN)) {
-		Chr_limits    = c((i*chrS)-2, (i*chrS)-1);
-		Chr_upper = c(Chr_upper, Chr_limits);
-	
-		Chr_rts = c(rr,0.5);
-		Chr_rates = c(Chr_rates, Chr_rts);
-	}
-	
-	//"GENES"
-	// Generate a vector for genes upper bounds limits and 0.5 racombination rate limits 
-	// Generate also a vector of recombination rates for each gene upper limites
-	gene_upper = c((genomeS-1));
-	gene_rates = c(rr);
-	
-	// Combine chromosome and gene upper limits
-	// Combine chromosome rates and gene rates
-	
-	upper = c(Chr_upper, gene_upper);
-	rates = c(Chr_rates, gene_rates);
+	// Set the recombination rate
+	upper = c((chrS-2), (chrS-1), (fragS-1));
+	rates = c(rr, 0.5, rr);
 	
 	// Difine recombination rates
 	initializeRecombinationRate(rates, asInteger(upper));
@@ -182,7 +164,7 @@ s3 late() {
 	pop_muts = sortBy(unique(sim.subpopulations.individuals.genomes.mutations), "position");
 	
 	// Get TRUE only for all mutations in "GENE" region to subset only these mutations
-	pop_muts_in_gene = (pop_muts.position +1) > chromosome;
+	pop_muts_in_gene = (pop_muts.position +1) > chrS;
 	pop_gene_muts = pop_muts[pop_muts_in_gene];
 	
 	///////////////////////
@@ -193,15 +175,15 @@ s3 late() {
 	sam_muts = sortBy(unique(sam_inds.genomes.mutations), "position");
 	
 	// Get TRUE only for all mutations in "GENE" region to subset only these mutations
-	sam_muts_in_gene = (sam_muts.position +1) > chromosome;
+	sam_muts_in_gene = (sam_muts.position +1) > chrS;
 	sam_gene_muts = sam_muts[sam_muts_in_gene];
 	
 	// Define "GENE" lower and upper bounds and assign an ID
-	gene_upper = c((genomeS-1));
-	gene_lower = c(chromosome);
+	gene_upper = c((fragS-1));
+	gene_lower = c(chrS);
 		
 	gene = cbind(gene_lower, gene_upper);
-		
+	
 	/////////////////////////
 	// SAMPLE's  MUTATIONS //
 	/////////////////////////
@@ -226,7 +208,7 @@ s3 late() {
 	// Export the output
 	segr_output = c(segr_head, segr_table);
    writeFile(paste0(outputpath + "slim_segr_output_t1_" + simID + ".txt"), segr_output);
-
+			
 	//////////////////////////////////
 	// OUTPUT_3 T=1  - GENETIC DATA //
 	//////////////////////////////////
@@ -286,7 +268,7 @@ s7 late() {
 	pop_muts = sortBy(unique(sim.subpopulations.individuals.genomes.mutations), "position");
 	
 	// Get TRUE only for all mutations in "GENE" region to subset only these mutations
-	pop_muts_in_gene = (pop_muts.position +1) > chromosome;
+	pop_muts_in_gene = (pop_muts.position +1) > chrS;
 	pop_gene_muts = pop_muts[pop_muts_in_gene];
 	
 	///////////////////////
@@ -297,15 +279,15 @@ s7 late() {
 	sam_muts = sortBy(unique(sam_inds.genomes.mutations), "position");
 	
 	// Get TRUE only for all mutations in "GENE" region to subset only these mutations
-	sam_muts_in_gene = (sam_muts.position +1) > chromosome;
+	sam_muts_in_gene = (sam_muts.position +1) > chrS;
 	sam_gene_muts = sam_muts[sam_muts_in_gene];
 	
 	// Define "GENE" lower and upper bounds and assign an ID
-	gene_upper = c((genomeS-1));
-	gene_lower = c(chromosome);
+	gene_upper = c((fragS-1));
+	gene_lower = c(chrS);
 		
-	genes = cbind(gene_lower, gene_upper);
-	
+	gene = cbind(gene_lower, gene_upper);
+		
 	/////////////////////////
 	// SAMPLE's  MUTATIONS //
 	/////////////////////////
@@ -330,6 +312,7 @@ s7 late() {
 	// Export the output
 	segr_output = c(segr_head, segr_table);
    writeFile(paste0(outputpath + "slim_segr_output_t2_" + simID + ".txt"), segr_output);
+
 
 	///////////////////////////////////////
 	// POPULATION's BENEFICIAL MUTATIONS //
