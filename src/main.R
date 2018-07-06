@@ -14,37 +14,37 @@
 rm(list=ls())
 ls()
 
-################
-## R PACKAGES ##
-################
-#install.packages(c("KScorrect", "moments", "foreach", "parallel", "doParallel"), dependencies = T)
+###########################################
+##              R PACKAGES               ##
+###########################################
+#install.packages(c("moments", "foreach", 
+#                   "doParallel", "parallel"), 
+#                 dependencies = T)
 
 ###########################################
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim               <- 100                              # number of simulations 1000
-model              <- "src/models/model_2_v2.1"
+nsim               <- 100
+slim_model         <- paste0("src/models/model_2_v2.2", ".slim")
+path_to_slim       <- "/usr/local/bin/slim"
 slim_output_folder <- "results/slim_output/"
 egglib_input       <- "results/egglib_input/"
 egglib_output      <- "results/egglib_output/"
-reftable_file      <- "results/reference_table"       # reference table file name
+reftable_file      <- "results/reference_table"
 arg <- commandArgs(TRUE)
 seed               <- arg
 set.seed(seed,"Mersenne-Twister")
-parallel_sims    <- FALSE
-num_of_threads   <- 25
-remove_files     <- TRUE
+parallel_sims      <- TRUE
+num_of_threads     <- 25
+remove_files       <- TRUE
 
-##########################################
-##       EGGLIB SUMMSTAT SETTINGS       ##
-##########################################
+###########################################
+##      EGGLIB SUMMSTAT SETTINGS         ##
+###########################################
 
-python_path     <- "/home/pavinato/py-egglib-3.0.0b19/bin/python"
-#python_path     <- "/home/pavinato/py-egglib-3.0.0b21/bin/python"
-
-egglib_summstat <- "bin/summstats_0.0.py" # this version works with egglib-3.0.0b19
-#egglib_summstat <- "bin/summstats_1.0.py" # this version works with egglib-3.0.0b21
+path_to_python          <- "/home/pavinato/py-egglib-3.0.0b21/bin/python"
+path_to_egglib_summstat <- "bin/summstats_1.0.py" # this version works with egglib-3.0.0b21
 
 wss_wspan = 100
 sfs_bins = 5
@@ -70,10 +70,10 @@ ne1_min = 1
 ne1_max = 1000
 
 pge2_min = 0.00001 
-pge2_max = 0.5
+pge2_max = 1
 
 mpb_min = 0.00001 
-mpb_max = 0.5
+mpb_max = 1
 
 gammaM_gammak = TRUE # if TRUE, rate=1, then only gammaM will be sample from prior
 
@@ -83,7 +83,7 @@ gammaM_max = 1
 gammak_min = 0.001 # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
 gammak_max = 1
 
-rr_rate = 0 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
+rr_rate = 1 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
 rr_min  = 4.2 * 1e-8
 rr_max  = 4.2 * 1e-5
 
@@ -101,7 +101,6 @@ ts2 = 8
 ###########################################
 
 # load required libraries
-#library(KScorrect) # for the log uniform distribution
 library(moments)
 if(parallel_sims){
   library(foreach)    #
@@ -120,18 +119,15 @@ source("src/fun.R")
 if(parallel_sims){
   cl <- makeCluster(num_of_threads)
   registerDoParallel(cl)
-  clusterEvalQ(cl, library(KScorrect))
+  clusterEvalQ(cl, library(moments))
   ref_table <- foreach(sim=seq_len(nsim),.combine=rbind) %dopar% {
-                                                                        #library(plyr)
-                                                                        #library(dplyr)
-                                                                        library(moments)
-                                                                        do_sim(sim, nsim, model,
+                                                                        do_sim(sim, nsim, slim_model, path_to_slim,
                                                                                mu_rate, mu_min, mu_max, 
                                                                                ne0_min, ne0_max, ne1_min, ne1_max, pge2_min, pge2_max, mpb_min, mpb_max, 
                                                                                gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
                                                                                rr_rate, rr_min, rr_max, SS1, SS2, ts2,
                                                                                slim_output_folder, egglib_input, save_extra_data, extra_output,  
-                                                                               python_path, egglib_summstat, wss_wspan, sfs_bins,
+                                                                               path_to_python, path_to_egglib_summstat, wss_wspan, sfs_bins,
                                                                                egglib_output, 
                                                                                remove_files
                                                                                )
@@ -142,13 +138,13 @@ if(parallel_sims){
 }else{
   ref_table <- vector("list", nsim)
   for(sim in 1:nsim){
-    ref_table[[sim]] <- do_sim(sim, nsim, model,
+    ref_table[[sim]] <- do_sim(sim, nsim, slim_model, path_to_slim,
                                mu_rate, mu_min, mu_max, 
                                ne0_min, ne0_max, ne1_min, ne1_max, pge2_min, pge2_max, mpb_min, mpb_max, 
                                gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
                                rr_rate, rr_min, rr_max, SS1, SS2, ts2,
                                slim_output_folder, egglib_input, save_extra_data, extra_output,  
-                               python_path, egglib_summstat, wss_wspan, sfs_bins,
+                               path_to_python, path_to_egglib_summstat, wss_wspan, sfs_bins,
                                egglib_output, 
                                remove_files
                                )

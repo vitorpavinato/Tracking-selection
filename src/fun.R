@@ -1,10 +1,10 @@
-do_sim <- function(sim, nsim, model,
+do_sim <- function(sim, nsim, slim_model, path_to_slim,
                    mu_rate, mu_min, mu_max, 
                    ne0_min, ne0_max, ne1_min, ne1_max, pge2_min, pge2_max, mpb_min, mpb_max, 
                    gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
                    rr_rate, rr_min, rr_max, SS1, SS2, ts2,
                    slim_output_folder, egglib_input, save_extra_data, extra_output,  
-                   python_path, egglib_summstat, wss_wspan, sfs_bins,
+                   path_to_python, path_to_egglib_summstat, wss_wspan, sfs_bins,
                    egglib_output, 
                    remove_files){
   
@@ -25,49 +25,41 @@ do_sim <- function(sim, nsim, model,
   if (mu_rate == 0){
     mu <- 1e-7
   } else {
-    #mu <- rlunif(1, min = mu_min, max = mu_max, base = exp(10)) 
-    mu <- 10^runif(1, min = log10(mu_min), max = log10(mu_max)) # with works if you're unable to install KScorrect package
+    mu <- 10^runif(1, min = log10(mu_min), max = log10(mu_max))
   }
   
   # THETA
   theta_min = 4*ne0_min*mu
   theta_max = 4*ne0_max*mu
-  #theta <- rlunif(1, min = theta_min, max = theta_max, base = exp(10))
   theta <- 10^runif(1, min = log10(theta_min), max = log10(theta_max))
   
   # EFFECTIVE POPULATION SIZE 0 - Ne0
   ne0 = as.integer(theta/(4*mu))
   
   # EFFECTIVE POPULATION SIZE 1 - Ne1
-  #ne1 <- as.integer(rlunif(1, min = ne1_min, max = ne1_max, base = exp(10)))
   ne1 <- as.integer(10^runif(1, min = log10(ne1_min), max = log10(ne1_max)))
   
   # SAMPLING VALUES FOR SLiM GAMMA DISTRIBUTION OF FITNESS EFFECTS
   # GAMMA MEAN
-  #gammaM = round(rlunif(1, min = gammaM_min, max = gammaM_max, base = exp(10)), digits = 4)
   gammaM = round(10^runif(1, min = log10(gammaM_min), max = log10(gammaM_max)), digits = 4)
   
   # GAMMA SHAPE 
   if (gammaM_gammak){
     gammak = gammaM
   } else {
-    #gammak = round(rlunif(1, min = gammak_min, max = gammak_max, base = exp(10)), digits = 4)
     gammak = round(10^runif(1, min = log10(gammak_min), max = log10(gammak_max)), digits = 4)
   }
   
   # PROPORTION OF GENOMIC ELEMENTS G2
-  #pge2 = round(rlunif(1, min = pge2_min, max = pge2_max, base = exp(10)), digits = 6)
-  pge2 = round(10^runif(1, min = log10(pge2_min), max = log10(pge2_max)), digits = 6)
+  pge2 = round(runif(1, min = pge2_min, max = pge2_max), digits = 6)
   
   # PROPORTION OF BENEFICIAL MUTATION IN GENOMIC ELEMENTS G2
-  #mpb = round(rlunif(1, min = mpb_min, max = mpb_max, base = exp(10)), digits = 6)
-  mpb = round(10^runif(1, min = log10(mpb_min), max = log10(mpb_max)), digits = 6)
+  mpb = round(runif(1, min = mpb_min, max = mpb_max), digits = 6)
   
   # RECOMBINATION RATE
   if (rr_rate == 0){
     rr <- 4.2 * 1e-7
   } else {
-    #rr <- 4.2 * (rlunif(1, min = rr_min, max = rr_max, base=exp(10)))
     rr <- 4.2 * (10^runif(1, min = log10(rr_min), max = log10(rr_max)))
   }
   
@@ -88,16 +80,15 @@ do_sim <- function(sim, nsim, model,
   slim_Ne1      <- paste0("-d Ne1=", ne1)
   slim_gamma2_M <- paste0("-d gamma2_M=", gammaM)
   slim_gamma2_k <- paste0("-d gamma2_k=", gammak)
-  slim_pge2     <- paste0("-d pge2=", sprintf("%.6f", pge2))
-  slim_mpb      <- paste0("-d mpb=", sprintf("%.6f", mpb))
+  slim_pge2     <- paste0("-d pge2=", pge2)
+  slim_mpb      <- paste0("-d mpb=", mpb)
   slim_rr       <- paste0("-d rr=", rr)
   slim_SS1      <- paste0("-d SS1=", SS1)
   slim_SS2      <- paste0("-d SS2=", SS2)
   slim_ts2      <- paste0("-d ts2=", ts2)
   slim_output <- paste0("-d ", '"',"outputpath=", slim_output_fullpath, '"')
-  slim_model <- paste0(model, ".slim")
   
-  slim_run <- paste( "/usr/local/bin/slim",
+  slim_run <- paste( path_to_slim,
                      "-s", sim_seed,                # seed  = simulation seed number
                      slim_simID,                    # simID = simulation id number
                      slim_theta,                    # theta
@@ -125,17 +116,17 @@ do_sim <- function(sim, nsim, model,
   ######################
   
   # LOAD T=1 DATA
-  slim_segr_output_t1        <- paste0(slim_output_folder,"slim_segr_output_t1_", sim, ".txt")
-  slim_segr_data_t1 <- read.table(file = slim_segr_output_t1, header = T, check.names = F)
+  slim_segr_output_t1  <- paste0(slim_output_folder,"slim_segr_output_t1_", sim, ".txt")
+  slim_segr_data_t1    <- read.table(file = slim_segr_output_t1, header = T, check.names = F)
   
   # LOAD T=2 DATA
-  slim_segr_output_t2        <- paste0(slim_output_folder,"slim_segr_output_t2_", sim, ".txt")
-  slim_segr_data_t2 <- read.table(file = slim_segr_output_t2, header = T, check.names = F)
+  slim_segr_output_t2  <- paste0(slim_output_folder,"slim_segr_output_t2_", sim, ".txt")
+  slim_segr_data_t2    <- read.table(file = slim_segr_output_t2, header = T, check.names = F)
   
   # Merge segregation data T=1 & T=2
-  segr_merged_data  <- merge.data.frame(slim_segr_data_t1, by.x = c(1,2,3,4,5,6,7,8,9),
-                                        slim_segr_data_t2, by.y = c(1,2,3,4,5,6,7,8,9), 
-                                        all = T, sort = T);
+  segr_merged_data     <- merge.data.frame(slim_segr_data_t1, by.x = c(1,2,3,4,5,6,7,8,9),
+                                           slim_segr_data_t2, by.y = c(1,2,3,4,5,6,7,8,9), 
+                                           all = T, sort = T);
   
   # Check if there is at leas one mutation - else NULL
   if (sum(is.na(segr_merged_data)) == (length(segr_merged_data)-2)){
@@ -149,11 +140,11 @@ do_sim <- function(sim, nsim, model,
   ######################
   
   # LOAD T=2 DATA
-  slim_sel_output_t2        <- paste0(slim_output_folder,"slim_sel_output_t2_", sim, ".txt")
-  slim_sel_data_t2 <- read.table(file = slim_sel_output_t2, header = T, check.names = F)
+  slim_sel_output_t2  <- paste0(slim_output_folder,"slim_sel_output_t2_", sim, ".txt")
+  slim_sel_data_t2    <- read.table(file = slim_sel_output_t2, header = T, check.names = F)
   
   # Save GENETIC LOAD DATA
-  genetic_load = slim_sel_data_t2[1,9]
+  genetic_load <- slim_sel_data_t2[1,9]
   
   # Remove genetic load data  
   slim_sel_data_t2 <- slim_sel_data_t2[, -c(9)]
@@ -306,8 +297,8 @@ do_sim <- function(sim, nsim, model,
   }
   
   # generate text with slim command  
-  egglib_run <- paste(python_path,
-                      paste0(getwd(), "/", egglib_summstat),
+  egglib_run <- paste(path_to_python,
+                      paste0(getwd(), "/", path_to_egglib_summstat),
                       paste0("input-file=", egglib_input, conv_file),
                       paste0("output-file=", egglib_output, "egglib_output", "_", sim, ".txt"),
                       paste0("LSS=", paste0(c("He", "Dj", "WCst"), collapse = ",")),
@@ -319,7 +310,7 @@ do_sim <- function(sim, nsim, model,
   
   # rum egglib summstat on system
   if(.Platform$OS.type == "unix") {
-    slim_run <- paste( ".", egglib_run, sep="")
+    egglib_run <- paste( ".", egglib_run, sep="")
     system(egglib_run)
   }
   
@@ -381,7 +372,7 @@ do_sim <- function(sim, nsim, model,
   
   ## REFERENCE TABLE
   raw_reftable  <- cbind(sim=sim, seed=sim_seed, theta=theta, mu=mu, Ne0=ne0, Ne1=ne1, gammaMean=gammaM, gammak=gammak,
-                         PropGSel=sprintf("%.4f", pge2), PropMSel=sprintf("%.4f", mpb), rr=sprintf("%1.e", rr),
+                         PropGSel=pge2, PropMSel=mpb, rr=rr,
                          genetic_load, global_stats, add_global_stats,
                          ref_locus_stats)
   
