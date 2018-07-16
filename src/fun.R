@@ -352,34 +352,26 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   
   if (any(slim_to_egglib_snps$MT == 1) | any(slim_to_egglib_snps$MT == 2)){
     m1m2 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 2), size=1)
-    while (m1m2 == m1 | m1m2 == m2){
-      m1m2 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 2), size=1)
-    }
   } else {
     m1m2 <- 0
   }
   
   if (any(slim_to_egglib_snps$MT == 1) | any(slim_to_egglib_snps$MT == 3)){
     m1m3 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 3), size=1)
-    while (m1m3 == m1 | m1m3 == m3 | m1m3 == m1m2){
-      m1m3 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 3), size=1)
-    }
   } else {
     m1m3 <- 0
   }
   
   if (any(slim_to_egglib_snps$MT == 2) | any(slim_to_egglib_snps$MT == 3)){
     m2m3 <- sample(which(slim_to_egglib_snps$MT == 2 | slim_to_egglib_snps$MT == 3), size=1)
-    while (m2m3 == m2 | m2m3 == m3 | m2m3 == m1m2 | m2m3 == m1m3){
-      m1m3 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 3), size=1)
-    }
   } else {
     m2m3 <- 0
   }
 
-  m1m2m3 <- sample(nrow(slim_to_egglib_snps), size=1) 
-  while (m1m2m3 == m1 | m1m2m3 == m2 | m1m2m3 == m3 | m1m2m3 == m1m2 | m1m2m3 == m1m3 | m1m2m3 == m2m3){
-    m1m2m3 <- sample(nrow(slim_to_egglib_snps), size=1) 
+  if (any(slim_to_egglib_snps$MT == 1) | any(slim_to_egglib_snps$MT == 2) | any(slim_to_egglib_snps$MT == 3)){
+    m1m2m3 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 2 | slim_to_egglib_snps$MT == 3), size=1)
+  } else {
+    m1m2m3 <- 0
   }
   
   locus_lss_info <- slim_to_egglib_snps[c(m1,m2,m3,m1m2,m1m3,m2m3,m1m2m3), ]
