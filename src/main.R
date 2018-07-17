@@ -32,7 +32,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 5
+nsim                    <- 50
 slim_model              <- paste0("src/models/model", ".slim")
 path_to_slim            <- "/usr/local/bin/slim"
 slim_output_folder      <- "results/slim_output/"
@@ -46,10 +46,10 @@ path_to_python          <- "/home/pavinato/py-egglib-3.0.0b21/bin/python"
 path_to_egglib_summstat <- "bin/summstats_1.0.py" # this version works with egglib-3.0.0b21
 reftable_file_folder    <- "results/reference_table"
 arg <- commandArgs(TRUE)
-#seed                    <- arg
-seed                    <- 1234
+seed                    <- arg
+#seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims           <- TRUE
+parallel_sims           <- FALSE
 num_of_threads          <- 25
 remove_files            <- TRUE
 
@@ -119,15 +119,15 @@ SS1 = 80
 SS2 = 115
 ts2 = 8
 
-genomeS = 135e+6
+genomeS = 135e+5 # 10x less the the size of A. thaliana genome 
 fragS   = 4.5e+6 
-chrN    = 4
+chrN    = 1
 
 ###########################################
 ##      EGGLIB SUMMSTAT SETTINGS         ##
 ###########################################
 
-wss_wspan = 1000
+wss_wspan = 100
 sfs_bins = 10
 
 ###########################################

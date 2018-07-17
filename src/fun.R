@@ -43,10 +43,10 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   Ne1 <- as.integer(10^runif(n = 1, min = log10(ne1_min), max = log10(ne1_max)))
   
   # SAMPLING VALUES FOR SLiM GAMMA DISTRIBUTION OF FITNESS EFFECTS
-  # Gamma Mean
+  # gamma mean
   gammaM = round(10^runif(n = 1, min = log10(gammaM_min), max = log10(gammaM_max)), digits = 4)
   
-  # Gamma Shape 
+  # gamma shape 
   if (gammaM_gammak){
     gammak = gammaM
   } else {
@@ -233,7 +233,7 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
                                     selection=slim_data$selection, alleles=slim_data$alleles)
   
   # assembly final egglib input
-  slim_to_egglib_data <- cbind(slim_to_egglib_data, slim_data[, 10:ncol(slim_data)])
+  slim_to_egglib_data <- cbind(slim_to_egglib_data, slim_data[, (length(header_1)+1):ncol(slim_data)])
   
   # re-code the status column
   slim_to_egglib_data$status <- ifelse(slim_to_egglib_data$status == 1, "S", "NS")
@@ -292,7 +292,7 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   ## READ EGGLIB OUTPUT AND CREATE THE REFERENCE TABLE
   ##-----------------------------------------------------
   
-  # Import egglib output
+  # import egglib output
   egglib_summary_stats <- read.csv(file = paste0(egglib_output_folder,"egglib_output_", sim, ".txt"), header = T, sep = "\t", check.names = F)
   
   # remove redundant summary statistics
@@ -302,11 +302,13 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   colnames(egglib_summary_stats) <- gsub(":", "_", names(egglib_summary_stats))
   
   # GLOBAL SUMMARY STATISTICS
-  # Take only calculated global statistics
+  #-------------------------------------------------------
+  
+  # take only calculated global statistics
   globla_GSS_stats <- egglib_summary_stats[1 , grepl("GSS" , unique(names(egglib_summary_stats)))]
   global_SFS_stats <- egglib_summary_stats[1 , grepl("SFS" , unique(names(egglib_summary_stats)))]
   
-  # Calculate additional GLOBAL summary statistics
+  # calculate additional GLOBAL summary statistics
   mean_LSS_stats <- apply(egglib_summary_stats[,-c(1, 13:29)], 2, function(x){mean(x, na.rm=T)})
   names(mean_LSS_stats) <- c("MEAN_LSS_He", "MEAN_LSS_Dj","MEAN_LSS_WCst", "MEAN_WSS_He", "MEAN_WSS_Dj", 
                              "MEAN_WSS_WCst", "MEAN_WSS_S", "MEAN_WSS_thetaW", "MEAN_WSS_D", "MEAN_WSS_Da", "MEAN_WSS_ZZ")
@@ -333,10 +335,11 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   additional_global_summary_stats <-cbind(as.data.frame(t(mean_LSS_stats)), as.data.frame(t(var_LSS_stats)), as.data.frame(t(kurt_LSS_stats)), 
                                           as.data.frame(t(skew_LSS_stats)), as.data.frame(t(q05_LSS_stats)), as.data.frame(t(q95_LSS_stats)))
   
-  # Assemble GLOBAL summary statistics
+  # assemble GLOBAL summary statistics
   global_summary_stats <- cbind(globla_GSS_stats, global_SFS_stats, additional_global_summary_stats)
   
   # LOCUS-SPECIFIC SUMMARY STATISTICS
+  #-------------------------------------------------------
   
   # sampling snps for the locus-specific reference table
   if (any(slim_to_egglib_snps$MT == 1)){
@@ -381,13 +384,33 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
     m1m2m3 <- 0
   }
   
-  locus_lss_info <- slim_to_egglib_snps[c(m1,m2,m3,m1m2,m1m3,m2m3,m1m2m3), ]
-  locus_lss_stats <- egglib_summary_stats[c(m1,m2,m3,m1m2,m1m3,m2m3,m1m2m3) , grepl("LSS" , unique(names(egglib_summary_stats)))]
-  locus_wss_stats <- egglib_summary_stats[c(m1,m2,m3,m1m2,m1m3,m2m3,m1m2m3) , grepl("WSS" , unique(names(egglib_summary_stats)))]
+  snps_in_reftable <- c(m1,m2,m3,m1m2,m1m3,m2m3,m1m2m3)
   
-  locus_summary_stats <- cbind(locus_lss_info, locus_lss_stats, locus_wss_stats)
+  # calculate sample minor allele frequency
+  slim_to_egglib_genotypes <- slim_to_egglib_data[snps_in_reftable, (grep("alleles", names(slim_to_egglib_data)) + 1):(SS1 + SS2 + 5)]
   
-  ## REFERENCE TABLE - Parei aqui
+  # MAF sample 1
+  S1_genotypes <- slim_to_egglib_genotypes[, grepl(paste0("@pop", 1), names(slim_to_egglib_genotypes))]
+  S1n11 <- apply(S1_genotypes==11, 1, sum, na.rm=T)
+  S1n12 <- apply(S1_genotypes==12 | S1_genotypes==21, 1, sum, na.rm=T)
+  S1n22 <- apply(S1_genotypes==22, 1, sum, na.rm=T)
+  MAF1 <- (2*(S1n22) + S1n12)/((2*(S1n11) + S1n12)+(2*(S1n22) + S1n12))
+    
+  # MAF sample 2
+  S2_genotypes <- slim_to_egglib_genotypes[, grepl(paste0("@pop", 2), names(slim_to_egglib_genotypes))]
+  S2n11 <- apply(S2_genotypes==11, 1, sum, na.rm=T)
+  S2n12 <- apply(S2_genotypes==12 | S2_genotypes==21, 1, sum, na.rm=T)
+  S2n22 <- apply(S2_genotypes==22, 1, sum, na.rm=T)
+  MAF2 <- (2*(S2n22) + S2n12)/((2*(S2n11) + S2n12)+(2*(S2n22) + S2n12))
+  
+  # assemble LOCUS-SPECIFIC summary statistics
+  locus_lss_info <- slim_to_egglib_snps[snps_in_reftable, ]
+  locus_lss_stats <- egglib_summary_stats[snps_in_reftable , grepl("LSS" , unique(names(egglib_summary_stats)))]
+  locus_wss_stats <- egglib_summary_stats[snps_in_reftable , grepl("WSS" , unique(names(egglib_summary_stats)))]
+  
+  locus_summary_stats <- cbind(locus_lss_info, MAF1, MAF2, locus_lss_stats, locus_wss_stats)
+  
+  ## RAW REFERENCE TABLE
   raw_reftable  <- suppressWarnings(cbind(sim=sim, theta=theta, mu=mu, rr=rr, Ne0=Ne0, Ne1=Ne1,
                                           gammaMean=gammaM, gammak=gammak,
                                           PrGWSel=PrGWSel, PropMSel=prbe, GeneticLoad=geneticLoad,
@@ -397,6 +420,7 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   if (remove_files){
     file.remove(paste0(egglib_input_folder, egglib_converted_file))
     file.remove(paste0(egglib_output_folder,"egglib_output_", sim, ".txt"))
+    file.remove(paste0(slim_output_geneticLoad))
   }
   
   ## OUTPUT RAW REFERENCE TABLE
