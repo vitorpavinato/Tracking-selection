@@ -259,6 +259,13 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   slim_to_egglib_snps <- data.frame(ID=paste0(slim_data$chrom, ":", slim_data$position), MID=slim_data$MID,
                                     MT=slim_data$MT, S=slim_data$S, DOM=slim_data$DOM, GO=slim_data$GO)
   
+  ## HANDLE SLiM2 OUTPUT 2 - GENETIC LOAD
+  ##-----------------------------------------------------
+  
+  # merge and get the data
+  slim_output_geneticLoad <- paste0(slim_output_folder,"slim_output_load_", sim, ".txt")
+  geneticLoad <- scan(slim_output_geneticLoad, quiet=T)
+  
   ## READ EGGLIB INPUT AND RUN EGGLIB SUMSTAT
   ##----------------------------------------------------- 
   
@@ -376,13 +383,15 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   
   locus_lss_info <- slim_to_egglib_snps[c(m1,m2,m3,m1m2,m1m3,m2m3,m1m2m3), ]
   locus_lss_stats <- egglib_summary_stats[c(m1,m2,m3,m1m2,m1m3,m2m3,m1m2m3) , grepl("LSS" , unique(names(egglib_summary_stats)))]
+  locus_wss_stats <- egglib_summary_stats[c(m1,m2,m3,m1m2,m1m3,m2m3,m1m2m3) , grepl("WSS" , unique(names(egglib_summary_stats)))]
   
-  locus_summary_stats <- cbind(locus_lss_info, locus_lss_stats)
+  locus_summary_stats <- cbind(locus_lss_info, locus_lss_stats, locus_wss_stats)
   
   ## REFERENCE TABLE - Parei aqui
-  raw_reftable  <- suppressWarnings(cbind(sim=sim, theta=theta, mu=mu, Ne0=Ne0, Ne1=Ne1,
-                                          gammaMean=gammaM, gammak=gammak,PrGWSel=PrGWSel, PropMSel=prbe, rr=rr,
-                                          global_summary_stats,  locus_summary_stats))
+  raw_reftable  <- suppressWarnings(cbind(sim=sim, theta=theta, mu=mu, rr=rr, Ne0=Ne0, Ne1=Ne1,
+                                          gammaMean=gammaM, gammak=gammak,
+                                          PrGWSel=PrGWSel, PropMSel=prbe, GeneticLoad=geneticLoad,
+                                          global_summary_stats, locus_summary_stats))
   
   # remove all intermediate files 
   if (remove_files){
