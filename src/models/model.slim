@@ -134,28 +134,29 @@ initialize() {
 	//p1.setSelfingRate(sr);
 	
 	// Set the generations for each event - it schedule script blocks
-	t1   = Ne0*10;    // for T=1;
-	t1b1 = t1 -1;  	// for ONE generation BEFORE T=1;
-	t2   = t1 + ts2; 	// for T=2
-	t2b2 = t2 -1;  	// for ONE generation BEFORE T=2
+	t1   = Ne0*10;   // for T=1;
+	t1b = t1 -1;  	  // for ONE generation BEFORE T=1;
+	t2   = t1 + ts2; // for T=2
+	t2b = t2 -1;  	  // for ONE generation BEFORE T=2
 	
-	sim.rescheduleScriptBlock(s1, start=t1b1, end=t1b1);
+	sim.rescheduleScriptBlock(s1, start=t1b, end=t1b);
 	
 	sim.rescheduleScriptBlock(s2, start=t1, end=t1);
 	sim.rescheduleScriptBlock(s3, start=t1, end=t1);
 	sim.rescheduleScriptBlock(s4, start=t1, end=t1);
 	
-	sim.rescheduleScriptBlock(s5, start=t2b2, end=t2b2);
+	sim.rescheduleScriptBlock(s5, start=t2b, end=t2b);
 	sim.rescheduleScriptBlock(s6, start=t2, end=t2);
+	sim.rescheduleScriptBlock(s7, start=t2, end=t2);
 }
 
 
 s1 late() {
+	
 	m1.convertToSubstitution = F; //the effect of it change affect the next generation
 	m2.convertToSubstitution = F;
 	m3.convertToSubstitution = F;
 
-	
 	CS1 = asInteger(Ne1 + SS1); //CS1 = the Census Size of T=1 - the effect of it change affect the next generation - 
 	p1.setSubpopulationSize(CS1);
 	cat("Ne1=" + Ne1 + "\t" + "Census Size 1=" + CS1 + "\n");
@@ -187,6 +188,7 @@ s2 late() {
 }
 
 s3 fitness(NULL) {
+	
 	// Kill sampled individuals
 	if (individual.tag == 0)
 		return 0.0;
@@ -195,16 +197,33 @@ s3 fitness(NULL) {
 }
 
 s4 late() {
+	
 	p1.setSubpopulationSize(Ne1); //add this to force sbpopulation size to Ne1
 }
 
 s5 late() {
+	
 	CS2 = asInteger(Ne1 + SS2); //the effect of it change affect the next generation - CS2 = Census Size 2
 	p1.setSubpopulationSize(CS2);
 	cat("Ne1=" + Ne1 + "\t" + "Census Size 2=" + CS2 + "\n");
 }
 
-s6 late() {
+s6 early() {
+	
+	//////////////////////////////////
+	// OUTPUT_1 T=2  - GENETIC LOAD //
+	//////////////////////////////////
+	
+	if (any(sim.mutations.mutationType == m2 | sim.mutations.mutationType == m3)){
+		geneticL = paste((max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL)));
+	} else {
+		geneticL = paste(0);
+	}
+
+	writeFile(filePath=paste0(outputpath + "slim_output_load_" + simID + ".txt"), contents=geneticL, append=F);
+}
+
+s7 late() {
 	
 	/////////
 	// T=2 //
