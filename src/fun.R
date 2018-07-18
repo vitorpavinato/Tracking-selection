@@ -1,7 +1,7 @@
 do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
                    path_to_bgzip, path_to_tabix, path_to_bcftools,
-                   egglib_input_folder, egglib_output_folder, egglib_input_data, 
-                   path_to_python, path_to_egglib_summstat,remove_files,  
+                   egglib_input_folder, egglib_output_folder, 
+                   path_to_python, path_to_egglib_summstat, remove_files,  
                    mu_rate, mu_min, mu_max, ne0_min, ne0_max, ne1_min, ne1_max,  
                    gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
                    PrGWSel_min, PrGWSel_max, prbe_min, prbe_max, 
@@ -190,11 +190,9 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   # remove temporary SLiM outputs from the folder
   if (remove_files){
     file.remove(paste0(slim_output_t1))
-    file.remove(paste0(slim_output_t1_sorted))
     file.remove(paste0(slim_output_t1_sorted, ".gz"))
     file.remove(paste0(slim_output_t1_sorted, ".gz.tbi"))
     file.remove(paste0(slim_output_t2))
-    file.remove(paste0(slim_output_t2_sorted))
     file.remove(paste0(slim_output_t2_sorted, ".gz"))
     file.remove(paste0(slim_output_t2_sorted, ".gz.tbi"))
     file.remove(paste0(slim_output_merged))
@@ -245,15 +243,6 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   # export egglib input file to the egglib input folder
   egglib_converted_file <- paste0("egglib_input", "_", sim, ".txt");
   write.table(slim_to_egglib_data, file = paste0(egglib_input_folder, egglib_converted_file), quote=FALSE, sep="\t", row.names = FALSE)
-  
-  if (!file_test("-d", egglib_input_data)){
-    dir.create(file.path(egglib_input_data))
-  }
-  
-  # this conditional to save some input files
-  if (sim %% 100 == 0){
-    write.table(slim_to_egglib_data, file = paste0(egglib_input_data, egglib_converted_file), quote=FALSE, sep="\t", row.names = FALSE)
-  }
   
   # save only the information of the snps
   slim_to_egglib_snps <- data.frame(ID=paste0(slim_data$chrom, ":", slim_data$position), MID=slim_data$MID,
@@ -418,7 +407,9 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   
   # remove all intermediate files 
   if (remove_files){
-    file.remove(paste0(egglib_input_folder, egglib_converted_file))
+    if (!sim %% 10 == 0){
+      file.remove(paste0(egglib_input_folder, egglib_converted_file))
+    }
     file.remove(paste0(egglib_output_folder,"egglib_output_", sim, ".txt"))
     file.remove(paste0(slim_output_geneticLoad))
   }

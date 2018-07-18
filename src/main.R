@@ -32,16 +32,15 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 50
+nsim                    <- 10
 slim_model              <- paste0("src/models/model", ".slim")
-path_to_slim            <- "/usr/local/bin/slim"
+path_to_slim            <- "/home/pavinato/Softwares/slim3/slim"
 slim_output_folder      <- "results/slim_output/"
 path_to_bgzip           <- "/usr/local/bin/bgzip"
 path_to_tabix           <- "/usr/local/bin/tabix"
 path_to_bcftools        <- "/usr/local/bin/bcftools"
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
-egglib_input_data      <- "data/egglib_input"
 path_to_python          <- "/home/pavinato/py-egglib-3.0.0b21/bin/python"
 path_to_egglib_summstat <- "bin/summstats_1.0.py" # this version works with egglib-3.0.0b21
 reftable_file_folder    <- "results/reference_table"
@@ -157,8 +156,8 @@ if(parallel_sims){
   raw_reftable <- foreach(sim=seq_len(nsim),.combine=rbind) %dopar% {
                                                                         do_sim(sim, nsim, slim_model, path_to_slim, slim_output_folder,
                                                                                path_to_bgzip, path_to_tabix, path_to_bcftools,
-                                                                               egglib_input_folder, egglib_output_folder, egglib_input_data,
-                                                                               path_to_python, path_to_egglib_summstat,remove_files,  
+                                                                               egglib_input_folder, egglib_output_folder,
+                                                                               path_to_python, path_to_egglib_summstat, remove_files,  
                                                                                mu_rate, mu_min, mu_max, ne0_min, ne0_max, ne1_min, ne1_max,  
                                                                                gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
                                                                                PrGWSel_min, PrGWSel_max, prbe_min, prbe_max, 
@@ -176,8 +175,8 @@ if(parallel_sims){
   for(sim in 1:nsim){
     raw_reftable[[sim]] <- do_sim(sim, nsim, slim_model, path_to_slim, slim_output_folder,
                                path_to_bgzip, path_to_tabix, path_to_bcftools,
-                               egglib_input_folder, egglib_output_folder, egglib_input_data,
-                               path_to_python, path_to_egglib_summstat,remove_files,  
+                               egglib_input_folder, egglib_output_folder,
+                               path_to_python, path_to_egglib_summstat, remove_files,  
                                mu_rate, mu_min, mu_max, ne0_min, ne0_max, ne1_min, ne1_max,  
                                gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
                                PrGWSel_min, PrGWSel_max, prbe_min, prbe_max, 
