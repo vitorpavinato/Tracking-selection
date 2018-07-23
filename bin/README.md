@@ -1,7 +1,8 @@
 [//]: # (Hello,)
 
 [//]: # (I'm done with a complete version of the summstats.py script. As we discussed, it takes an input file in the format of the "example.txt" file attached,)
-[//]: # (and generates, based on option values, an output file in the format of the "test.txt" file attached. I attached the current version of the source file) [//]: # (also (the program is complete with this single file).)
+[//]: # (and generates, based on option values, an output file in the format of the "test.txt" file attached. I attached the current version of the source file) 
+[//]: # (also (the program is complete with this single file).)
 
 [//]: # (But it will be more interesting to test it with a more serious input file. Where are you with SLiM?)
 
@@ -70,15 +71,10 @@ Options are all in the form <KEY>=<VALUE> with keys as listed below:
 
 **2. Input file**
 
-The input file is a text file with space/tab separated values. There is
-
-a header line giving column names and, then, one line per site (a site
-
-may be a SNP, and indel or whatever). No term may contain a space. The
-
-order of columns is unimportant, except that the individual columns
-
-must be after the columns with fixed names.
+The input file is a text file with space/tab separated values. There isa header line 
+giving column names and, then, one line per site (a site may be a SNP, and indel or 
+whatever). No term may contain a space. The order of columns is unimportant, except that 
+the individual columns must be after the columns with fixed names.
 
 List of columns:
 
@@ -109,9 +105,8 @@ List of columns:
     ...           and so on for all individuals.
 
 
-The data (values for individual columns) are two-digit strings with
-
-integer values (diploid data only).
+The data (values for individual columns) are two-digit strings with integer values 
+(diploid data only).
 
     - 0 for missing data.
 
@@ -121,23 +116,12 @@ integer values (diploid data only).
 
 **3. Output file**
 
-The output file is a tab-separated table, with a header line and, then,
-
-one line per locus (matching the loci found in the input file.
-
-The first column is titled "ID" and gives the identifier of a loci, in
- 
-the form "chrom:position", as taken from the input file.
-
-All subsequent columns provide the values for a statistic. The column
-
-name is the statistic code (with a "LSS", "WSS", or "GSS" prefix). For
-
-GSS, the value of the statistics is identical for all loci. Missing data
- 
-are denoted by "NA".
-
-
+The output file is a tab-separated table, with a header line and, then, one line per 
+locus (matching the loci found in the input file. The first column is titled "ID" and 
+gives the identifier of a loci, in the form "chrom:position", as taken from the input 
+file. All subsequent columns provide the values for a statistic. The column name is 
+the statistic code (with a "LSS", "WSS", or "GSS" prefix). For GSS, the value of the 
+statistics is identical for all loci. Missing data are denoted by "NA".
 
 ##egglib summstats.py bug fixes
 
@@ -149,7 +133,6 @@ are denoted by "NA".
 - select=rand and select-num error;
 - Some GSS are repeated before GSS columns in the output;
 - Mutation with same position caused a problem in egglib;
-
 	- Mutations in same position were likely with the output code for the first version of the pipeline; however one of the redundant position is removed now during the egglib file conversion in the pipeline v1 and v2;
 	- With the new code to produce the ouputs it is unlikely to have mutations with same positions in the sample; but if it is the case, they it is also checked and redundant positions are removed with the R code;
 	- With the use the vcf-style slim output, if we use the argument MULTIALLELIC=F, BOTH mutation with same position are removed.
