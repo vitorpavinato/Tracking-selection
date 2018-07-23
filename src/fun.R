@@ -1,12 +1,17 @@
 do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
                    path_to_bgzip, path_to_tabix, path_to_bcftools,
-                   egglib_input_folder, egglib_output_folder, 
+                   egglib_input_folder, egglib_output_folder,
                    path_to_python, path_to_egglib_summstat, remove_files,  
-                   mu_rate, mu_min, mu_max, ne0_min, ne0_max, ne1_min, ne1_max,  
-                   gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
-                   PrGWSel_min, PrGWSel_max, prbe_min, prbe_max, 
-                   domN, domN_min, domN_max, domB, domB_min, domB_max, 
-                   rr_rate, rr_min, rr_max,
+                   mu_rate, mu_random, mu_min, mu_max, 
+                   ne0_value, ne0_random, ne0_min, ne0_max,
+                   ne1_value, ne1_random, ne1_min, ne1_max,  
+                   gammaM_value, gammak_value, gammaM_gammak, gammaM_random, gammaM_min, gammaM_max, 
+                   gammak_random, gammak_min, gammak_max, 
+                   PrGWSel_value, PrGWSel_random, PrGWSel_min, PrGWSel_max, 
+                   prbe_value, prbe_random, prbe_min, prbe_max, 
+                   domN, domN_random, domN_min, domN_max, 
+                   domB, domB_random, domB_min, domB_max, 
+                   rr_rate, rr_random, rr_min, rr_max,
                    SS1, SS2, ts2, genomeS, fragS, chrN,
                    wss_wspan, sfs_bins
                    ){
@@ -25,58 +30,84 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   sim_seed  <- as.integer(runif(n = 1, min = 100000000, max = 900000000));
   
   # MUTATION RATE
-  if (mu_rate == 0){
-    mu <- 1e-7
-  } else {
+  if (mu_random){
     mu <- 10^runif(n = 1, min = log10(mu_min), max = log10(mu_max))
+  } else {
+    mu <- mu_rate
   }
   
-  # THETA
-  theta_min = 4*ne0_min*mu
-  theta_max = 4*ne0_max*mu
-  theta <- 10^runif(n = 1, min = log10(theta_min), max = log10(theta_max))
-  
-  # EFFECTIVE POPULATION SIZE 0
-  Ne0 = as.integer(theta/(4*mu))
+  # THETA AND EFFECTIVE POPULATION SIZE 0
+  if (ne0_random){
+    theta_min = 4*ne0_min*mu
+    theta_max = 4*ne0_max*mu
+    theta <- 10^runif(n = 1, min = log10(theta_min), max = log10(theta_max))
+    Ne0 <- as.integer(theta/(4*mu))
+  } else {
+    Ne0 <- ne0_value
+    theta <- 4*Ne0*mu
+  }
   
   # EFFECTIVE POPULATION SIZE 1
-  Ne1 <- as.integer(10^runif(n = 1, min = log10(ne1_min), max = log10(ne1_max)))
+  if (ne1_random){
+    Ne1 <- as.integer(10^runif(n = 1, min = log10(ne1_min), max = log10(ne1_max)))  
+  } else {
+    Ne1 <- ne1_value
+  }
   
   # SAMPLING VALUES FOR SLiM GAMMA DISTRIBUTION OF FITNESS EFFECTS
+  
   # gamma mean
-  gammaM = round(10^runif(n = 1, min = log10(gammaM_min), max = log10(gammaM_max)), digits = 4)
+  if (gammaM_random){
+    gammaM <- round(10^runif(n = 1, min = log10(gammaM_min), max = log10(gammaM_max)), digits = 4)
+  } else {
+    gammaM <- gammaM_value
+  }
   
   # gamma shape 
-  if (gammaM_gammak){
-    gammak = gammaM
+  if (gammak_random){
+    if (gammaM_gammak){
+      gammak = gammaM
+    } else {
+      gammak <- round(10^runif(n = 1, min = log10(gammak_min), max = log10(gammak_max)), digits = 4)
+    }
   } else {
-    gammak = round(10^runif(n = 1, min = log10(gammak_min), max = log10(gammak_max)), digits = 4)
+    gammak <- gammak_value
   }
   
   # GENOME-WIDE PROPORTION OF SELECTED GENOMIC ELEMENTS G2
-  PrGWSel = round(runif(n = 1, min = PrGWSel_min, max = PrGWSel_max), digits = 6)
-  
-  # PROPORTION OF GENOME-WIDE BENEFICIAL MUTATION IN GENOMIC ELEMENTS G2
-  prbe = round(runif(1, min = prbe_min, max = prbe_max), digits = 6)
-  
-  # DOMINANCE FOR GENOME-WIDE MUTATIONS
-  if (domN == 0){
-    dm1 = dm2 <- 0.5
+  if (PrGWSel_random){
+    PrGWSel <- round(runif(n = 1, min = PrGWSel_min, max = PrGWSel_max), digits = 6)
   } else {
-    dm1 = dm2 <- runif(n = 1, min = domN_min, max = domN_max)
+    PrGWSel <-  PrGWSel_value
   }
   
-  if (domB == 0){
-    dm3 <- 0.5
+  # PROPORTION OF GENOME-WIDE BENEFICIAL MUTATION IN GENOMIC ELEMENTS G2
+  if (prbe_random){
+    prbe <- round(runif(1, min = prbe_min, max = prbe_max), digits = 6)
   } else {
+    prbe <- prbe_value
+  }
+  # DOMINANCE FOR GENOME-WIDE MUTATIONS
+  
+  # Neutral mutations - m1 and m2
+  if (domN_random){
+    dm1 = dm2 <- runif(n = 1, min = domN_min, max = domN_max)
+  } else {
+    dm1 = dm2 <- domN
+  }
+  
+  # Beneficial mutations - m3
+  if (domB_random){
     dm3 <- runif(n = 1, min = domB_min, max = domB_max)
+  } else {
+    dm3 <- domB
   }
   
   # RECOMBINATION RATE
-  if (rr_rate == 0){
-    rr <- 4.2 * 1e-7
-  } else {
+  if (rr_random){
     rr <- 4.2 * (10^runif(1, min = log10(rr_min), max = log10(rr_max)))
+  } else {
+    rr <- rr_rate
   }
   
   ## RUM SLiM2
@@ -253,7 +284,7 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   
   # merge and get the data
   slim_output_geneticLoad <- paste0(slim_output_folder,"slim_output_load_", sim, ".txt")
-  geneticLoad <- scan(slim_output_geneticLoad, quiet=T)
+  geneticLoad <- scan(slim_output_geneticLoad, quiet=T, na.strings = "NA")
   
   ## READ EGGLIB INPUT AND RUN EGGLIB SUMSTAT
   ##----------------------------------------------------- 

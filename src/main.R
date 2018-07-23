@@ -32,18 +32,18 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 10
+nsim                    <- 1000
 slim_model              <- paste0("src/models/model", ".slim")
-path_to_slim            <- "/home/pavinato/Softwares/slim3/slim"
+path_to_slim            <- "/home/pavinato/Softwares/slim3/slim" #cluster# "./bin/slim"
 slim_output_folder      <- "results/slim_output/"
-path_to_bgzip           <- "/usr/local/bin/bgzip"
-path_to_tabix           <- "/usr/local/bin/tabix"
-path_to_bcftools        <- "/usr/local/bin/bcftools"
+path_to_bgzip           <- "/usr/local/bin/bgzip"                #cluster# "./bin/bgzip"
+path_to_tabix           <- "/usr/local/bin/tabix"                #cluster# "./bin/tabix"
+path_to_bcftools        <- "/usr/local/bin/bcftools"             #cluster# "./bin/bcftools"
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
-path_to_python          <- "/home/pavinato/py-egglib-3.0.0b21/bin/python"
+path_to_python          <- "/home/pavinato/py-egglib-3.0.0b21/bin/python" #cluster# "./bin/pyegglib21/bin/python"
 path_to_egglib_summstat <- "bin/summstats_1.0.py" # this version works with egglib-3.0.0b21
-reftable_file_folder    <- "results/reference_table"
+reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
 seed                    <- arg
 #seed                    <- 1234
@@ -64,48 +64,64 @@ remove_files            <- TRUE
 # For now, only sampling theta and calculating Ne with known mutation rate mu
 
 # Mutation Rate
-mu_rate = 1 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
+mu_rate <- 1e-7
+mu_random = TRUE
 mu_min  = 1e-8
 mu_max  = 1e-5
 
 # Theta's effective population size 0 - Ne0
+ne0_value <- 182
+ne0_random = TRUE
 ne0_min = 1
 ne0_max = 1000
 
 # EFFECTIVE POPULATION SIZE 1 - Ne1
+ne1_value <- 182
+ne1_random = TRUE
 ne1_min = 1
 ne1_max = 1000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
-gammaM_gammak = TRUE # if TRUE, rate=1, then only gammaM will be sample from prior
-
+gammaM_value <- 0.01
+gammaM_random = TRUE
 gammaM_min = 0.001
 gammaM_max = 1
 
+gammak_value <- 0.01
+gammak_random = TRUE
 gammak_min = 0.001 # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
 gammak_max = 1
 
+gammaM_gammak = TRUE # if TRUE, rate=1, then only gammaM will be sample from prior
+
 # PROPORTION OF THE GENOME THAT HOLDS BENEFICIAL MUTATIONS
+PrGWSel_value <- 0.1
+PrGWSel_random = TRUE
 PrGWSel_min = 0.00001 
 PrGWSel_max = 1
 
 # PROPORTION OF BENEFICIAL MUTATIONS
+prbe_value <- 0.1
+prbe_random = TRUE
 prbe_min = 0.00001 
 prbe_max = 1
 
 # DOMINANCE FOR GENOME-WIDE MUTATIONS
 # Neutral mutations - m1 and m2
-domN = 0 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
+domN <- 0.5
+domN_random = FALSE 
 domN_min = 0.5
 domN_max = 1
 
 # Beneficial mutations - m3
-domB = 0 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
+domB <- 0.5
+domB_random = FALSE 
 domB_min = 0.5
-dom_max = 1
+domB_max = 1
 
 # GENOME-WIDE RECOMBINATION RATE
-rr_rate = 1 # 0 = "FIXED"; 1 = "RANDOM" sample from prior
+rr_rate <- 4.2 * 1e-7
+rr_random = TRUE
 rr_min  = 4.2 * 1e-8
 rr_max  = 4.2 * 1e-5
 
@@ -119,7 +135,7 @@ SS2 = 115
 ts2 = 8
 
 genomeS = 135e+5 # 10x less the the size of A. thaliana genome 
-fragS   = 4.5e+6 
+fragS   = 4.5e+4 
 chrN    = 1
 
 ###########################################
@@ -158,11 +174,16 @@ if(parallel_sims){
                                                                                path_to_bgzip, path_to_tabix, path_to_bcftools,
                                                                                egglib_input_folder, egglib_output_folder,
                                                                                path_to_python, path_to_egglib_summstat, remove_files,  
-                                                                               mu_rate, mu_min, mu_max, ne0_min, ne0_max, ne1_min, ne1_max,  
-                                                                               gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
-                                                                               PrGWSel_min, PrGWSel_max, prbe_min, prbe_max, 
-                                                                               domN, domN_min, domN_max, domB, domB_min, domB_max, 
-                                                                               rr_rate, rr_min, rr_max,
+                                                                               mu_rate, mu_random, mu_min, mu_max, 
+                                                                               ne0_value, ne0_random, ne0_min, ne0_max,
+                                                                               ne1_value, ne1_random, ne1_min, ne1_max,  
+                                                                               gammaM_value, gammak_value, gammaM_gammak, gammaM_random, gammaM_min, gammaM_max, 
+                                                                               gammak_random, gammak_min, gammak_max, 
+                                                                               PrGWSel_value, PrGWSel_random, PrGWSel_min, PrGWSel_max, 
+                                                                               prbe_value, prbe_random, prbe_min, prbe_max, 
+                                                                               domN, domN_random, domN_min, domN_max, 
+                                                                               domB, domB_random, domB_min, domB_max, 
+                                                                               rr_rate, rr_random, rr_min, rr_max,
                                                                                SS1, SS2, ts2, genomeS, fragS, chrN,
                                                                                wss_wspan, sfs_bins
                                                                                )
@@ -174,34 +195,27 @@ if(parallel_sims){
   raw_reftable <- vector("list", nsim)
   for(sim in 1:nsim){
     raw_reftable[[sim]] <- do_sim(sim, nsim, slim_model, path_to_slim, slim_output_folder,
-                               path_to_bgzip, path_to_tabix, path_to_bcftools,
-                               egglib_input_folder, egglib_output_folder,
-                               path_to_python, path_to_egglib_summstat, remove_files,  
-                               mu_rate, mu_min, mu_max, ne0_min, ne0_max, ne1_min, ne1_max,  
-                               gammaM_gammak, gammaM_min, gammaM_max, gammak_min, gammak_max, 
-                               PrGWSel_min, PrGWSel_max, prbe_min, prbe_max, 
-                               domN, domN_min, domN_max, domB, domB_min, domB_max, 
-                               rr_rate, rr_min, rr_max,
-                               SS1, SS2, ts2, genomeS, fragS, chrN,
-                               wss_wspan, sfs_bins
+                                  path_to_bgzip, path_to_tabix, path_to_bcftools,
+                                  egglib_input_folder, egglib_output_folder,
+                                  path_to_python, path_to_egglib_summstat, remove_files,  
+                                  mu_rate, mu_random, mu_min, mu_max, 
+                                  ne0_value, ne0_random, ne0_min, ne0_max,
+                                  ne1_value, ne1_random, ne1_min, ne1_max,  
+                                  gammaM_value, gammak_value, gammaM_gammak, gammaM_random, gammaM_min, gammaM_max, 
+                                  gammak_random, gammak_min, gammak_max, 
+                                  PrGWSel_value, PrGWSel_random, PrGWSel_min, PrGWSel_max, 
+                                  prbe_value, prbe_random, prbe_min, prbe_max, 
+                                  domN, domN_random, domN_min, domN_max, 
+                                  domB, domB_random, domB_min, domB_max, 
+                                  rr_rate, rr_random, rr_min, rr_max,
+                                  SS1, SS2, ts2, genomeS, fragS, chrN,
+                                  wss_wspan, sfs_bins
                                )
   }
   raw_reftable <- do.call(rbind, raw_reftable)
 }
 gc()
 
-#write.table(ref_table,
-#            file      = paste0(reftable_file,".txt"),
-#            sep       = "\t",
-#            quote     = FALSE,
-#            col.names = TRUE,
-#            row.names = FALSE,
-#            append    = FALSE)
-
-#ref_table <- read.table(paste0(reftable_file,".txt"),header=T)
-#dim(ref_table)
-#head(ref_table)
-#summary(ref_table)
 save(raw_reftable,file=paste0(reftable_file,".RData"))
 
 cat("\n Simulations finished\n\n")

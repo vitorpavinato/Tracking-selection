@@ -3,3 +3,11 @@ results/*
 src/.Rhistory
 .Rproj.user
 .Rhistory
+bin/bcftools
+bin/bgzip
+bin/pyegglib21/
+bin/slim
+bin/tabix
+batch.*/
+selsim.*
+trackingselsim.*
