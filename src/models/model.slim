@@ -214,7 +214,7 @@ s6 early() {
 	// OUTPUT_1 T=2  - GENETIC LOAD //
 	//////////////////////////////////
 	
-	if (any(sim.mutations.mutationType == m2 | sim.mutations.mutationType == m3)){
+	if (any(sim.mutations.mutationType == m3)){
 		geneticL = paste((max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL)));
 	} else {
 		geneticL = paste(0);
