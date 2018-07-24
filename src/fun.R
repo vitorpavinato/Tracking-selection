@@ -13,7 +13,8 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
                    domB, domB_random, domB_min, domB_max, 
                    rr_rate, rr_random, rr_min, rr_max,
                    SS1, SS2, ts2, genomeS, fragS, chrN,
-                   wss_wspan, sfs_bins
+                   wss_wspan, sfs_bins,
+                   random_simulations
                    ){
   
   # write progress of simulation on screen 
@@ -360,81 +361,90 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   
   # LOCUS-SPECIFIC SUMMARY STATISTICS
   #-------------------------------------------------------
-  
-  # sampling snps for the locus-specific reference table
-  if (any(slim_to_egglib_snps$MT == 1)){
-    m1 <- sample(which(slim_to_egglib_snps$MT == 1), size=1)
-  } else {
-    m1 <- 0
-  }
+  if (random_simulations){
+    # sampling snps for the locus-specific reference table
+    if (any(slim_to_egglib_snps$MT == 1)){
+      m1 <- sample(which(slim_to_egglib_snps$MT == 1), size=1)
+    } else {
+      m1 <- 0
+    }
         
-  if (any(slim_to_egglib_snps$MT == 2)){
-    m2 <- sample(which(slim_to_egglib_snps$MT == 2), size=1)
-  } else {
-    m2 <- 0
-  }
+    if (any(slim_to_egglib_snps$MT == 2)){
+      m2 <- sample(which(slim_to_egglib_snps$MT == 2), size=1)
+    } else {
+      m2 <- 0
+    }
   
-  if (any(slim_to_egglib_snps$MT == 3)){
-    m3 <- sample(which(slim_to_egglib_snps$MT == 3), size=1)
-  } else {
-    m3 <- 0
-  }
+    if (any(slim_to_egglib_snps$MT == 3)){
+      m3 <- sample(which(slim_to_egglib_snps$MT == 3), size=1)
+    } else {
+      m3 <- 0
+    }
   
-  if (any(slim_to_egglib_snps$MT == 1) | any(slim_to_egglib_snps$MT == 2)){
-    m1m2 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 2), size=1)
-  } else {
-    m1m2 <- 0
-  }
+    if (any(slim_to_egglib_snps$MT == 1) | any(slim_to_egglib_snps$MT == 2)){
+      m1m2 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 2), size=1)
+    } else {
+      m1m2 <- 0
+    }
   
-  if (any(slim_to_egglib_snps$MT == 1) | any(slim_to_egglib_snps$MT == 3)){
-    m1m3 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 3), size=1)
-  } else {
-    m1m3 <- 0
-  }
+    if (any(slim_to_egglib_snps$MT == 1) | any(slim_to_egglib_snps$MT == 3)){
+      m1m3 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 3), size=1)
+    } else {
+      m1m3 <- 0
+    }
   
-  if (any(slim_to_egglib_snps$MT == 2) | any(slim_to_egglib_snps$MT == 3)){
-    m2m3 <- sample(which(slim_to_egglib_snps$MT == 2 | slim_to_egglib_snps$MT == 3), size=1)
-  } else {
-    m2m3 <- 0
-  }
+    if (any(slim_to_egglib_snps$MT == 2) | any(slim_to_egglib_snps$MT == 3)){
+      m2m3 <- sample(which(slim_to_egglib_snps$MT == 2 | slim_to_egglib_snps$MT == 3), size=1)
+    } else {
+      m2m3 <- 0
+    }
 
-  if (any(slim_to_egglib_snps$MT == 1) | any(slim_to_egglib_snps$MT == 2) | any(slim_to_egglib_snps$MT == 3)){
-    m1m2m3 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 2 | slim_to_egglib_snps$MT == 3), size=1)
-  } else {
-    m1m2m3 <- 0
-  }
+    if (any(slim_to_egglib_snps$MT == 1) | any(slim_to_egglib_snps$MT == 2) | any(slim_to_egglib_snps$MT == 3)){
+      m1m2m3 <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 2 | slim_to_egglib_snps$MT == 3), size=1)
+    } else {
+      m1m2m3 <- 0
+    }
   
-  snps_in_reftable <- c(m1,m2,m3,m1m2,m1m3,m2m3,m1m2m3)
+    snps_in_reftable <- c(m1,m2,m3,m1m2,m1m3,m2m3,m1m2m3)
   
-  # calculate sample minor allele frequency
-  slim_to_egglib_genotypes <- slim_to_egglib_data[snps_in_reftable, (grep("alleles", names(slim_to_egglib_data)) + 1):(SS1 + SS2 + 5)]
+    # calculate sample minor allele frequency
+    slim_to_egglib_genotypes <- slim_to_egglib_data[snps_in_reftable, (grep("alleles", names(slim_to_egglib_data)) + 1):(SS1 + SS2 + 5)]
   
-  # MAF sample 1
-  S1_genotypes <- slim_to_egglib_genotypes[, grepl(paste0("@pop", 1), names(slim_to_egglib_genotypes))]
-  S1n11 <- apply(S1_genotypes==11, 1, sum, na.rm=T)
-  S1n12 <- apply(S1_genotypes==12 | S1_genotypes==21, 1, sum, na.rm=T)
-  S1n22 <- apply(S1_genotypes==22, 1, sum, na.rm=T)
-  MAF1 <- (2*(S1n22) + S1n12)/((2*(S1n11) + S1n12)+(2*(S1n22) + S1n12))
+    # MAF sample 1
+    S1_genotypes <- slim_to_egglib_genotypes[, grepl(paste0("@pop", 1), names(slim_to_egglib_genotypes))]
+    S1n11 <- apply(S1_genotypes==11, 1, sum, na.rm=T)
+    S1n12 <- apply(S1_genotypes==12 | S1_genotypes==21, 1, sum, na.rm=T)
+    S1n22 <- apply(S1_genotypes==22, 1, sum, na.rm=T)
+    MAF1 <- (2*(S1n22) + S1n12)/((2*(S1n11) + S1n12)+(2*(S1n22) + S1n12))
     
-  # MAF sample 2
-  S2_genotypes <- slim_to_egglib_genotypes[, grepl(paste0("@pop", 2), names(slim_to_egglib_genotypes))]
-  S2n11 <- apply(S2_genotypes==11, 1, sum, na.rm=T)
-  S2n12 <- apply(S2_genotypes==12 | S2_genotypes==21, 1, sum, na.rm=T)
-  S2n22 <- apply(S2_genotypes==22, 1, sum, na.rm=T)
-  MAF2 <- (2*(S2n22) + S2n12)/((2*(S2n11) + S2n12)+(2*(S2n22) + S2n12))
+    # MAF sample 2
+    S2_genotypes <- slim_to_egglib_genotypes[, grepl(paste0("@pop", 2), names(slim_to_egglib_genotypes))]
+    S2n11 <- apply(S2_genotypes==11, 1, sum, na.rm=T)
+    S2n12 <- apply(S2_genotypes==12 | S2_genotypes==21, 1, sum, na.rm=T)
+    S2n22 <- apply(S2_genotypes==22, 1, sum, na.rm=T)
+    MAF2 <- (2*(S2n22) + S2n12)/((2*(S2n11) + S2n12)+(2*(S2n22) + S2n12))
   
-  # assemble LOCUS-SPECIFIC summary statistics
-  locus_lss_info <- slim_to_egglib_snps[snps_in_reftable, ]
-  locus_lss_stats <- egglib_summary_stats[snps_in_reftable , grepl("LSS" , unique(names(egglib_summary_stats)))]
-  locus_wss_stats <- egglib_summary_stats[snps_in_reftable , grepl("WSS" , unique(names(egglib_summary_stats)))]
+    # assemble LOCUS-SPECIFIC summary statistics
+    locus_lss_info <- slim_to_egglib_snps[snps_in_reftable, ]
+    locus_lss_stats <- egglib_summary_stats[snps_in_reftable , grepl("LSS" , unique(names(egglib_summary_stats)))]
+    locus_wss_stats <- egglib_summary_stats[snps_in_reftable , grepl("WSS" , unique(names(egglib_summary_stats)))]
   
-  locus_summary_stats <- cbind(locus_lss_info, MAF1, MAF2, locus_lss_stats, locus_wss_stats)
+    locus_summary_stats <- cbind(locus_lss_info, MAF1, MAF2, locus_lss_stats, locus_wss_stats)
+  
+  }
   
   ## RAW REFERENCE TABLE
-  raw_reftable  <- suppressWarnings(cbind(sim=sim, theta=theta, mu=mu, rr=rr, Ne0=Ne0, Ne1=Ne1,
-                                          gammaMean=gammaM, gammak=gammak,
-                                          PrGWSel=PrGWSel, PropMSel=prbe, GeneticLoad=geneticLoad,
-                                          global_summary_stats, locus_summary_stats))
+  if (random_simulations){
+    raw_reftable  <- suppressWarnings(cbind(sim=sim, theta=theta, mu=mu, rr=rr, Ne0=Ne0, Ne1=Ne1,
+                                            gammaMean=gammaM, gammak=gammak,
+                                            PrGWSel=PrGWSel, PropMSel=prbe, GeneticLoad=geneticLoad,
+                                            global_summary_stats, locus_summary_stats))
+  } else {
+    raw_reftable  <- suppressWarnings(cbind(sim=sim, theta=theta, mu=mu, rr=rr, Ne0=Ne0, Ne1=Ne1,
+                                            gammaMean=gammaM, gammak=gammak,
+                                            PrGWSel=PrGWSel, PropMSel=prbe, GeneticLoad=geneticLoad,
+                                            global_summary_stats))
+  }
   
   # remove all intermediate files 
   if (remove_files){
