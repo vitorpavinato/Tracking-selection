@@ -19,15 +19,13 @@ for (i in 1:number_of_batches){
     load(paste0("/", working_dir, reftable_file_folder, ".", i, "/", reftable_file, ".RData"))
     
     raw_global_reftable <- raw_reftable[, 1:94]
-    raw_global_reftable <- raw_global_reftable[1, ]
+    raw_global_reftable <- raw_global_reftable[!duplicated(raw_global_reftable$sim), ]
     pooled_raw_global_reftable <- rbind(pooled_raw_global_reftable, raw_global_reftable)
     
     raw_locus_reftable <- raw_reftable[, c(1, 95:length(names(raw_reftable)))]
     pooled_raw_locus_reftable <- rbind(pooled_raw_locus_reftable, raw_locus_reftable)
   }
 }
-
-pooled_reftable <- rbind(pooled_reftable,ref_table)
 
 if (!file_test("-d", paste0("/", working_dir, pooled_reftable_folder))){
   dir.create(file.path(paste0("/", working_dir, pooled_reftable_folder)))
@@ -37,7 +35,7 @@ save(pooled_raw_global_reftable,
      file=paste0("/", working_dir, pooled_reftable_folder, pooled_global_reftable, "_", super_batch_number, ".RData"))
 
 save(pooled_raw_locus_reftable,
-     file=paste0("/", working_dir, pooled_reftable_folder, pooled_loucus_reftable, "_", super_batch_number, ".RData"))
+     file=paste0("/", working_dir, pooled_reftable_folder, pooled_locus_reftable, "_", super_batch_number, ".RData"))
 
 gc()
 
