@@ -12,11 +12,6 @@ pooled_reftable_folder <- "pooled_reference_table/"
 pooled_global_reftable <- "pooled_global_reftable"
 pooled_locus_reftable  <- "pooled_locus_reftable"
 
-
-load("results/reference_table.RData")
-
-names(raw_reftable)
-
 pooled_raw_global_reftable <- NULL
 pooled_raw_locus_reftable <- NULL
 for (i in 1:number_of_batches){
