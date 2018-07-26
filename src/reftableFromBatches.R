@@ -8,7 +8,7 @@ number_of_batches      <- 1000
 working_dir            <- "home/pavinato/project/Tracking-selection/"
 reftable_file_folder   <- "batch"
 reftable_file          <- "reference_table"
-pooled_reftable_folder <- "pooled_reference_table/" 
+pooled_reftable_output <- "results/" 
 pooled_global_reftable <- "pooled_global_reftable"
 pooled_locus_reftable  <- "pooled_locus_reftable"
 
@@ -27,15 +27,15 @@ for (i in 1:number_of_batches){
   }
 }
 
-if (!file_test("-d", paste0("/", working_dir, pooled_reftable_folder))){
-  dir.create(file.path(paste0("/", working_dir, pooled_reftable_folder)))
+if (!file_test("-d", paste0("/", working_dir, pooled_reftable_output))){
+  dir.create(file.path(paste0("/", working_dir, pooled_reftable_output)))
 }
 
 save(pooled_raw_global_reftable,
-     file=paste0("/", working_dir, pooled_reftable_folder, pooled_global_reftable, "_", super_batch_number, ".RData"))
+     file=paste0("/", working_dir, pooled_reftable_output, pooled_global_reftable, "_", super_batch_number, ".RData"))
 
 save(pooled_raw_locus_reftable,
-     file=paste0("/", working_dir, pooled_reftable_folder, pooled_locus_reftable, "_", super_batch_number, ".RData"))
+     file=paste0("/", working_dir, pooled_reftable_output, pooled_locus_reftable, "_", super_batch_number, ".RData"))
 
 gc()
 
