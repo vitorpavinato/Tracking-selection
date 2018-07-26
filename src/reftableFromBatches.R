@@ -12,6 +12,11 @@ pooled_reftable_folder <- "pooled_reference_table/"
 pooled_global_reftable <- "pooled_global_reftable"
 pooled_locus_reftable  <- "pooled_locus_reftable"
 
+
+load("results/reference_table.RData")
+
+names(raw_reftable)
+
 pooled_raw_global_reftable <- NULL
 pooled_raw_locus_reftable <- NULL
 for (i in 1:number_of_batches){
@@ -22,7 +27,7 @@ for (i in 1:number_of_batches){
     raw_global_reftable <- raw_global_reftable[!duplicated(raw_global_reftable$sim), ]
     pooled_raw_global_reftable <- rbind(pooled_raw_global_reftable, raw_global_reftable)
     
-    raw_locus_reftable <- raw_reftable[, c(1, 95:length(names(raw_reftable)))]
+    raw_locus_reftable <- raw_reftable[, c(95:113, 12:94)]
     pooled_raw_locus_reftable <- rbind(pooled_raw_locus_reftable, raw_locus_reftable)
   }
 }
