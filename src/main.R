@@ -3,9 +3,9 @@
 ##########################################################################################################
 ##                            Tracking Selection in Time-Series Data with                               ## 
 ##                                      Forward-time Simulations                                        ##
+##                                      PIPELINE FOR SIMULATIONS                                        ##
 ##########################################################################################################
 
-## Script to perform an ABC analysis 
 ## Vitor Pavinato
 ## vitor.pavinato@supagro.fr
 ## INRA
@@ -32,7 +32,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 100
+nsim                    <- 20
 slim_model              <- paste0("src/models/model", ".slim")
 path_to_slim            <- "/home/pavinato/Softwares/slim3/slim" #cluster# "./bin/slim"
 slim_output_folder      <- "results/slim_output/"
@@ -48,10 +48,10 @@ arg <- commandArgs(TRUE)
 seed                    <- arg
 #seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims           <- TRUE
+parallel_sims           <- FALSE
 num_of_threads          <- 25
-random_simulations      <- FALSE
-remove_files            <- FALSE
+random_simulations      <- TRUE
+remove_files            <- TRUE
 
 ############################################
 ##            SLiM SIMULATION             ##
@@ -65,30 +65,30 @@ remove_files            <- FALSE
 # For now, only sampling theta and calculating Ne with known mutation rate mu
 
 # Mutation Rate
-mu_random = F
+mu_random = TRUE
 mu_rate <- 1e-7
 mu_min  = 1e-8
 mu_max  = 1e-5
 
 # Theta's effective population size 0 - Ne0
-ne0_random = F
+ne0_random = TRUE
 ne0_value <- 500
 ne0_min = 1
 ne0_max = 1000
 
 # EFFECTIVE POPULATION SIZE 1 - Ne1
-ne1_random = F
+ne1_random = TRUE
 ne1_value <- 500
 ne1_min = 1
 ne1_max = 1000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
-gammaM_random = F
+gammaM_random = TRUE
 gammaM_value <- 0.2
 gammaM_min = 0.001
 gammaM_max = 1
 
-gammak_random = F
+gammak_random = TRUE
 gammak_value <- 0.2
 gammak_min = 0.001 # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
 gammak_max = 1
@@ -96,13 +96,13 @@ gammak_max = 1
 gammaM_gammak = TRUE # if TRUE, rate=1, then only gammaM will be sample from prior
 
 # PROPORTION OF THE GENOME THAT HOLDS BENEFICIAL MUTATIONS
-PrGWSel_random = F
+PrGWSel_random = TRUE
 PrGWSel_value <- 0.25
 PrGWSel_min = 0.00001 
 PrGWSel_max = 1
 
 # PROPORTION OF BENEFICIAL MUTATIONS
-prbe_random = F
+prbe_random = TRUE
 prbe_value <- 0.1
 prbe_min = 0.00001 
 prbe_max = 1
@@ -116,12 +116,12 @@ domN_max = 1
 
 # Beneficial mutations - m3
 domB_random = FALSE 
-domB <- 0.5
+domB <- 1
 domB_min = 0.5
 domB_max = 1
 
 # GENOME-WIDE RECOMBINATION RATE
-rr_random = F
+rr_random = TRUE
 rr_rate <- 4.2 * 1e-7
 rr_min  = 4.2 * 1e-8
 rr_max  = 4.2 * 1e-5
@@ -133,7 +133,7 @@ rr_max  = 4.2 * 1e-5
 
 SS1 = 80
 SS2 = 115
-ts2 = 8
+ts2 = 50
 
 genomeS = 135e+5 # 10x less the the size of A. thaliana genome 
 fragS   = 4.5e+4 

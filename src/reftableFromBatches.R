@@ -5,6 +5,7 @@ ls()
 
 super_batch_number     <- 1
 number_of_batches      <- 1000 
+batch_size             <- 20
 working_dir            <- "home/pavinato/project/Tracking-selection/"
 reftable_file_folder   <- "batch"
 reftable_file          <- "reference_table"
@@ -18,11 +19,13 @@ for (i in 1:number_of_batches){
   if (file.exists(paste0("/", working_dir, reftable_file_folder, ".", i, "/", reftable_file, ".RData"))){
     load(paste0("/", working_dir, reftable_file_folder, ".", i, "/", reftable_file, ".RData"))
     
-    raw_global_reftable <- raw_reftable[, 1:94]
+    sim <- raw_reftable$sim + (i - 1) * batch_size
+    
+    raw_global_reftable <- data.frame(sim, raw_reftable[, 2:94])
     raw_global_reftable <- raw_global_reftable[!duplicated(raw_global_reftable$sim), ]
     pooled_raw_global_reftable <- rbind(pooled_raw_global_reftable, raw_global_reftable)
     
-    raw_locus_reftable <- raw_reftable[, c(95:113, 12:94)]
+    raw_locus_reftable <- data.frame(sim, raw_reftable[, c(3:11, 95:113, 12:94)])
     pooled_raw_locus_reftable <- rbind(pooled_raw_locus_reftable, raw_locus_reftable)
   }
 }
