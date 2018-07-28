@@ -285,7 +285,7 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   
   # merge and get the data
   slim_output_geneticLoad <- paste0(slim_output_folder,"slim_output_load_", sim, ".txt")
-  geneticLoad <- scan(slim_output_geneticLoad, quiet=T, na.strings = "NA")
+  geneticLoad <- as.numeric(scan(file = slim_output_geneticLoad, quiet = T, na.strings = "NA", what = "character"))
   
   ## READ EGGLIB INPUT AND RUN EGGLIB SUMSTAT
   ##----------------------------------------------------- 
