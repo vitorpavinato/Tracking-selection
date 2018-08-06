@@ -430,6 +430,7 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
     locus_wss_stats <- egglib_summary_stats[snps_in_reftable , grepl("WSS" , unique(names(egglib_summary_stats)))]
   
     locus_summary_stats <- cbind(locus_lss_info, MAF1, MAF2, locus_lss_stats, locus_wss_stats)
+    locus_summary_stats <- locus_summary_stats[ !duplicated(locus_summary_stats[ , 3]), ] 
   
   }
   
@@ -438,7 +439,7 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
     raw_reftable  <- suppressWarnings(cbind(sim=sim, theta=theta, mu=mu, rr=rr, Ne0=Ne0, Ne1=Ne1,
                                             gammaMean=gammaM, gammak=gammak,
                                             PrGWSel=PrGWSel, PropMSel=prbe, GeneticLoad=geneticLoad,
-                                            global_summary_stats, locus_summary_stats))
+                                            locus_summary_stats, global_summary_stats))
   } else {
     raw_reftable  <- suppressWarnings(cbind(sim=sim, theta=theta, mu=mu, rr=rr, Ne0=Ne0, Ne1=Ne1,
                                             gammaMean=gammaM, gammak=gammak,
