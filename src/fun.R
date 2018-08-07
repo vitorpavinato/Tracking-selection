@@ -111,7 +111,9 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
     rr <- rr_rate
   }
   
-  ## RUM SLiM2
+  #######################
+  ##      RUN SLiM     ##
+  #######################
   ##-------------------
   
   # check if the folder exists
@@ -165,7 +167,7 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
                      slim_output,
                      slim_model)                    # model
   
-  # rum slim on system
+  # run slim on system
   system(slim_run)
   
   ## HANDLE SLiM2 OUTPUT 1 - GENETIC DATA
@@ -287,7 +289,9 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   slim_output_geneticLoad <- paste0(slim_output_folder,"slim_output_load_", sim, ".txt")
   geneticLoad <- as.numeric(scan(file = slim_output_geneticLoad, quiet = T, na.strings = "NA", what = "character"))
   
-  ## READ EGGLIB INPUT AND RUN EGGLIB SUMSTAT
+  #######################
+  ##     RUN EGGLIB    ##
+  #######################
   ##----------------------------------------------------- 
   
   # check if the folder exists
@@ -307,7 +311,7 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
                       paste0("SFS-bins=", sfs_bins),
                       paste0("select=", "all"));
   
-  # rum egglib summstat on system
+  # run egglib summstat on system
   system(egglib_run)
   
   ## READ EGGLIB OUTPUT AND CREATE THE REFERENCE TABLE
@@ -436,12 +440,14 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   
   ## RAW REFERENCE TABLE
   if (random_simulations){
-    raw_reftable  <- suppressWarnings(cbind(sim=sim, theta=theta, mu=mu, rr=rr, Ne0=Ne0, Ne1=Ne1,
+    raw_reftable  <- suppressWarnings(cbind(seed=sim_seed, sim=sim, 
+                                            theta=theta, mu=mu, rr=rr, Ne0=Ne0, Ne1=Ne1,
                                             gammaMean=gammaM, gammak=gammak,
                                             PrGWSel=PrGWSel, PropMSel=prbe, GeneticLoad=geneticLoad,
                                             locus_summary_stats, global_summary_stats))
   } else {
-    raw_reftable  <- suppressWarnings(cbind(sim=sim, theta=theta, mu=mu, rr=rr, Ne0=Ne0, Ne1=Ne1,
+    raw_reftable  <- suppressWarnings(cbind(seed=sim_seed, sim=sim, 
+                                            theta=theta, mu=mu, rr=rr, Ne0=Ne0, Ne1=Ne1,
                                             gammaMean=gammaM, gammak=gammak,
                                             PrGWSel=PrGWSel, PropMSel=prbe, GeneticLoad=geneticLoad,
                                             global_summary_stats))
@@ -449,9 +455,7 @@ do_sim <- function(sim, nsim, slim_model, path_to_slim, slim_output_folder,
   
   # remove all intermediate files 
   if (remove_files){
-    if (!sim %% 10 == 0){
-      file.remove(paste0(egglib_input_folder, egglib_converted_file))
-    }
+    file.remove(paste0(egglib_input_folder, egglib_converted_file))
     file.remove(paste0(egglib_output_folder,"egglib_output_", sim, ".txt"))
     file.remove(paste0(slim_output_geneticLoad))
   }
