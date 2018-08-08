@@ -42,14 +42,14 @@ path_to_bcftools        <- "/usr/local/bin/bcftools"             #cluster# "./bi
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
 path_to_python          <- "/home/pavinato/py-egglib-3.0.0b21/bin/python" #cluster# "./bin/pyegglib21/bin/python"
-path_to_egglib_summstat <- "bin/summstats_1.0.py" # this version works with egglib-3.0.0b21
+path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b21
 reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
 seed                    <- arg
 #seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
 parallel_sims           <- FALSE
-num_of_threads          <- 25
+num_of_threads          <- 28
 random_simulations      <- TRUE
 remove_files            <- TRUE
 
@@ -84,12 +84,12 @@ ne1_max = 1000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
 gammaM_random = TRUE
-gammaM_value <- 0.2
+gammaM_value <- 0.1
 gammaM_min = 0.001
 gammaM_max = 1
 
 gammak_random = TRUE
-gammak_value <- 0.2
+gammak_value <- 0.1
 gammak_min = 0.001 # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
 gammak_max = 1
 
@@ -222,7 +222,7 @@ gc()
 if (random_simulations){
   save(raw_reftable,file=paste0(reftable_file,".RData"))
 } else {
-  save(raw_reftable,file=paste0(reftable_file,"_replicates.RData"))
+  save(raw_reftable,file=paste0(reftable_file,"_fixed.RData"))
 }
 
 cat("\n Simulations finished\n\n")
