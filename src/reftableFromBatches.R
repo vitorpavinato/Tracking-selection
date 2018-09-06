@@ -27,13 +27,13 @@ ls()
 super_batch_number     <- 1
 number_of_batches      <- 1000 
 batch_size             <- 20
-working_dir            <- "home/pavinato/Desktop/Tracking-selection-02.1-copy/"
+working_dir            <- "home/pavinato/Desktop/Tracking-selection-02.1/"
 reftable_file_folder   <- "batch"
 reftable_file          <- "reference_table"
 pooled_reftable_output <- "results/" 
 pooled_reftable_file   <- "pooled_reftable"
 parallel_pool          <- TRUE
-num_of_threads         <- 20
+num_of_threads         <- 28
 
 ###########################################
 ##         LOAD REQUIRED PACKAGES        ##
@@ -59,9 +59,10 @@ poolFromBatches <- function(i){
     
       sim <- raw_reftable$sim + (i - 1) * batch_size
       raw_reftable <- data.frame(sim, raw_reftable[, c(2:11, 95:113, 12:94)])
-      #raw_reftable <- data.frame(sim, raw_reftable)
+      #raw_reftable <- data.frame(sim, raw_reftable[, -c(1)])
+      
+      return(raw_reftable)
     }
-  return(raw_reftable)
 }
 
 
@@ -72,8 +73,9 @@ if(parallel_pool){
   
   ## PARALLEL PROCESSING
   #------------------------------------------
-  pooled_raw_reftable <- foreach(i=1:number_of_batches,.combine=rbind) %dopar% {
-                                                                                poolFromBatches(i=i)
+  pooled_raw_reftable <- foreach(i=1:number_of_batches,.combine=rbind, 
+                                                       .errorhandling="pass", .verbose = TRUE) %dopar% {
+                                                                                                          poolFromBatches(i=i)
     }
   stopCluster(cl)
     
@@ -87,7 +89,7 @@ if(parallel_pool){
     
       sim <- raw_reftable$sim + (i - 1) * batch_size
       raw_reftable <- data.frame(sim, raw_reftable[, c(2:11, 95:113, 12:94)])
-      #raw_reftable <- data.frame(sim, raw_reftable)
+      #raw_reftable <- data.frame(sim, raw_reftable[, -c(1)])
       pooled_raw_reftable <- rbind(pooled_raw_reftable, raw_reftable)
     }
   }

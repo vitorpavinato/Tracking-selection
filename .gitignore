@@ -1,5 +1,10 @@
 data/*
 results/*
+src/study_reftables_noDOM.R
+src/abcrfanalyses.R
+src/abcrf.R
+src/abcfun.R
+src/abcmain.R
 src/.Rhistory
 .Rproj.user
 .Rhistory
