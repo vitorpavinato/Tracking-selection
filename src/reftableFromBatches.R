@@ -27,7 +27,7 @@ ls()
 super_batch_number     <- 1
 number_of_batches      <- 1000 
 batch_size             <- 20
-working_dir            <- "home/pavinato/Desktop/Tracking-selection-02.1/"
+working_dir            <- "/home/pavinato/Desktop/TrackSel-01.1/"
 reftable_file_folder   <- "batch"
 reftable_file          <- "reference_table"
 pooled_reftable_output <- "results/" 
@@ -57,10 +57,9 @@ poolFromBatches <- function(i){
     if (file.exists(paste0("/", working_dir, reftable_file_folder, ".", i, "/", reftable_file, ".RData"))){
       load(paste0("/", working_dir, reftable_file_folder, ".", i, "/", reftable_file, ".RData"))
     
-      sim <- raw_reftable$sim + (i - 1) * batch_size
-      raw_reftable <- data.frame(sim, raw_reftable[, c(2:11, 95:113, 12:94)])
+      raw_reftable$sim <- raw_reftable$sim + (i - 1) * batch_size
+      #raw_reftable <- data.frame(sim, raw_reftable[, c(2:11, 95:113, 12:94)])
       #raw_reftable <- data.frame(sim, raw_reftable[, -c(1)])
-      
       return(raw_reftable)
     }
 }
@@ -87,8 +86,8 @@ if(parallel_pool){
     if (file.exists(paste0("/", working_dir, reftable_file_folder, ".", i, "/", reftable_file, ".RData"))){
       load(paste0("/", working_dir, reftable_file_folder, ".", i, "/", reftable_file, ".RData"))
     
-      sim <- raw_reftable$sim + (i - 1) * batch_size
-      raw_reftable <- data.frame(sim, raw_reftable[, c(2:11, 95:113, 12:94)])
+      raw_reftable$sim <- raw_reftable$sim + (i - 1) * batch_size
+      #raw_reftable <- data.frame(sim, raw_reftable[, c(2:11, 95:113, 12:94)])
       #raw_reftable <- data.frame(sim, raw_reftable[, -c(1)])
       pooled_raw_reftable <- rbind(pooled_raw_reftable, raw_reftable)
     }

@@ -1,4 +1,4 @@
-import sys, os, egglib, random
+import sys, os, egglib, random, math
 
 class Application(object):
     """
@@ -36,6 +36,8 @@ Options are all in the form <KEY>=<VALUE> with keys as listed below:
                             * ZZ          Rozas et al.'s ZZ
     - GSS               list of global summary statistics, taken from
                         the WSS list, plus SFS
+    - GSSp              global summary statistics that should be computed
+                        for each population (excluding SFS, Dj, and WCst)
     - wspan             span of windows on each side of the focal locus
                         (in bp, such that the window size is actually
                         2 * wspan + 1 bp)
@@ -54,6 +56,9 @@ Options are all in the form <KEY>=<VALUE> with keys as listed below:
     - debug             activate debug mode:
                             * 0   default mode
                             * 1   debug mode: exception trace displayed
+                        when setting this option to 1, it is recommended
+                        to do it as first argument to cope with an error
+                        occurring during argument parsing 
 
 2. Input file
 
@@ -99,9 +104,13 @@ are denoted by "NA".
 """
 
     valid_LSS = ['He', 'Dj', 'WCst']
-    valid_WSS = valid_LSS + ['S', 'thetaW', 'D', 'Da', 'ZZ', 'ZnS']
+    valid_LSSp = ['He', 'Dj']
+    valid_WSS = valid_LSS + ['S', 'thetaW', 'Pi', 'D', 'Da', 'ZZ', 'ZnS']
+    valid_WSSp = valid_LSSp + ['S', 'thetaW', 'Pi', 'D', 'ZZ', 'ZnS']
     valid_GSS = valid_WSS[:]
+    valid_GSSp = ['He', 'S', 'thetaW', 'Pi', 'D', 'Da', 'ZZ', 'ZnS']
     valid_select = ['all', 'rand', 'freq', 'list']
+    alph = egglib.alphabets.Alphabet('int', [1,2,3], [-1])
 
     def run(self, args):
         """
@@ -115,8 +124,11 @@ are denoted by "NA".
             self.get_input_file()
             self.compute_SFS()
             self.compute_GSS()
+            self.compute_GSSp()
             self.compute_LSS()
+            self.compute_LSSp()
             self.compute_WSS()
+            self.compute_WSSp()
             self.export()
 
     def get_args(self, args):
@@ -124,11 +136,14 @@ are denoted by "NA".
         This method interprets the list of arguments, check their
         consistency, and set the ``_params`` dictionary. In particular,
         lists of statistics are in ``_params['GSS']``,
-        ``_params['LSS']``, and ``_params['WSS']``.
+        ``_params['LSS']``, and ``_params['WSS']`` (as well as their
+        per-population counterparts).
         """
 
         # initialize parameter dict
-        self._params = {'LSS': set(), 'WSS': set(), 'GSS': set(), 'SFS': False, 'debug': 0}
+        self._params = {'LSS': set(), 'LSSp': set(), 'WSS': set(),
+                'WSSp': set(), 'GSS': set(), 'GSSp': set(),
+                'SFS': False, 'debug': 0}
 
         # get arguments
         for arg in args:
@@ -144,6 +159,11 @@ are denoted by "NA".
                 for stat in stats:
                     if stat not in self.valid_LSS: raise ValueError, 'invalid LSS: {0}'.format(stat)
                 self._params['LSS'].update(stats)
+            elif key == 'LSSp':
+                stats = value.split(',')
+                for stat in stats:
+                    if stat not in self.valid_LSSp: raise ValueError, 'invalid LSSp: {0}'.format(stat)
+                self._params['LSSp'].update(stats)
             elif key == 'GSS':
                 stats = value.split(',')
                 for stat in stats:
@@ -151,11 +171,21 @@ are denoted by "NA".
                         self._params['SFS'] = True
                     elif stat not in self.valid_GSS: raise ValueError, 'invalid GSS: {0}'.format(stat)
                 self._params['GSS'].update(stats) # SFS is added but will be filtered out during sorting
+            elif key == 'GSSp':
+                stats = value.split(',')
+                for stat in stats:
+                    if stat not in self.valid_GSSp: raise ValueError, 'invalid GSSp: {0}'.format(stat)
+                self._params['GSSp'].update(stats)
             elif key == 'WSS':
                 stats = value.split(',')
                 for stat in stats:
                     if stat not in self.valid_WSS: raise ValueError, 'invalid WSS: {0}'.format(stat)
                 self._params['WSS'].update(stats)
+            elif key == 'WSSp':
+                stats = value.split(',')
+                for stat in stats:
+                    if stat not in self.valid_WSSp: raise ValueError, 'invalid WSSp: {0}'.format(stat)
+                self._params['WSSp'].update(stats)
             elif key == 'wspan':
                 try: value = int(value)
                 except ValueError: raise ValueError, 'invalid value for \'window-size\': {0}'.format(value)
@@ -182,7 +212,9 @@ are denoted by "NA".
             elif key == 'debug':
                 if value == '0': self._params['debug'] = 0
                 elif value == '1': self._params['debug'] = 1
-                else: raise ValueError, 'invalud valud for \'debug\': {0}'.format(value)
+                else: raise ValueError, 'invalud value for \'debug\': {0}'.format(value)
+            else:
+                raise ValueError, 'invalid option: ' + key
 
         # check required parameters & consistency
         if 'input-file' not in self._params: raise ValueError, '\'input-file\' argument is required'
@@ -201,6 +233,9 @@ are denoted by "NA".
         self._params['GSS'] = [i for i in self.valid_GSS if i in self._params['GSS']]
         self._params['LSS'] = [i for i in self.valid_LSS if i in self._params['LSS']]
         self._params['WSS'] = [i for i in self.valid_WSS if i in self._params['WSS']]
+        self._params['GSSp'] = [i for i in self.valid_GSSp if i in self._params['GSSp']]
+        self._params['LSSp'] = [i for i in self.valid_LSSp if i in self._params['LSSp']]
+        self._params['WSSp'] = [i for i in self.valid_WSSp if i in self._params['WSSp']]
 
     def get_input_file(self):
         """
@@ -237,6 +272,7 @@ are denoted by "NA".
             name, pop = idv.split('@')
             if pop not in self._sample: self._sample[pop] = []
             self._sample[pop].append(name)
+        self._pops = sorted(self._sample)
 
         # report sample structure
         print '[summstats] sample structure'
@@ -245,15 +281,20 @@ are denoted by "NA".
         for pop in sorted(self._sample):
             print '    {0}:\t{1}'.format(pop, len(self._sample[pop]))
 
-        # generate structure object
+        # generate structure objects
         acc = 0
         ingr = {}
-        for i, v in enumerate(self._sample.itervalues()):
+        for i, p in enumerate(self._pops):
             ingr[i] = {}
-            for j in xrange(len(v)):
-                ingr[i][j+acc] = (j+acc,)
-            acc += len(v)
+            for j in xrange(len(self._sample[p])):
+                ingr[i][2*(j+acc)] =(2*(j+acc),)
+                ingr[i][2*(j+acc)+1] = (2*(j+acc)+1,)
+            acc += len(self._sample[p])
         self._struct = egglib.stats.make_structure({0: ingr}, {})
+        self._struct_per_pop = {}
+        for k in self._sample:
+            idx = self._pops.index(k)
+            self._struct_per_pop[k] = egglib.stats.make_structure({0: {idx: ingr[idx]}}, {})
 
         # initialize tables
         if selectionQ: self._selection = []
@@ -296,7 +337,9 @@ are denoted by "NA".
             if line['status'] not in set(['IG', 'NS', 'S']): raise IOError, 'invalid `status` value at site number {0}'.format(idx)
             self._status.append(line['status'])
 
-            site = egglib.stats.site_from_list(map(self.get_snp, [line['{0}@{1}'.format(sam, pop)] for pop in self._sample for sam in self._sample[pop]]), [])
+            site = map(self.get_snp, [line['{0}@{1}'.format(sam, pop)] for pop in self._pops for sam in self._sample[pop]])
+            site = [j for i in site for j in i]
+            site = egglib.stats.site_from_list(site, [], self.alph)
             self._sites.append(site)
 
         # define list of sites
@@ -312,8 +355,8 @@ are denoted by "NA".
         """
         Convert genotype
         """
-        if x == '0': return (None, None)
-        if x == '00': return (None, None)
+        if x == '0': return (-1, -1)
+        if x == '00': return (-1, -1)
         if len(x) != 2: raise ValueError, 'invalid genotype: {0}'.format(x)
         try: a, b = map(int, x)
         except ValueError: raise ValueError, 'invalid genotype: {0}'.format(x)
@@ -331,9 +374,7 @@ are denoted by "NA".
             for site in self._sites:
                 MAF = cs.process_site(site)['MAF']
                 if MAF is not None:
-                    idx = cs.process_site(site)['MAF'] / 0.5 * self._params['SFS-bins']
-                    idx = int(idx)
-                    if idx == self._params['SFS-bins']: idx -= 1
+                    idx = int(math.ceil(MAF/0.5 * self._params['SFS-bins']))-1
                     self._SFS[idx] += 1
 
     def compute_GSS(self):
@@ -343,9 +384,21 @@ are denoted by "NA".
         if len(self._params['GSS']) == 0:
             self._GSS_stats = []
             return
-        cs = egglib.stats.ComputeStats(multi_hits=True)
+        cs = egglib.stats.ComputeStats(multi_hits=True, struct=self._struct)
         cs.add_stats(*self._params['GSS'])
-        self._GSS_stats = cs.process_sites(self._sites, struct=self._struct)
+        self._GSS_stats = cs.process_sites(self._sites)
+
+    def compute_GSSp(self):
+        """
+        Compute global summary statistics per population. Store data in ``_GSSp_stats``.
+        """
+        self._GSSp_stats = {}
+        if len(self._params['GSSp']) == 0: return
+        cs = egglib.stats.ComputeStats()
+        cs.add_stats(*self._params['GSSp'])
+        for pop in self._pops:
+            cs.configure(multi_hits=True, struct=self._struct_per_pop[pop])
+            self._GSSp_stats[pop] = cs.process_sites(self._sites)
 
     def compute_LSS(self):
         """
@@ -353,10 +406,24 @@ are denoted by "NA".
         """
         self._LSS_stats = []
         if len(self._params['LSS']) == 0: return
-        cs = egglib.stats.ComputeStats(multi_hits=True)
+        cs = egglib.stats.ComputeStats(multi_hits=True, struct=self._struct)
         cs.add_stats(*self._params['LSS'])
         for idx in self._selection:
-            self._LSS_stats.append(cs.process_site(self._sites[idx], struct=self._struct))
+            self._LSS_stats.append(cs.process_site(self._sites[idx]))
+
+    def compute_LSSp(self):
+        """
+        Compute locus summary statistics. Store data in ``_LSSp_stats``.
+        """
+        self._LSSp_stats = {}
+        if len(self._params['LSSp']) == 0: return
+        cs = egglib.stats.ComputeStats()
+        cs.add_stats(*self._params['LSSp'])
+        for k in self._struct_per_pop: self._LSSp_stats[k] = []
+        for idx in self._selection:
+            for pop in self._pops:
+                cs.configure(multi_hits=True, struct=self._struct_per_pop[pop])
+                self._LSSp_stats[pop].append(cs.process_site(self._sites[idx]))
 
     def compute_WSS(self):
         """
@@ -364,7 +431,7 @@ are denoted by "NA".
         """
         self._WSS_stats = []
         if len(self._params['WSS']) == 0: return
-        cs = egglib.stats.ComputeStats(multi_hits=True)
+        cs = egglib.stats.ComputeStats(multi_hits=True, struct=self._struct)
         cs.add_stats(*self._params['WSS'])
         for idx in self._selection:
             first = idx
@@ -377,10 +444,31 @@ are denoted by "NA".
                 if self._chrom[last+1] != self._chrom[idx] or self._pos[last+1] > self._pos[idx]+self._params['wspan']:
                     break
                 last += 1
+            self._WSS_stats.append(cs.process_sites(self._sites[first:last+1]))
 
-            print 'window: contig={0} first={1} center={2} last={3} num={4}'.format(self._chrom[idx], self._pos[first]+1, self._pos[idx]+1, self._pos[last]+1, last-first+1)
-
-            self._WSS_stats.append(cs.process_sites(self._sites[first:last+1], struct=self._struct))
+    def compute_WSSp(self):
+        """
+        Compute window summary statistics. Store data in ``_WSSp_stats``.
+        """
+        self._WSSp_stats = {}
+        if len(self._params['WSSp']) == 0: return
+        cs = egglib.stats.ComputeStats()
+        cs.add_stats(*self._params['WSSp'])
+        for k in self._struct_per_pop: self._WSSp_stats[k] = []
+        for idx in self._selection:
+            first = idx
+            while first > 0:
+                if self._chrom[first-1] != self._chrom[idx] or self._pos[first-1] < self._pos[idx]-self._params['wspan']:
+                    break
+                first -= 1
+            last = idx
+            while last < len(self._sites) - 1:
+                if self._chrom[last+1] != self._chrom[idx] or self._pos[last+1] > self._pos[idx]+self._params['wspan']:
+                    break
+                last += 1
+            for k, struct in self._struct_per_pop.iteritems():
+                cs.configure(multi_hits=True, struct=struct)
+                self._WSSp_stats[k].append(cs.process_sites(self._sites[first:last+1]))
 
     def export(self):
         """
@@ -389,15 +477,21 @@ are denoted by "NA".
         try: f = open(self._params['output-file'], 'w')
         except IOError: raise ValueError, 'cannot open this file: {0}'.format(self._params['output-file'])
         f.write('ID')
+
         for ss in self._params['LSS']: f.write('\tLSS:{0}'.format(ss))
+        for ss in self._params['LSSp']: f.write(''.join(['\tLSSp:{0}:{1}'.format(ss, p) for p in self._pops]))
         for ss in self._params['WSS']: f.write('\tWSS:{0}'.format(ss))
+        for ss in self._params['WSSp']: f.write(''.join(['\tWSSp:{0}:{1}'.format(ss, p) for p in self._pops]))
         for ss in self._params['GSS']: f.write('\tGSS:{0}'.format(ss))
+        for ss in self._params['GSSp']: f.write(''.join(['\tGSSp:{0}:{1}'.format(ss, p) for p in self._pops]))
         if self._params['SFS']:
             f.write('\t' + '\t'.join(['SFS:{0}'.format(i+1) for i in xrange(self._params['SFS-bins'])]))
         f.write('\n')
 
         GSS = '\t'.join(['NA' if self._GSS_stats[ss] is None else str(self._GSS_stats[ss]) for ss in self._params['GSS']])
         if len(GSS) > 0: GSS = '\t'+GSS
+        GSSp = '\t'.join(['NA' if self._GSSp_stats[p][ss] is None else str(self._GSSp_stats[p][ss]) for ss in self._params['GSSp'] for p in self._pops])
+        if len(GSSp) > 0: GSSp = '\t'+GSSp
 
         print '[summstats] exporting statistics for {0} loc{1}'.format(len(self._selection), 'us' if len(self._selection) == 1 else 'i')
         for idx, site_idx in enumerate(self._selection):
@@ -405,10 +499,15 @@ are denoted by "NA".
             for ss in self._params['LSS']:
                 if self._LSS_stats[idx][ss] is None: f.write('\tNA')
                 else: f.write('\t{0}'.format(self._LSS_stats[idx][ss]))
+            for ss in self._params['LSSp']:
+                f.write('\t' + '\t'.join(['NA' if self._LSSp_stats[p][idx][ss] is None else str(self._LSSp_stats[p][idx][ss]) for p in self._pops]))
             for ss in self._params['WSS']:
                 if self._WSS_stats[idx][ss] is None: f.write('\tNA')
                 else: f.write('\t{0}'.format(self._WSS_stats[idx][ss]))
+            for ss in self._params['WSSp']:
+                f.write('\t' + '\t'.join(['NA' if self._WSSp_stats[p][idx][ss] is None else str(self._WSSp_stats[p][idx][ss]) for p in self._pops]))
             f.write(GSS)
+            f.write(GSSp)
             if self._params['SFS']: f.write('\t' + '\t'.join(map(str, self._SFS)))
             f.write('\n')
         f.close()
@@ -422,9 +521,10 @@ if __name__ == '__main__':
     except Exception as e:
         sys.stderr.write('an error occurred: {0}\n'.format(e.message))
         print '[summstats] failed'
-        if app._params['debug'] > 0:
+        if '_params' not in dir(app) or app._params['debug'] > 0:
             print '[summstat] full traceback'
             raise
     else:
         print '[summstats] done'
+
 
