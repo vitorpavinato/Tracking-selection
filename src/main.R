@@ -60,7 +60,7 @@ remove_files            <- TRUE
 ############################################
 
 # MODEL SELECTION
-model_type = 2             # 1 = de novo beneficial mutations ("DN"); 
+model_type = 3             # 1 = de novo beneficial mutations ("DN"); 
                            # 2 = background selection ("BS"); 
                            # 3 = selection on standing variation ("SV");
 
@@ -260,8 +260,8 @@ if(parallel_sims){
 }
 gc()
 
-raw_reftable_header <- c("seed","sim","mu","rr","Neq","N","gammaMean","gammak","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPStrMSel","PrSAMMSel","PrSAMStrMSel",paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
-                         "IBDNeGWtotal",paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWNtotal",paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
+raw_reftable_header <- c("seed","sim","mu","rr","Neq","N","gammaMean","gammak","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPStrMSel","PrSAMMSel","PrSAMStrMSel", paste0("PedigreeNe",seq(from=0,to=(tau))),
+                         "PedigreeNetotal",paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWtotal",paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWNtotal",paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
                          "IBDNeGWStotal",paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau)),"IBDNeChrtotal",paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
                          "VARNeGWtotal",paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"VARNeGWNtotal",paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
                          "VARNeGWStotal",paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau)),"VARNeChrtotal","FSTfdrMT05","FSTfdrMT10","FSTfdrMT25","FSTfdrNS05","FSTfdrNS10","FSTfdrNS25","FSTprecMT75","FSTprecMT95","FSTprecNS75","FSTprecNS95",

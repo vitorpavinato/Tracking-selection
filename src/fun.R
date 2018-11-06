@@ -137,7 +137,7 @@ do_sim <- function(sim, nsim,
     tc = 0
   }
   
-  ## GENOME SPECIFICATION
+  ## GENOME SPECIFICATION - outside the loop
   ##------------------------------------------------------------------------------------------------
   
   # DEFINE CHROMOSOME STRUCTURE
@@ -147,10 +147,10 @@ do_sim <- function(sim, nsim,
     chrS = as.integer(genomeS/chrN)
   }
   
-  ## FIXED VALUES DEFINING GENOMIC STRUCTURE 
+  ## FIXED VALUES DEFINING GENOMIC STRUCTURE
   ##------------------------------------------------------------------------------------------------
   
-  # RECOMBINATION LIMITS - MOVE IT TO AN EXTERNAL SCRIPT - IT IS FIXED ACROSS SIMULATIONS
+  # RECOMBINATION LIMITS - MOVE IT TO AN EXTERNAL SCRIPT - IT IS FIXED ACROSS SIMULATIONS - - outside the loop
   if (chrN == 1){
     rr_limits = c((genomeS-1), genomeS, ((genomeS+chrS)-1))
     rr_rates = c(rr, 0.5, rr)
@@ -349,6 +349,56 @@ do_sim <- function(sim, nsim,
     }
   }
   
+  ## HANDLING SLiM2 OUTPUT t1:t2 - PEDIGREE NE
+  ##------------------------------------------------------------------------------------------------
+  
+  # load the data
+  slim_output_pedigreene <- paste0(slim_output_folder,"slim_output_pedigreeNe_", sim, ".txt")
+  
+  if (file.exists(slim_output_pedigreene)){
+    info_pedigreene_file = file.info(slim_output_pedigreene)
+    
+    if (info_pedigreene_file$size != 0){
+      pedigreene <- read.csv(file = slim_output_pedigreene, sep = "\t", header = F, col.names = c("gen", "time", "ne"), na.strings = "NA")
+      
+      if (nrow(pedigreene) != 0){
+        
+        # check if there is any -Inf/Inf and susbstitute it for NA
+        pedigreene[which(is.infinite(pedigreene$ne)), "ne"] <- NA
+        
+        # take the Pedigree Ne for each interval
+        pedigreeNetimes <- pedigreene$ne
+        pedigreeNetimes <- as.data.frame(t(pedigreene$ne))
+        names(pedigreeNetimes) <- paste0("PedigreeNe",seq(from=0,to=(tau)))
+        
+        # get the Pedigree Ne for the whole period - harmonic mean
+        pedigreeNetotal <- 1/mean(1/pedigreene$ne, na.rm = TRUE)
+        
+      } else {
+        pedigreeNetimes <- as.data.frame(t(rep(NA, tau+1)))
+        names(pedigreeNetimes) <- paste0("PedigreeNe",seq(from=0,to=(tau)))
+        pedigreeNetotal <- as.numeric(NA)
+      }
+      
+    } else {
+      pedigreeNetimes <- as.data.frame(t(rep(NA, tau+1)))
+      names(pedigreeNetimes) <- paste0("PedigreeNe",seq(from=0,to=(tau)))
+      pedigreeNetotal <- as.numeric(NA)
+    }
+    
+  } else {
+    pedigreeNetimes <- as.data.frame(t(rep(NA, tau+1)))
+    names(pedigreeNetimes) <- paste0("PedigreeNe",seq(from=0,to=(tau)))
+    pedigreeNetotal <- as.numeric(NA)
+  }
+  
+  # remove temporary genetic load output from slim_output folder
+  if (remove_files){
+    if (file.exists(slim_output_pedigreene)){
+      file.remove(slim_output_pedigreene)
+    }
+  }
+  
   ## HANDLING SLiM2 OUTPUT t1:t2 - POPULATION ALLELE FREQUENCIES
   ##------------------------------------------------------------------------------------------------
   
@@ -371,7 +421,7 @@ do_sim <- function(sim, nsim,
     strong_pop_prbe <- as.numeric(NA)
   }
   
-  ## NE CALCULATION
+  ## IBD and VAR NE CALCULATION
   
   # load file with the last generation
   slim_output_lastgen <- paste0(slim_output_folder,"slim_output_lastgen_", sim, ".txt")
@@ -398,7 +448,7 @@ do_sim <- function(sim, nsim,
   }
   
   ## ALL MUTATION TYPES
-  if (nrow(merged_genome)!=0){
+  if (nrow(merged_genome) != 0){
     
     he_merged_genome <- merged_genome[ , grepl("^HE" , names(merged_genome))]
     he_merged_genome[is.na(he_merged_genome)] <- 0
@@ -488,7 +538,7 @@ do_sim <- function(sim, nsim,
     names(VARNeGWNtotal) <- "VARNeGWNtotal"
   }
   
-  ## ONLY SELECTED MUTATIONS - ##DOUBT## - HERE
+  ## ONLY SELECTED MUTATIONS - ##DOUBT## - HERE FOR SV
   if (any(merged_genome$MT == 3)){
     
     merged_genome_selection <- merged_genome[merged_genome$MT == 3,]
@@ -548,7 +598,7 @@ do_sim <- function(sim, nsim,
     merged_extraChr <- merged_empty
   }
   
-  if (nrow(merged_extraChr)!=0){
+  if (nrow(merged_extraChr) != 0){
     
     he_merged_extraChr <- merged_extraChr[ , grepl("HE" , names(merged_extraChr))]
     he_merged_extraChr[is.na(he_merged_extraChr)] <- 0
@@ -659,6 +709,10 @@ do_sim <- function(sim, nsim,
     file.remove(paste0(slim_output_sample_merged))
   }
   
+  if (nrow(slim_raw_data) != 0){
+    
+  }
+  
   # RADseq or WGS Data
   if (data_type == 2){
     
@@ -741,7 +795,7 @@ do_sim <- function(sim, nsim,
   #  }
   #}
   
-  # function to plug into the apply function to re-code the chromosome name
+  # function to plug into the apply function to re-code the chromosome name - remove from loop
   chromtagging <- function(x){
     
     for (i in seq(from = 1, to = (length(chrs_lowers)-1))){
@@ -1200,7 +1254,8 @@ do_sim <- function(sim, nsim,
                                           PrGWSel, prbe, 
                                           averageGenLoad, lastGenLoad,
                                           actual_pop_prbe, strong_pop_prbe,
-                                          actual_sample_prbe, strong_sample_prbe, 
+                                          actual_sample_prbe, strong_sample_prbe,
+                                          pedigreeNetimes, pedigreeNetotal,
                                           IBDNeGWtimes, IBDNeGWtotal, IBDNeGWNtimes, IBDNeGWNtotal, 
                                           IBDNeGWStimes, IBDNeGWStotal, IBDNeChrtimes, IBDNeChrtotal,
                                           VARNeGWtimes, VARNeGWtotal, VARNeGWNtimes, VARNeGWNtotal, 
