@@ -13,6 +13,13 @@ function (o)setSVSelectionCoeff(o$ x)
 		}
 	}
 
+function (io)countGametes(io$ x)
+	{
+		n = sum(sim.subpopulations.individuals.pedigreeParentIDs == x);
+		return n;	
+	}
+
+
 initialize() {
 
 	// Genome-wide Neutral mutations fitness
@@ -123,11 +130,14 @@ s0 late() {
 
 s1 2 early() {
 
-	if (any(sim.mutationTypes == m3)){
+	if (any(sim.mutationTypes == m3))
+	{
 		if (max(sim.subpopulations.cachedFitness(NULL)) == mean(sim.subpopulations.cachedFitness(NULL)))
+		{
 			geneticL = 0;
-		else
-		   geneticL = (max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL));
+		} else {
+			geneticL = (max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL));
+		}	   
 	} else {
 		geneticL = 0;
 	}
@@ -169,9 +179,11 @@ s3 fitness(NULL) {
 	
 	// Kill sampled individuals
 	if (individual.tag == 0)
+	{
 		return 0.0;
-	else
+	} else {
 		return relFitness;
+	}
 }
 
 s4 late() {
@@ -183,9 +195,11 @@ s5 2 early() {
 
 	if (any(sim.mutationTypes == m3)){
 		if (max(sim.subpopulations.cachedFitness(NULL)) == mean(sim.subpopulations.cachedFitness(NULL)))
+		{
 			geneticL = 0;
-		else
-		   geneticL = ((max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL))) * ((N+SS1)/N);
+		} else {
+			geneticL = ((max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL))) * ((N+SS1)/N);
+		}	  
 	} else {
 		geneticL = 0;
 	}
@@ -218,13 +232,15 @@ s6 2 early() {
 	
 	if (any(sim.mutationTypes == m3)){
 		if (max(sim.subpopulations.cachedFitness(NULL)) == mean(sim.subpopulations.cachedFitness(NULL)))
+		{
 			geneticL = 0;
-		else
-		   geneticL = (max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL));
+		} else {
+			geneticL = (max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL));
+		}   
 	} else {
 		geneticL = 0;
 	}
-	
+
 	// Save the generation and the genetic load
 	geneticL = paste(sim.generation + "\t" + (sim.generation - T0) + "\t" + geneticL);
 	
@@ -270,27 +286,25 @@ s7 2 late() {
 	// output as a TXT file - CS1
 	writeFile(filePath=paste0(outputpath + "slim_output_paaf_extraChr_t" + (sim.generation - T0) + "_" + simID + ".txt"), contents=paaf_file_extraChr, append=F); // CS1 - output PAF only for all m4 - extra chr
 	
-	// MEAN RELATEDNESS
+	// PEDIGREE EFFECTIVE SIZE
 	//...................
 	
-	//meanRelat = sapply(sim.subpopulations.individuals, "mean(sim.subpopulations.individuals.relatedness(applyValue));");
+	uniqParents = unique(sim.subpopulations.individuals.pedigreeParentIDs);
+	
+	gametes = sapply(uniqParents, "countGametes(applyValue);"); // k => Gamete contribution of each parente (g-1 individuals);
 
-	// Save the generation and individual's mean relatedness
-	//meanRelat = paste(sim.generation + "\t" + (sim.generation - T0) + "\t" + paste(meanRelat));
+	if (size(gametes) > 1)
+	{
+		pedigreene = (4*p1.individualCount)/(2+var(gametes));
+	} else {
+		pedigreene = (4*p1.individualCount)/(2+0);
+	}
 	
-	// Output as a TXT file
-	//writeFile(filePath=paste0(outputpath + "slim_output_meanRelat_" + simID + ".txt"), contents=meanRelat , append=T);
-	
-	// NUMBER OF UNIQUE PARENTS's ID
-	//...................
-	
-	UniqParent = size(unique(sim.subpopulations.individuals.pedigreeParentIDs));
-
 	// Save the generation and the number of unique parentes IDs
-	UniqParent = paste(sim.generation + "\t" + (sim.generation - T0) + "\t" + UniqParent);
+	pedigreene = paste((sim.generation - T0) + "\t" + pedigreene);
 	
 	// Output as a TXT file
-	writeFile(filePath=paste0(outputpath + "slim_output_uniqParent_" + simID + ".txt"), contents=UniqParent , append=T);
+	writeFile(filePath=paste0(outputpath + "slim_output_pedigreeNe_" + simID + ".txt"), contents=pedigreene , append=T);
 }
 
 s8 late() {
