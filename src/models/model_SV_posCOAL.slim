@@ -301,7 +301,7 @@ s7 2 late() {
 	}
 	
 	// Save the generation and the number of unique parentes IDs
-	pedigreene = paste((sim.generation - T0) + "\t" + pedigreene);
+	pedigreene = paste(sim.generation + "\t" + (sim.generation - T0) + "\t" + pedigreene);
 	
 	// Output as a TXT file
 	writeFile(filePath=paste0(outputpath + "slim_output_pedigreeNe_" + simID + ".txt"), contents=pedigreene , append=T);
