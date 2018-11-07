@@ -33,14 +33,14 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 1
+nsim                    <- 3
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
-path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim" #cluster# "./bin/slim"
+path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "./bin/slim"
 slim_output_folder      <- "results/slim_output/"
-path_to_bgzip           <- "/usr/local/bin/bgzip"                #cluster# "./bin/bgzip"
-path_to_tabix           <- "/usr/local/bin/tabix"                #cluster# "./bin/tabix"
-path_to_bcftools        <- "/usr/local/bin/bcftools"             #cluster# "./bin/bcftools"
+path_to_bgzip           <- "/usr/local/bin/bgzip"                         #cluster# "./bin/bgzip"
+path_to_tabix           <- "/usr/local/bin/tabix"                         #cluster# "./bin/tabix"
+path_to_bcftools        <- "/usr/local/bin/bcftools"                      #cluster# "./bin/bcftools"
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
 path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #cluster# "./bin/pyegglib21/bin/python"
@@ -67,7 +67,7 @@ model_type = 3             # 1 = de novo beneficial mutations ("DN");
 # GENOME SPECIFICATION
 genomeS = 135e+5           # genomeS => Genome Size;
 fragS   = 4.5e+4           # fragS   => Fragment size to define g1 or g2 elements;
-chrN    = 5                # chrN    => Chromosome number to define independent genome blocks;
+chrN    = 4                # chrN    => Chromosome number to define independent genome blocks;
 
 chrTAG = TRUE              # chrTAG  => if TRUE, SNPs are tagged with chromosome ID based on its position;
 
@@ -78,10 +78,10 @@ radseq_readL = 100         # radseq_readL => the read length produced by the RAD
 radseq_cov = 0.20          # radseq_cov   => the proportion of the genome covered by the RADseq reads;
 
 
-missing_data = 0.25        # missing_data => specify the proportion of missing genotypes;
+missing_data = 0.25        # missing_data => specify the proportion of missing genotypes per locus;
 
 SS1 = 80                   # SS1 => Sample Size for T=1;
-SS2 = 115                  # SS2 => Sample Size for T=2;
+SS2 = 115                  # SS2 => Sample Size for T=2; Total sample size (SS1+SS2) should be at least > 3;
 tau = 8                    # tau => Time between samples;
 
 ############################################

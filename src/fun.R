@@ -1,3 +1,84 @@
+## MODEL SELECTION
+##------------------------------------------------------------------------------------------------
+
+model_title <- switch(model_type, "DN", "BS", "SV")
+
+
+## FIXED VALUES DEFINING GENOMIC STRUCTURE
+##------------------------------------------------------------------------------------------------
+
+# DEFINE CHROMOSOME SIZE AND RECOMBINATION LIMITS
+if (chrN == 1){
+  chrS = as.integer(0.25 * genomeS) 
+  
+  rr_limits = c((genomeS-1), genomeS, ((genomeS+chrS)-1))
+  #rr_rates = c(rr, 0.5, rr)
+} else {
+  chrS = as.integer(genomeS/chrN)
+  
+  chrs_uppers = NULL
+  chrs_lowers = NULL
+  rr_limits = NULL
+  for(i in seq(from = 1, to = (chrN-1))){
+    uppers = ((i*chrS)-1)
+    chrs_uppers = c(chrs_uppers, uppers)
+    
+    lowers = (uppers+1)
+    chrs_lowers = c(chrs_lowers, lowers)
+    
+    limits = c(uppers, lowers)
+    rr_limits = c(rr_limits, limits)
+  }
+  #rr_rates = rep(c(rr, 0.5), as.integer(length(rr_limits)/2))
+  
+  #rr_limits = c(rr_limits, (genomeS-1), genomeS, ((genomeS+chrS)-1))
+  #rr_rates = c(rr_rates, rr, 0.5, rr)
+}	
+
+## IF IT IS A RADseq DATA
+##----------------------------------------------------------------------------------------------
+if (data_type == 2){
+  
+  # Set the total number of the RADseq reads
+  radseq_readN = as.integer((genomeS/radseq_readL))
+  
+  # Set the STARTS and the ENDS for the RADseq reads
+  rad_starts = NULL
+  for(i in seq(from = 0, to = radseq_readN-1)){
+    starts    = i*radseq_readL
+    rad_starts = c(rad_starts, starts)
+  }
+  
+  # Sample the starts/ends pairs of RADseq reads
+  radseq_sampled <- sort(sample(rad_starts, as.integer(radseq_cov*radseq_readN), replace = FALSE))
+  
+  # Generate the vector of positionS for the sampled RADseq reads
+  rad_interval = NULL
+  for(i in seq_along(radseq_sampled)){
+    interval   = radseq_sampled[i]:(radseq_sampled[i]+(radseq_readL-1))
+    rad_interval = c(rad_interval, interval) # I should put it separatly in another script
+  }
+  
+  #slim_raw_data <- slim_raw_data[which(slim_raw_data$position %in% rad_interval), ]
+}
+
+## ADDITIONAL FUNCTIONS
+##---------------------------------------------------------------------------------------------
+# function to plug into the apply function to re-code the chromosome name
+chromtagging <- function(x){
+  
+  for (i in seq(from = 1, to = (length(chrs_lowers)-1))){
+    
+    if (x < chrs_lowers[1]){ chrom_idd = paste0("chr", 1)}
+    
+    else if (x > chrs_lowers[length(chrs_lowers)]){ chrom_idd = paste0("chr", (length(chrs_lowers)+1))}
+    
+    else if (x > chrs_lowers[i] & x < chrs_lowers[i+1]){ chrom_idd = paste0("chr", (i+1))}
+    
+  }
+  return(chrom_idd)
+}
+
 do_sim <- function(sim, nsim, 
                    path_to_slim_model, slim_model_prefix, model_type,
                    path_to_slim, slim_output_folder,
@@ -27,11 +108,6 @@ do_sim <- function(sim, nsim,
   if (sim==1 | sim%%10==0 | sim==nsim){
     cat(paste(sim,"of",nsim))  
   }
-  
-  ## MODEL SELECTION
-  ##------------------------------------------------------------------------------------------------
-  
-  model_title <- switch(model_type, "DN", "BS", "SV")
   
   ## SAMPLED VALUES FOR SIMULATION's PARAMETERS
   ##------------------------------------------------------------------------------------------------
@@ -123,6 +199,17 @@ do_sim <- function(sim, nsim,
     rr <- rr_rate
   }
   
+  # the distribution of rr across chromosome limits
+  if (chrN == 1){
+    rr_rates = c(rr, 0.5, rr)
+  } else {
+    rr_rates = rep(c(rr, 0.5), as.integer(length(rr_limits)/2))
+
+    # updated  
+    rr_limits = c(rr_limits, (genomeS-1), genomeS, ((genomeS+chrS)-1))
+    rr_rates = c(rr_rates, rr, 0.5, rr)
+  }	
+  
   # SELFING RATE
   if (selfing_random){
     selfing <- (10^runif(1, min = log10(selfing_min), max = log10(selfing_max)))
@@ -139,40 +226,40 @@ do_sim <- function(sim, nsim,
   
   ## GENOME SPECIFICATION - outside the loop
   ##------------------------------------------------------------------------------------------------
-  
+  #
   # DEFINE CHROMOSOME STRUCTURE
-  if (chrN == 1){
-    chrS = as.integer(0.25 * genomeS) 
-  } else {
-    chrS = as.integer(genomeS/chrN)
-  }
+  #if (chrN == 1){
+  #  chrS = as.integer(0.25 * genomeS) 
+  #} else {
+  #  chrS = as.integer(genomeS/chrN)
+  #}
   
   ## FIXED VALUES DEFINING GENOMIC STRUCTURE
   ##------------------------------------------------------------------------------------------------
   
   # RECOMBINATION LIMITS - MOVE IT TO AN EXTERNAL SCRIPT - IT IS FIXED ACROSS SIMULATIONS - - outside the loop
-  if (chrN == 1){
-    rr_limits = c((genomeS-1), genomeS, ((genomeS+chrS)-1))
-    rr_rates = c(rr, 0.5, rr)
-  } else {
-    chrs_uppers = NULL
-    chrs_lowers = NULL
-    rr_limits = NULL
-    for(i in seq(from = 1, to = (chrN-1))){
-      uppers = ((i*chrS)-1)
-      chrs_uppers = c(chrs_uppers, uppers)
-      
-      lowers = (uppers+1)
-      chrs_lowers = c(chrs_lowers, lowers)
-      
-      limits = c(uppers, lowers)
-      rr_limits = c(rr_limits, limits)
-    }
-    rr_rates = rep(c(rr, 0.5), as.integer(length(rr_limits)/2))
-    
-    rr_limits = c(rr_limits, (genomeS-1), genomeS, ((genomeS+chrS)-1))
-    rr_rates = c(rr_rates, rr, 0.5, rr)
-  }	
+  #if (chrN == 1){
+  #  rr_limits = c((genomeS-1), genomeS, ((genomeS+chrS)-1))
+  #  rr_rates = c(rr, 0.5, rr) #  INSIDE LOOP
+  #} else {
+  #  chrs_uppers = NULL
+  #  chrs_lowers = NULL
+  #  rr_limits = NULL
+  #  for(i in seq(from = 1, to = (chrN-1))){
+  #    uppers = ((i*chrS)-1)
+  #    chrs_uppers = c(chrs_uppers, uppers)
+  #    
+  #    lowers = (uppers+1)
+  #    chrs_lowers = c(chrs_lowers, lowers)
+  #    
+  #    limits = c(uppers, lowers)
+  #    rr_limits = c(rr_limits, limits)
+  #  }
+  #  rr_rates = rep(c(rr, 0.5), as.integer(length(rr_limits)/2)) # INSIDE LOOP
+  #  
+  #  rr_limits = c(rr_limits, (genomeS-1), genomeS, ((genomeS+chrS)-1))
+  #  rr_rates = c(rr_rates, rr, 0.5, rr) # INSIDE LOOP
+  #}	
   
   ## RANDOM VALUES DEFINING GENOMIC ELEMENTS  
   ##------------------------------------------------------------------------------------------------
@@ -539,9 +626,9 @@ do_sim <- function(sim, nsim,
   }
   
   ## ONLY SELECTED MUTATIONS - ##DOUBT## - HERE FOR SV
-  if (any(merged_genome$MT == 3)){
+  if (any(merged_genome$S > 0)){
     
-    merged_genome_selection <- merged_genome[merged_genome$MT == 3,]
+    merged_genome_selection <- merged_genome[merged_genome$S > 0,]
     
     he_merged_genome_selection <- merged_genome_selection[ , grepl("HE" , names(merged_genome_selection))]
     he_merged_genome_selection[is.na(he_merged_genome_selection)] <- 0
@@ -557,7 +644,7 @@ do_sim <- function(sim, nsim,
     colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
     
     # IBD NE Genome-wide selection total
-    IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1])))
+    IBDNeGWStotal <- -((tau-tc)/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[tc+1])))
     names(IBDNeGWStotal) <- "IBDNeGWStotal"
     
     # VAR NE Genome-wide selection for each time interval
@@ -566,7 +653,7 @@ do_sim <- function(sim, nsim,
     colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
     
     # VAR NE Genome-wide neutral total
-    VARNeGWStotal <- tau*mean_he_merged_genome_selection[1]/(2*mean((paaf_merged_genome_selection[,1] - paaf_merged_genome_selection[,(tau+1)])^2))
+    VARNeGWStotal <- (tau-tc)*mean_he_merged_genome_selection[(tc+1)]/(2*mean((paaf_merged_genome_selection[,(tc+1)] - paaf_merged_genome_selection[,(tau+1)])^2))
     names(VARNeGWStotal) <- "VARNeGWStotal"
   
   } else {
@@ -709,34 +796,34 @@ do_sim <- function(sim, nsim,
     file.remove(paste0(slim_output_sample_merged))
   }
   
-  if (nrow(slim_raw_data) != 0){
-    
-  }
-  
-  # RADseq or WGS Data
+  # if it is a RADseq data
   if (data_type == 2){
     
     # Set the total number of the RADseq reads
-    radseq_readN = as.integer((genomeS/radseq_readL))
+    #radseq_readN = as.integer((genomeS/radseq_readL))
     
     # Set the STARTS and the ENDS for the RADseq reads
-    rad_starts = NULL
-    for(i in seq(from = 0, to = radseq_readN-1)){
-      starts    = i*radseq_readL
-      rad_starts = c(rad_starts, starts)
-    }
+    #rad_starts = NULL
+    #for(i in seq(from = 0, to = radseq_readN-1)){
+    #  starts    = i*radseq_readL
+    #  rad_starts = c(rad_starts, starts)
+    #}
     
     # Sample the starts/ends pairs of RADseq reads
-    radseq_sampled <- sort(sample(rad_starts, as.integer(radseq_cov*radseq_readN), replace = FALSE))
+    #radseq_sampled <- sort(sample(rad_starts, as.integer(radseq_cov*radseq_readN), replace = FALSE))
     
     # Generate the vector of position in the sampled RADseq reads
-    rad_interval = NULL
-    for(i in seq_along(radseq_sampled)){
-      interval   = radseq_sampled[i]:(radseq_sampled[i]+(radseq_readL-1))
-      rad_interval = c(rad_interval, interval) # I should put it separatly in another script
-    }
+    #rad_interval = NULL
+    #for(i in seq_along(radseq_sampled)){
+    #  interval   = radseq_sampled[i]:(radseq_sampled[i]+(radseq_readL-1))
+    #  rad_interval = c(rad_interval, interval) # I should put it separatly in another script
+    #}
     
     slim_raw_data <- slim_raw_data[which(slim_raw_data$position %in% rad_interval), ]
+  }
+  
+  if (nrow(slim_raw_data) != 0){
+  
   }
   
   # split the data
@@ -766,7 +853,7 @@ do_sim <- function(sim, nsim,
   # re-assemble the data
   slim_data <- cbind(slim_snp_info, slim_snp_geno)
   
-  # remove monomophormic mutations
+  # remove monomorphic mutations
   slim_data <- slim_data[keep_snps, ]
   
   # remove duplicated mutations
@@ -796,19 +883,19 @@ do_sim <- function(sim, nsim,
   #}
   
   # function to plug into the apply function to re-code the chromosome name - remove from loop
-  chromtagging <- function(x){
-    
-    for (i in seq(from = 1, to = (length(chrs_lowers)-1))){
-      
-      if (x < chrs_lowers[1]){ chrom_idd = paste0("chr", 1)}
-      
-      else if (x > chrs_lowers[length(chrs_lowers)]){ chrom_idd = paste0("chr", (length(chrs_lowers)+1))}
-      
-      else if (x > chrs_lowers[i] & x < chrs_lowers[i+1]){ chrom_idd = paste0("chr", (i+1))}
-        
-    }
-    return(chrom_idd)
-  }
+  #chromtagging <- function(x){
+  #  
+  #  for (i in seq(from = 1, to = (length(chrs_lowers)-1))){
+  #    
+  #    if (x < chrs_lowers[1]){ chrom_idd = paste0("chr", 1)}
+  #    
+  #    else if (x > chrs_lowers[length(chrs_lowers)]){ chrom_idd = paste0("chr", (length(chrs_lowers)+1))}
+  #    
+  #   else if (x > chrs_lowers[i] & x < chrs_lowers[i+1]){ chrom_idd = paste0("chr", (i+1))}
+  #      
+  #  }
+  #  return(chrom_idd)
+  #}
   
   # re-code the chromosome name
   if (chrTAG){
