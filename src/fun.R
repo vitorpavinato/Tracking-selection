@@ -3,7 +3,6 @@
 
 model_title <- switch(model_type, "DN", "BS", "SV")
 
-
 ## FIXED VALUES DEFINING GENOMIC STRUCTURE
 ##------------------------------------------------------------------------------------------------
 
@@ -79,6 +78,8 @@ chromtagging <- function(x){
   return(chrom_idd)
 }
 
+## SIMULATIONS
+##---------------------------------------------------------------------------------------------
 do_sim <- function(sim, nsim, 
                    path_to_slim_model, slim_model_prefix, model_type,
                    path_to_slim, slim_output_folder,
@@ -659,10 +660,10 @@ do_sim <- function(sim, nsim,
   } else {
     
     IBDNeGWStimes <- as.data.frame(t(rep(NA, tau)))
-    colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+    colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
     
     IBDNeGWStotal <- as.numeric(NA)
-    names(VARNeGWStotal) <- "VARNeGWStotal"
+    names(IBDNeGWStotal) <- "IBDNeGWStotal"
     
     VARNeGWStimes <- as.data.frame(t(rep(NA, tau)))
     colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
@@ -823,177 +824,171 @@ do_sim <- function(sim, nsim,
   }
   
   if (nrow(slim_raw_data) != 0){
-  
-  }
-  
-  # split the data
-  slim_snp_geno <- slim_raw_data[, 10:ncol(slim_raw_data)]
-  slim_snp_info <- slim_raw_data[, 1:length(header_1)]
-  
-  # change the genotype annotations
-  slim_snp_geno <- as.matrix(slim_snp_geno)
-  slim_snp_geno[is.na(slim_snp_geno)]   <- "11"
-  slim_snp_geno[slim_snp_geno == "0|0"] <- "11"
-  slim_snp_geno[slim_snp_geno =="1|1"]  <- "22"
-  slim_snp_geno[slim_snp_geno == "0|1" | slim_snp_geno == "1|0"] <- "12"
-  slim_snp_geno <- as.data.frame(slim_snp_geno)
-  
-  # mark monomophormic mutations (all 11 or 22)
-  count_ref_geno    <- apply(slim_snp_geno, 1, function(x){sum(x == 11)})
-  count_alt_geno    <- apply(slim_snp_geno, 1, function(x){sum(x == 22)})
-  keep_snps     <- count_ref_geno < (SS1 + SS2) & count_alt_geno < (SS1 + SS2) # REMOVE FIXED MUTATIONS
-  
-  # adding missing data randomly
-  slim_snp_geno <- as.matrix(as.data.frame(lapply(slim_snp_geno, function(mi) mi[sample(c(TRUE, NA), prob = c((1-missing_data), missing_data), size = length(mi), replace = TRUE)])))
-  slim_snp_geno[is.na(slim_snp_geno)] <- "00"
-  slim_snp_geno <- as.data.frame(slim_snp_geno)
-  
-  colnames(slim_snp_geno) <- c(sample_names_1,sample_names_2) # I re-do it here because the missing data part is messing with the header
-  
-  # re-assemble the data
-  slim_data <- cbind(slim_snp_info, slim_snp_geno)
-  
-  # remove monomorphic mutations
-  slim_data <- slim_data[keep_snps, ]
-  
-  # remove duplicated mutations
-  # with new version of egglib summstats it supposedly possible to work with redundant positions
-  # When it starts working comment this part
-  slim_data <- slim_data[!duplicated(slim_data[ ,1:2]), ] # REMOVE DUPLICATED CHROM-POS
-  
-  # re-code the chromosome name
-  #if (chrN > 1){
-  #  if(chrTAG){
-  #    
-  #    chrom_id = NULL
-  #    for (m in seq_along(slim_data$position)){
-  #      
-  #      for (i in seq(from = 1, to = (length(chrs_lowers)-1)))
-  #        
-  #        if (slim_data$position[m] < chrs_lowers[1]) {chrom_idd = paste0("chr", 1)}
-  #      
-  #        else if (slim_data$position[m] > chrs_lowers[length(chrs_lowers)]) {chrom_idd = paste0("chr", (length(chrs_lowers)+1) )}
-  #      
-  #        else if (slim_data$position[m] > chrs_lowers[i] & slim_data$position[m] < chrs_lowers[i+1]) {chrom_idd = paste0("chr", (i+1))}
-  #      
-  #      chrom_id <- c(chrom_id, chrom_idd)				 	 
-  #    }
-  #    slim_data$chrom <- chrom_id
-  #  }
-  #}
-  
-  # function to plug into the apply function to re-code the chromosome name - remove from loop
-  #chromtagging <- function(x){
-  #  
-  #  for (i in seq(from = 1, to = (length(chrs_lowers)-1))){
-  #    
-  #    if (x < chrs_lowers[1]){ chrom_idd = paste0("chr", 1)}
-  #    
-  #    else if (x > chrs_lowers[length(chrs_lowers)]){ chrom_idd = paste0("chr", (length(chrs_lowers)+1))}
-  #    
-  #   else if (x > chrs_lowers[i] & x < chrs_lowers[i+1]){ chrom_idd = paste0("chr", (i+1))}
-  #      
-  #  }
-  #  return(chrom_idd)
-  #}
-  
-  # re-code the chromosome name
-  if (chrTAG){
-    if(chrN > 1){
-      slim_data$chrom <- sapply(slim_data$position, chromtagging)
+    
+    # split the data
+    slim_snp_geno <- slim_raw_data[, 10:ncol(slim_raw_data)]
+    slim_snp_info <- slim_raw_data[, 1:length(header_1)]
+    
+    # change the genotype annotations
+    slim_snp_geno <- as.matrix(slim_snp_geno)
+    slim_snp_geno[is.na(slim_snp_geno)]   <- "11"
+    slim_snp_geno[slim_snp_geno == "0|0"] <- "11"
+    slim_snp_geno[slim_snp_geno =="1|1"]  <- "22"
+    slim_snp_geno[slim_snp_geno == "0|1" | slim_snp_geno == "1|0"] <- "12"
+    slim_snp_geno <- as.data.frame(slim_snp_geno)
+    
+    # mark monomophormic mutations (all 11 or 22)
+    count_ref_geno    <- apply(slim_snp_geno, 1, function(x){sum(x == 11)})
+    count_alt_geno    <- apply(slim_snp_geno, 1, function(x){sum(x == 22)})
+    keep_snps     <- count_ref_geno < (SS1 + SS2) & count_alt_geno < (SS1 + SS2) # REMOVE FIXED MUTATIONS
+    
+    # adding missing data randomly
+    slim_snp_geno <- as.matrix(as.data.frame(lapply(slim_snp_geno, function(mi) mi[sample(c(TRUE, NA), prob = c((1-missing_data), missing_data), size = length(mi), replace = TRUE)])))
+    slim_snp_geno[is.na(slim_snp_geno)] <- "00"
+    slim_snp_geno <- as.data.frame(slim_snp_geno)
+    
+    colnames(slim_snp_geno) <- c(sample_names_1,sample_names_2) # I re-do it here because the missing data part is messing with the header
+    
+    # re-assemble the data
+    slim_data <- cbind(slim_snp_info, slim_snp_geno)
+    
+    # remove monomorphic mutations
+    slim_data <- slim_data[keep_snps, ]
+    
+    # remove duplicated mutations
+    # with new version of egglib summstats it supposedly possible to work with redundant positions
+    # When it starts working comment this part
+    slim_data <- slim_data[!duplicated(slim_data[ ,1:2]), ] # REMOVE DUPLICATED CHROM-POS
+    
+    # re-code the chromosome name
+    #if (chrN > 1){
+    #  if(chrTAG){
+    #    
+    #    chrom_id = NULL
+    #    for (m in seq_along(slim_data$position)){
+    #      
+    #      for (i in seq(from = 1, to = (length(chrs_lowers)-1)))
+    #        
+    #        if (slim_data$position[m] < chrs_lowers[1]) {chrom_idd = paste0("chr", 1)}
+    #      
+    #        else if (slim_data$position[m] > chrs_lowers[length(chrs_lowers)]) {chrom_idd = paste0("chr", (length(chrs_lowers)+1) )}
+    #      
+    #        else if (slim_data$position[m] > chrs_lowers[i] & slim_data$position[m] < chrs_lowers[i+1]) {chrom_idd = paste0("chr", (i+1))}
+    #      
+    #      chrom_id <- c(chrom_id, chrom_idd)				 	 
+    #    }
+    #    slim_data$chrom <- chrom_id
+    #  }
+    #}
+    
+    # function to plug into the apply function to re-code the chromosome name - remove from loop
+    #chromtagging <- function(x){
+    #  
+    #  for (i in seq(from = 1, to = (length(chrs_lowers)-1))){
+    #    
+    #    if (x < chrs_lowers[1]){ chrom_idd = paste0("chr", 1)}
+    #    
+    #    else if (x > chrs_lowers[length(chrs_lowers)]){ chrom_idd = paste0("chr", (length(chrs_lowers)+1))}
+    #    
+    #   else if (x > chrs_lowers[i] & x < chrs_lowers[i+1]){ chrom_idd = paste0("chr", (i+1))}
+    #      
+    #  }
+    #  return(chrom_idd)
+    #}
+    
+    # re-code the chromosome name
+    if (chrTAG){
+      if(chrN > 1){
+        slim_data$chrom <- sapply(slim_data$position, chromtagging)
+      }
     }
-  }
-  
-  # prepare egglib input data
-  slim_to_egglib_data <- data.frame(chrom=slim_data$chrom, position=slim_data$position, status=slim_data$MT,
-                                    selection=slim_data$selection, alleles=slim_data$alleles)
-  
-  # assembly final egglib input
-  slim_to_egglib_data <- cbind(slim_to_egglib_data, slim_data[, (length(header_1)+1):ncol(slim_data)])
-  
-  # re-code the status column
-  slim_to_egglib_data$status <- ifelse(slim_to_egglib_data$status == 1, "S", "NS") #DOES IT MAKE SENSE??
-  
-  if (!file_test("-d", egglib_input_folder)){
-    dir.create(file.path(egglib_input_folder))
-  }
-  
-  # export egglib input file to the egglib input folder
-  egglib_converted_file <- paste0("egglib_input_sample", "_", sim, ".txt");
-  write.table(slim_to_egglib_data, file = paste0(egglib_input_folder, egglib_converted_file), quote=FALSE, sep="\t", row.names = FALSE)
-  
-  if (nrow(slim_data) != 0){
+    
+    # prepare egglib input data
+    slim_to_egglib_data <- data.frame(chrom=slim_data$chrom, position=slim_data$position, status=slim_data$MT,
+                                      selection=slim_data$selection, alleles=slim_data$alleles)
+    
+    # assembly final egglib input
+    slim_to_egglib_data <- cbind(slim_to_egglib_data, slim_data[, (length(header_1)+1):ncol(slim_data)])
+    
+    # re-code the status column
+    slim_to_egglib_data$status <- ifelse(slim_to_egglib_data$status == 1, "S", "NS") #DOES IT MAKE SENSE??
+    
+    if (!file_test("-d", egglib_input_folder)){
+      dir.create(file.path(egglib_input_folder))
+    }
+    
+    # export egglib input file to the egglib input folder
+    egglib_converted_file <- paste0("egglib_input_sample", "_", sim, ".txt");
+    write.table(slim_to_egglib_data, file = paste0(egglib_input_folder, egglib_converted_file), quote=FALSE, sep="\t", row.names = FALSE)
+    
     # save only the information of the snps
     slim_to_egglib_snps <- cbind(ID=paste0(slim_data$chrom, ":", slim_data$position), MID=slim_data$MID,
                                  MT=slim_data$MT, S=slim_data$S, DOM=slim_data$DOM, GO=slim_data$GO,
                                  slim_data[, (length(header_1)+1):ncol(slim_data)])
-  }
-  
-  ## RUNNUNG EGGLIB - CALCULATING SUMMARY STATISTICS
-  ##------------------------------------------------------------------------------------------------ 
-  
-  # check if the folder exists
-  if (!file_test("-d", egglib_output_folder)){
-    dir.create(file.path(egglib_output_folder))
-  }
-  
-  # generate text with slim command  
-  egglib_run <- paste(path_to_python,
-                paste0(getwd(), "/", path_to_egglib_summstat),
-                paste0("input-file=", egglib_input_folder, egglib_converted_file),
-                paste0("output-file=", egglib_output_folder, "egglib_output_sample", "_", sim, ".txt"),
-                paste0("LSS=", paste0(c("He", "Dj", "WCst"), collapse = ",")),
-                paste0("LSSp=", paste0(c("He", "Dj"), collapse = ",")),
-                paste0("WSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "Pi", "D", "Da", "ZZ", "ZnS"), collapse = ",")),
-                paste0("WSSp=", paste0(c("He", "Dj", "S", "thetaW", "Pi", "D", "ZZ", "ZnS"), collapse = ",")),
-                paste0("GSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW" , "Pi", "D", "Da", "SFS"), collapse = ",")),
-                paste0("GSSp=",paste0(c("He", "S", "thetaW", "Pi", "D", "Da"), collapse = ",")),
-                paste0("wspan=", wss_wspan_run),
-                paste0("SFS-bins=", sfs_bins_run),
-                paste0("select=", "all"));
-  
-  # run egglib summstat on system
-  system(egglib_run)
-  
-  if (add_WSSwspan_SFSbins_1){
-    egglib_run_1 <- paste(path_to_python,
-                    paste0(getwd(), "/", path_to_egglib_summstat),
-                    paste0("input-file=", egglib_input_folder, egglib_converted_file),
-                    paste0("output-file=", egglib_output_folder, "egglib_output_sample_addwspan1", "_", sim, ".txt"),
-                    paste0("WSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "Pi", "D", "Da", "ZZ", "ZnS"), collapse = ",")),
-                    paste0("WSSp=", paste0(c("He", "Dj", "S", "thetaW", "Pi", "D", "ZZ", "ZnS"), collapse = ",")),
-                    paste0("GSS=", paste0(c("SFS"), collapse = ",")),
-                    paste0("wspan=", add_wss_wspan_1),
-                    paste0("SFS-bins=", add_sfs_bins_1),
-                    paste0("select=", "all"));
-      
-  # run egglib summstat on system
-  system(egglib_run_1)
-  }
-  
-  if (add_WSSwspan_SFSbins_2){
-    egglib_run_2 <- paste(path_to_python,
-                    paste0(getwd(), "/", path_to_egglib_summstat),
-                    paste0("input-file=", egglib_input_folder, egglib_converted_file),
-                    paste0("output-file=", egglib_output_folder, "egglib_output_sample_addwspan2", "_", sim, ".txt"),
-                    paste0("WSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "Pi", "D", "Da", "ZZ", "ZnS"), collapse = ",")),
-                    paste0("WSSp=", paste0(c("He", "Dj", "S", "thetaW", "Pi", "D", "ZZ", "ZnS"), collapse = ",")),
-                    paste0("GSS=", paste0(c("SFS"), collapse = ",")),
-                    paste0("wspan=", add_wss_wspan_2),
-                    paste0("SFS-bins=", add_sfs_bins_2),
-                    paste0("select=", "all"));
     
-  # run egglib summstat on system
-  system(egglib_run_2)
-  }
-  
-  ## READING EGGLIB OUTPUT AND MAKE THE REFERENCE TABLE
-  ##------------------------------------------------------------------------------------------------
-  
-  # import egglib output
-  egglib_summary_stats <- read.csv(file = paste0(egglib_output_folder,"egglib_output_sample", "_", sim, ".txt"), header = T, sep = "\t", check.names = F)
-  
-  if (nrow(egglib_summary_stats) != 0){
+    ## RUNNUNG EGGLIB - CALCULATING SUMMARY STATISTICS
+    ##------------------------------------------------------------------------------------------------ 
+    
+    # check if the folder exists
+    if (!file_test("-d", egglib_output_folder)){
+      dir.create(file.path(egglib_output_folder))
+    }
+    
+    # generate text with slim command  
+    egglib_run <- paste(path_to_python,
+                        paste0(getwd(), "/", path_to_egglib_summstat),
+                        paste0("input-file=", egglib_input_folder, egglib_converted_file),
+                        paste0("output-file=", egglib_output_folder, "egglib_output_sample", "_", sim, ".txt"),
+                        paste0("LSS=", paste0(c("He", "Dj", "WCst"), collapse = ",")),
+                        paste0("LSSp=", paste0(c("He", "Dj"), collapse = ",")),
+                        paste0("WSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "Pi", "D", "Da", "ZZ", "ZnS"), collapse = ",")),
+                        paste0("WSSp=", paste0(c("He", "Dj", "S", "thetaW", "Pi", "D", "ZZ", "ZnS"), collapse = ",")),
+                        paste0("GSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW" , "Pi", "D", "Da", "SFS"), collapse = ",")),
+                        paste0("GSSp=",paste0(c("He", "S", "thetaW", "Pi", "D", "Da"), collapse = ",")),
+                        paste0("wspan=", wss_wspan_run),
+                        paste0("SFS-bins=", sfs_bins_run),
+                        paste0("select=", "all"));
+    
+    # run egglib summstat on system
+    system(egglib_run)
+    
+    if (add_WSSwspan_SFSbins_1){
+      egglib_run_1 <- paste(path_to_python,
+                            paste0(getwd(), "/", path_to_egglib_summstat),
+                            paste0("input-file=", egglib_input_folder, egglib_converted_file),
+                            paste0("output-file=", egglib_output_folder, "egglib_output_sample_addwspan1", "_", sim, ".txt"),
+                            paste0("WSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "Pi", "D", "Da", "ZZ", "ZnS"), collapse = ",")),
+                            paste0("WSSp=", paste0(c("He", "Dj", "S", "thetaW", "Pi", "D", "ZZ", "ZnS"), collapse = ",")),
+                            paste0("GSS=", paste0(c("SFS"), collapse = ",")),
+                            paste0("wspan=", add_wss_wspan_1),
+                            paste0("SFS-bins=", add_sfs_bins_1),
+                            paste0("select=", "all"));
+      
+      # run egglib summstat on system
+      system(egglib_run_1)
+    }
+    
+    if (add_WSSwspan_SFSbins_2){
+      egglib_run_2 <- paste(path_to_python,
+                            paste0(getwd(), "/", path_to_egglib_summstat),
+                            paste0("input-file=", egglib_input_folder, egglib_converted_file),
+                            paste0("output-file=", egglib_output_folder, "egglib_output_sample_addwspan2", "_", sim, ".txt"),
+                            paste0("WSS=", paste0(c("He", "Dj", "WCst", "S", "thetaW", "Pi", "D", "Da", "ZZ", "ZnS"), collapse = ",")),
+                            paste0("WSSp=", paste0(c("He", "Dj", "S", "thetaW", "Pi", "D", "ZZ", "ZnS"), collapse = ",")),
+                            paste0("GSS=", paste0(c("SFS"), collapse = ",")),
+                            paste0("wspan=", add_wss_wspan_2),
+                            paste0("SFS-bins=", add_sfs_bins_2),
+                            paste0("select=", "all"));
+      
+      # run egglib summstat on system
+      system(egglib_run_2)
+    }
+    
+    ## READ EGGLIB OUTPUT AND MAKE THE REFERENCE TABLE
+    ##------------------------------------------------------------------------------------------------
+    
+    # import egglib output
+    egglib_summary_stats <- read.csv(file = paste0(egglib_output_folder,"egglib_output_sample", "_", sim, ".txt"), header = T, sep = "\t", check.names = F)
     
     ## ACTUAL Pr BENEFICIAL MUTATIONS IN THE SAMPLE
     actual_sample_prbe <- sum(slim_to_egglib_snps$MT == 3)/length(slim_to_egglib_snps$S)
@@ -1055,7 +1050,7 @@ do_sim <- function(sim, nsim,
       var_wss_wspan1 <- apply(egglib_summary_stats_add1[,-c(1, which(grepl("^SFS_" , unique(names(egglib_summary_stats_add1)))))], 2, function(x){var(x, na.rm=T)})
       
       kurt_wss_wspan1 <- apply(egglib_summary_stats_add1[,-c(1, which(grepl("^SFS_" , unique(names(egglib_summary_stats_add1)))))], 2, function(x){kurtosis(x, na.rm=T)})
-                             
+      
       skew_wss_wspan1 <- apply(egglib_summary_stats_add1[,-c(1, which(grepl("^SFS_" , unique(names(egglib_summary_stats_add1)))))], 2, function(x){skewness(x, na.rm=T)})
       
       q05_wss_wspan1 <- apply(egglib_summary_stats_add1[,-c(1, which(grepl("^SFS_" , unique(names(egglib_summary_stats_add1)))))], 2, function(x){quantile(x, probs = 0.05, na.rm=T)})
@@ -1066,7 +1061,7 @@ do_sim <- function(sim, nsim,
       add_global_stats_add1 <-cbind(global_SFS_bins1,
                                     as.data.frame(t(mean_wss_wspan1)),as.data.frame(t(var_wss_wspan1)),as.data.frame(t(kurt_wss_wspan1)), 
                                     as.data.frame(t(skew_wss_wspan1)),as.data.frame(t(q05_wss_wspan1)),as.data.frame(t(q95_wss_wspan1))
-                                    )
+      )
       
       colnames(add_global_stats_add1) <- paste0("ADD_1_GSS","_",seq(from=1,to=dim(add_global_stats_add1)[2]))
       
@@ -1103,7 +1098,7 @@ do_sim <- function(sim, nsim,
       add_global_stats_add2 <-cbind(global_SFS_bins2,
                                     as.data.frame(t(mean_wss_wspan2)),as.data.frame(t(var_wss_wspan2)),as.data.frame(t(kurt_wss_wspan2)), 
                                     as.data.frame(t(skew_wss_wspan2)),as.data.frame(t(q05_wss_wspan2)),as.data.frame(t(q95_wss_wspan2))
-                                    )
+      )
       
       colnames(add_global_stats_add2) <- paste0("ADD_2_GSS","_",seq(from=1,to=dim(add_global_stats_add2)[2]))
       
@@ -1166,9 +1161,9 @@ do_sim <- function(sim, nsim,
                                      FSTprecMT95 = 1,
                                      FSTprecNS75 = 1,
                                      FSTprecNS95 = 1))
-    
+      
     }
-   
+    
     ## LOCUS-SPECIFIC SUMMARY STATISTICS
     # sampling snps for the locus-specific reference table
     #if (any(slim_to_egglib_snps$MT == 1)){
@@ -1264,7 +1259,7 @@ do_sim <- function(sim, nsim,
     } else if (exists("locus_wss_stats_add2")){
       locus_summary_stats <- cbind(locus_summary_stats, locus_wss_stats_add2)
     }
-    
+  
   } else {
     actual_sample_prbe <- as.numeric(NA)
     strong_sample_prbe <- as.numeric(NA)
@@ -1317,7 +1312,7 @@ do_sim <- function(sim, nsim,
     }
     
     if (add_WSSwspan_SFSbins_2){
-      locus_wss_stats_add1 <- as.data.frame(t(rep(NA, 26)))
+      locus_wss_stats_add2 <- as.data.frame(t(rep(NA, 26)))
       colnames(locus_wss_stats_add2) <- paste0("ADD_2_LSS","_",seq(from=1,to=dim(locus_wss_stats_add2)[2]))
     }
     
@@ -1328,7 +1323,6 @@ do_sim <- function(sim, nsim,
     } else if (exists("locus_wss_stats_add2")){
       locus_summary_stats <- cbind(locus_summary_stats, locus_wss_stats_add2)
     }
-  
   }
   
   ## RAW REFERENCE TABLE

@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 3
+nsim                    <- 5
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "./bin/slim"
@@ -50,7 +50,7 @@ arg <- commandArgs(TRUE)
 #seed                    <- arg
 seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims           <- FALSE
+parallel_sims           <- TRUE
 num_of_threads          <- 28
 remove_files            <- TRUE
 
@@ -260,7 +260,7 @@ if(parallel_sims){
 }
 gc()
 
-raw_reftable_header <- c("seed","sim","mu","rr","Neq","N","gammaMean","gammak","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPStrMSel","PrSAMMSel","PrSAMStrMSel", paste0("PedigreeNe",seq(from=0,to=(tau))),
+raw_reftable_header <- c("model","seed","sim","mu","rr","selfing","Neq","N","gammaMean","gammak","tc","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPStrMSel","PrSAMMSel","PrSAMStrMSel", paste0("PedigreeNe",seq(from=0,to=(tau))),
                          "PedigreeNetotal",paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWtotal",paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWNtotal",paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
                          "IBDNeGWStotal",paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau)),"IBDNeChrtotal",paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
                          "VARNeGWtotal",paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"VARNeGWNtotal",paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
