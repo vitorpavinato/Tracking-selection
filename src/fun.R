@@ -81,12 +81,13 @@ chromtagging <- function(x){
 ## SIMULATIONS
 ##---------------------------------------------------------------------------------------------
 do_sim <- function(sim, nsim, 
-                   path_to_slim_model, slim_model_prefix, model_type,
+                   path_to_slim_model, slim_model_prefix, model_type, model_title,
                    path_to_slim, slim_output_folder,
                    path_to_bgzip, path_to_tabix, path_to_bcftools,
                    egglib_input_folder, egglib_output_folder,
                    path_to_python, path_to_egglib_summstat, 
-                   SS1, SS2, tau, genomeS, fragS, chrN, chrTAG,
+                   SS1, SS2, tau, genomeS, fragS, chrN, chrS, chrTAG, chromtagging,  
+                   rr_limits, radseq_readL, radseq_readN, radseq_cov, missing_data,
                    mu_rate, mu_random, mu_min, mu_max, 
                    neq_value, neq_random, neq_min, neq_max,
                    n_value, n_random, n_min, n_max,  
@@ -111,7 +112,7 @@ do_sim <- function(sim, nsim,
   }
   
   ## SAMPLED VALUES FOR SIMULATION's PARAMETERS
-  ##------------------------------------------------------------------------------------------------
+  ##----------------------------------------------------------------------------------
   
   # SIMULATION SEED
   sim_seed  <- as.integer(runif(n = 1, min = 100000000, max = 900000000));
@@ -226,7 +227,7 @@ do_sim <- function(sim, nsim,
   }
   
   ## GENOME SPECIFICATION - outside the loop
-  ##------------------------------------------------------------------------------------------------
+  ##-------------------------------------------------------------------------------
   #
   # DEFINE CHROMOSOME STRUCTURE
   #if (chrN == 1){
@@ -236,7 +237,7 @@ do_sim <- function(sim, nsim,
   #}
   
   ## FIXED VALUES DEFINING GENOMIC STRUCTURE
-  ##------------------------------------------------------------------------------------------------
+  ##-------------------------------------------------------------------------------
   
   # RECOMBINATION LIMITS - MOVE IT TO AN EXTERNAL SCRIPT - IT IS FIXED ACROSS SIMULATIONS - - outside the loop
   #if (chrN == 1){
@@ -263,7 +264,7 @@ do_sim <- function(sim, nsim,
   #}	
   
   ## RANDOM VALUES DEFINING GENOMIC ELEMENTS  
-  ##------------------------------------------------------------------------------------------------
+  ##-------------------------------------------------------------------------------
   
   # GENOME'S GENOME ELEMENT TYPE
   
@@ -290,7 +291,7 @@ do_sim <- function(sim, nsim,
   g1_idx = setdiff(indexes, g2_idx)
   
   ## RUNNING SLiM
-  ##------------------------------------------------------------------------------------------------
+  ##-------------------------------------------------------------------------------
   
   # check if the folder exists
   if (!file_test("-d", slim_output_folder)){
@@ -392,7 +393,7 @@ do_sim <- function(sim, nsim,
   
   
   ## HANDLING SLiM2 OUTPUT t1:t2 - GENETIC LOAD
-  ##------------------------------------------------------------------------------------------------
+  ##------------------------------------------------------------------------------
   
   # load the data
   slim_output_geneticLoad <- paste0(slim_output_folder,"slim_output_load_", sim, ".txt")
@@ -438,7 +439,7 @@ do_sim <- function(sim, nsim,
   }
   
   ## HANDLING SLiM2 OUTPUT t1:t2 - PEDIGREE NE
-  ##------------------------------------------------------------------------------------------------
+  ##------------------------------------------------------------------------------
   
   # load the data
   slim_output_pedigreene <- paste0(slim_output_folder,"slim_output_pedigreeNe_", sim, ".txt")
@@ -488,7 +489,7 @@ do_sim <- function(sim, nsim,
   }
   
   ## HANDLING SLiM2 OUTPUT t1:t2 - POPULATION ALLELE FREQUENCIES
-  ##------------------------------------------------------------------------------------------------
+  ##-------------------------------------------------------------------------------
   
   ### GENOME
   filenames_genome <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t[0-", tau, "]_", sim), full.names=FALSE)
@@ -736,7 +737,7 @@ do_sim <- function(sim, nsim,
   }
   
   ## HANDLINDING SLiM2 OUTPUT - SAMPLED INDIVIDUALS
-  ##------------------------------------------------------------------------------------------------
+  ##---------------------------------------------------------------------------------
   
   # sort vcf files
   slim_output_sample_t1        <- paste0(slim_output_folder,"slim_output_sample_t1_", sim, ".vcf")
@@ -795,6 +796,8 @@ do_sim <- function(sim, nsim,
     file.remove(paste0(slim_output_sample_t2_sorted, ".gz"))
     file.remove(paste0(slim_output_sample_t2_sorted, ".gz.tbi"))
     file.remove(paste0(slim_output_sample_merged))
+    file.remove(paste0(slim_output_folder,"slim_coalesced_",model_title,"_", sim, ".tree"))
+    file.remove(paste0(slim_output_folder,"slim_output_lastgen_", sim, ".txt"))
   }
   
   # if it is a RADseq data
@@ -927,7 +930,7 @@ do_sim <- function(sim, nsim,
                                  slim_data[, (length(header_1)+1):ncol(slim_data)])
     
     ## RUNNUNG EGGLIB - CALCULATING SUMMARY STATISTICS
-    ##------------------------------------------------------------------------------------------------ 
+    ##-----------------------------------------------------------------------------------
     
     # check if the folder exists
     if (!file_test("-d", egglib_output_folder)){
@@ -985,7 +988,7 @@ do_sim <- function(sim, nsim,
     }
     
     ## READ EGGLIB OUTPUT AND MAKE THE REFERENCE TABLE
-    ##------------------------------------------------------------------------------------------------
+    ##----------------------------------------------------------------------------------
     
     # import egglib output
     egglib_summary_stats <- read.csv(file = paste0(egglib_output_folder,"egglib_output_sample", "_", sim, ".txt"), header = T, sep = "\t", check.names = F)
@@ -1122,32 +1125,47 @@ do_sim <- function(sim, nsim,
     ord_locusFST_table <- raw_locusFST_table[order(-raw_locusFST_table$LSS_WCst), ]
     
     if (any(ord_locusFST_table$Ns > 1)){
-      
-      pred_locusFSTMT <- prediction(predictions = ord_locusFST_table$LSS_WCst, labels = ord_locusFST_table$labelsMT)
-      perf_locusFSTMT_1 <- performance(pred_locusFSTMT, "fpr", "prec")
-      
-      pred_locusFSTNS <- prediction(predictions = ord_locusFST_table$LSS_WCst, labels = ord_locusFST_table$labelsNs)
-      perf_locusFSTNS_1 <- performance(pred_locusFSTNS, "fpr", "prec")
-      
-      perf_table <- data.frame(fprMT=perf_locusFSTMT_1@y.values[[1]], precMT=perf_locusFSTMT_1@x.values[[1]],
-                               fdrMT=1-perf_locusFSTMT_1@x.values[[1]],
-                               fprNS=perf_locusFSTNS_1@y.values[[1]], precNS=perf_locusFSTNS_1@x.values[[1]],
-                               fdrNS=1-perf_locusFSTNS_1@x.values[[1]])
-      
-      perf_locusFST_table <- data.frame(ord_locusFST_table[1:dim(perf_table)[1], ], perf_table)
-      
-      FSTfdr <- as.data.frame(cbind(FSTfdrMT05 = perf_locusFST_table[which.min(perf_locusFST_table$fdrMT <= 0.05) ,3],
-                                    FSTfdrMT10 = perf_locusFST_table[which.min(perf_locusFST_table$fdrMT <= 0.10) ,3],
-                                    FSTfdrMT25 = perf_locusFST_table[which.min(perf_locusFST_table$fdrMT <= 0.25) ,3],
-                                    FSTfdrNS05 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.05) ,3],
-                                    FSTfdrNS10 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.10) ,3],
-                                    FSTfdrNS25 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.25) ,3]))
-      
-      FSTprec <- as.data.frame(cbind(FSTprecMT75 = perf_locusFST_table[which.min(perf_locusFST_table$precMT >= 0.75) ,3],
-                                     FSTprecMT95 = perf_locusFST_table[which.min(perf_locusFST_table$precMT >= 0.95) ,3],
-                                     FSTprecNS75 = perf_locusFST_table[which.min(perf_locusFST_table$precNS >= 0.75) ,3],
-                                     FSTprecNS95 = perf_locusFST_table[which.min(perf_locusFST_table$precNS >= 0.95) ,3]))
-      
+      if(!all(ord_locusFST_table$Ns > 1)){
+        
+        pred_locusFSTMT <- prediction(predictions = ord_locusFST_table$LSS_WCst, labels = ord_locusFST_table$labelsMT)
+        perf_locusFSTMT_1 <- performance(pred_locusFSTMT, "fpr", "prec")
+        
+        pred_locusFSTNS <- prediction(predictions = ord_locusFST_table$LSS_WCst, labels = ord_locusFST_table$labelsNs)
+        perf_locusFSTNS_1 <- performance(pred_locusFSTNS, "fpr", "prec")
+        
+        perf_table <- data.frame(fprMT=perf_locusFSTMT_1@y.values[[1]], precMT=perf_locusFSTMT_1@x.values[[1]],
+                                 fdrMT=1-perf_locusFSTMT_1@x.values[[1]],
+                                 fprNS=perf_locusFSTNS_1@y.values[[1]], precNS=perf_locusFSTNS_1@x.values[[1]],
+                                 fdrNS=1-perf_locusFSTNS_1@x.values[[1]])
+        
+        perf_locusFST_table <- data.frame(ord_locusFST_table[1:dim(perf_table)[1], ], perf_table)
+        
+        FSTfdr <- as.data.frame(cbind(FSTfdrMT05 = perf_locusFST_table[which.min(perf_locusFST_table$fdrMT <= 0.05) ,3],
+                                      FSTfdrMT10 = perf_locusFST_table[which.min(perf_locusFST_table$fdrMT <= 0.10) ,3],
+                                      FSTfdrMT25 = perf_locusFST_table[which.min(perf_locusFST_table$fdrMT <= 0.25) ,3],
+                                      FSTfdrNS05 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.05) ,3],
+                                      FSTfdrNS10 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.10) ,3],
+                                      FSTfdrNS25 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.25) ,3]))
+        
+        FSTprec <- as.data.frame(cbind(FSTprecMT75 = perf_locusFST_table[which.min(perf_locusFST_table$precMT >= 0.75) ,3],
+                                       FSTprecMT95 = perf_locusFST_table[which.min(perf_locusFST_table$precMT >= 0.95) ,3],
+                                       FSTprecNS75 = perf_locusFST_table[which.min(perf_locusFST_table$precNS >= 0.75) ,3],
+                                       FSTprecNS95 = perf_locusFST_table[which.min(perf_locusFST_table$precNS >= 0.95) ,3]))
+        
+      } else {
+        
+        FSTfdr <- as.data.frame(cbind(FSTfdrMT05 = 0,
+                                      FSTfdrMT10 = 0,
+                                      FSTfdrMT25 = 0,
+                                      FSTfdrNS05 = 0,
+                                      FSTfdrNS10 = 0,
+                                      FSTfdrNS25 = 0))
+        
+        FSTprec <- as.data.frame(cbind(FSTprecMT75 = 0,
+                                       FSTprecMT95 = 0,
+                                       FSTprecNS75 = 0,
+                                       FSTprecNS95 = 0))
+      }
     } else {
       
       FSTfdr <- as.data.frame(cbind(FSTfdrMT05 = 1,

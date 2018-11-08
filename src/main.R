@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 5
+nsim                    <- 3
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "./bin/slim"
@@ -44,7 +44,7 @@ path_to_bcftools        <- "/usr/local/bin/bcftools"                      #clust
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
 path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #cluster# "./bin/pyegglib21/bin/python"
-path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b21
+path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b22
 reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
 #seed                    <- arg
@@ -105,17 +105,17 @@ neq_max = 1000
 
 # POPULATION SIZE N
 n_random = FALSE
-n_value <- 100
+n_value <- 50
 n_min = 1
 n_max = 1000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
-gammaM_random = FALSE
+gammaM_random = TRUE
 gammaM_value <- 0.4
 gammaM_min = 0.001
 gammaM_max = 1
 
-gammak_random = FALSE
+gammak_random = TRUE
 gammak_value <- 0.1         # gamma shape k must be positive;
 gammak_min = 0.001          # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
 gammak_max = 1
@@ -123,13 +123,13 @@ gammak_max = 1
 gammaM_gammak = TRUE        # if TRUE, rate=1, then only gammaM will be sample from prior;
 
 # PROPORTION OF THE GENOME THAT CONTAINS BENEFICIAL MUTATIONS - G2 ELEMENTS
-PrGWSel_random = FALSE
+PrGWSel_random = TRUE
 PrGWSel_value <- 0.25
 PrGWSel_min = 0.00001 
 PrGWSel_max = 1
 
 # PROPORTION OF GENOME-WIDE BENEFICIAL MUTATION IN G2 ELEMENTS
-prbe_random = FALSE
+prbe_random = TRUE
 prbe_value <- 0.1
 prbe_min = 0.00001 
 prbe_max = 1
@@ -201,12 +201,13 @@ if(parallel_sims){
   clusterEvalQ(cl, library(moments))
   raw_reftable <- foreach(sim=seq_len(nsim),.combine=rbind) %dopar% {   library(ROCR)
                                                                         do_sim(sim, nsim, 
-                                                                               path_to_slim_model, slim_model_prefix, model_type,
+                                                                               path_to_slim_model, slim_model_prefix, model_type, model_title,
                                                                                path_to_slim, slim_output_folder,
                                                                                path_to_bgzip, path_to_tabix, path_to_bcftools,
                                                                                egglib_input_folder, egglib_output_folder,
                                                                                path_to_python, path_to_egglib_summstat, 
-                                                                               SS1, SS2, tau, genomeS, fragS, chrN, chrTAG,
+                                                                               SS1, SS2, tau, genomeS, fragS, chrN, chrS, chrTAG, chromtagging,  
+                                                                               rr_limits, radseq_readL, radseq_readN, radseq_cov, missing_data,
                                                                                mu_rate, mu_random, mu_min, mu_max, 
                                                                                neq_value, neq_random, neq_min, neq_max,
                                                                                n_value, n_random, n_min, n_max,  
@@ -232,12 +233,13 @@ if(parallel_sims){
   raw_reftable <- vector("list", nsim)
   for(sim in 1:nsim){
     raw_reftable[[sim]] <- do_sim(sim, nsim, 
-                                  path_to_slim_model, slim_model_prefix, model_type,
+                                  path_to_slim_model, slim_model_prefix, model_type, model_title,
                                   path_to_slim, slim_output_folder,
                                   path_to_bgzip, path_to_tabix, path_to_bcftools,
                                   egglib_input_folder, egglib_output_folder,
                                   path_to_python, path_to_egglib_summstat, 
-                                  SS1, SS2, tau, genomeS, fragS, chrN, chrTAG,
+                                  SS1, SS2, tau, genomeS, fragS, chrN, chrS, chrTAG, chromtagging,  
+                                  rr_limits, radseq_readL, radseq_readN, radseq_cov, missing_data,
                                   mu_rate, mu_random, mu_min, mu_max, 
                                   neq_value, neq_random, neq_min, neq_max,
                                   n_value, n_random, n_min, n_max,  
