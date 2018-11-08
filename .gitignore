@@ -6,11 +6,11 @@ src/stuff/
 src/.Rhistory
 .Rproj.user
 .Rhistory
-bin/bcftools
-bin/bgzip
+#bin/bcftools
+#bin/bgzip
 bin/pyegglib21/
 bin/slim
-bin/tabix
+#bin/tabix
 batch.*/
 selsim.*
 trackingselsim.*
