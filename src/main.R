@@ -33,24 +33,24 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 1
+nsim                    <- 3
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
-path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim" #cluster# "./bin/slim"
+path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "./bin/slim"
 slim_output_folder      <- "results/slim_output/"
-path_to_bgzip           <- "/usr/local/bin/bgzip"                #cluster# "./bin/bgzip"
-path_to_tabix           <- "/usr/local/bin/tabix"                #cluster# "./bin/tabix"
-path_to_bcftools        <- "/usr/local/bin/bcftools"             #cluster# "./bin/bcftools"
+path_to_bgzip           <- "/usr/local/bin/bgzip"                         #cluster# "./bin/bgzip"
+path_to_tabix           <- "/usr/local/bin/tabix"                         #cluster# "./bin/tabix"
+path_to_bcftools        <- "/usr/local/bin/bcftools"                      #cluster# "./bin/bcftools"
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
 path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #cluster# "./bin/pyegglib21/bin/python"
-path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b21
+path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b22
 reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
 #seed                    <- arg
 seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims           <- FALSE
+parallel_sims           <- TRUE
 num_of_threads          <- 28
 remove_files            <- TRUE
 
@@ -67,7 +67,7 @@ model_type = 3             # 1 = de novo beneficial mutations ("DN");
 # GENOME SPECIFICATION
 genomeS = 135e+5           # genomeS => Genome Size;
 fragS   = 4.5e+4           # fragS   => Fragment size to define g1 or g2 elements;
-chrN    = 5                # chrN    => Chromosome number to define independent genome blocks;
+chrN    = 4                # chrN    => Chromosome number to define independent genome blocks;
 
 chrTAG = TRUE              # chrTAG  => if TRUE, SNPs are tagged with chromosome ID based on its position;
 
@@ -78,10 +78,10 @@ radseq_readL = 100         # radseq_readL => the read length produced by the RAD
 radseq_cov = 0.20          # radseq_cov   => the proportion of the genome covered by the RADseq reads;
 
 
-missing_data = 0.25        # missing_data => specify the proportion of missing genotypes;
+missing_data = 0.25        # missing_data => specify the proportion of missing genotypes per locus;
 
 SS1 = 80                   # SS1 => Sample Size for T=1;
-SS2 = 115                  # SS2 => Sample Size for T=2;
+SS2 = 115                  # SS2 => Sample Size for T=2; Total sample size (SS1+SS2) should be at least > 3;
 tau = 8                    # tau => Time between samples;
 
 ############################################
@@ -105,17 +105,17 @@ neq_max = 1000
 
 # POPULATION SIZE N
 n_random = FALSE
-n_value <- 100
+n_value <- 50
 n_min = 1
 n_max = 1000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
-gammaM_random = FALSE
+gammaM_random = TRUE
 gammaM_value <- 0.4
 gammaM_min = 0.001
 gammaM_max = 1
 
-gammak_random = FALSE
+gammak_random = TRUE
 gammak_value <- 0.1         # gamma shape k must be positive;
 gammak_min = 0.001          # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
 gammak_max = 1
@@ -123,13 +123,13 @@ gammak_max = 1
 gammaM_gammak = TRUE        # if TRUE, rate=1, then only gammaM will be sample from prior;
 
 # PROPORTION OF THE GENOME THAT CONTAINS BENEFICIAL MUTATIONS - G2 ELEMENTS
-PrGWSel_random = FALSE
+PrGWSel_random = TRUE
 PrGWSel_value <- 0.25
 PrGWSel_min = 0.00001 
 PrGWSel_max = 1
 
 # PROPORTION OF GENOME-WIDE BENEFICIAL MUTATION IN G2 ELEMENTS
-prbe_random = FALSE
+prbe_random = TRUE
 prbe_value <- 0.1
 prbe_min = 0.00001 
 prbe_max = 1
@@ -201,12 +201,13 @@ if(parallel_sims){
   clusterEvalQ(cl, library(moments))
   raw_reftable <- foreach(sim=seq_len(nsim),.combine=rbind) %dopar% {   library(ROCR)
                                                                         do_sim(sim, nsim, 
-                                                                               path_to_slim_model, slim_model_prefix, model_type,
+                                                                               path_to_slim_model, slim_model_prefix, model_type, model_title,
                                                                                path_to_slim, slim_output_folder,
                                                                                path_to_bgzip, path_to_tabix, path_to_bcftools,
                                                                                egglib_input_folder, egglib_output_folder,
                                                                                path_to_python, path_to_egglib_summstat, 
-                                                                               SS1, SS2, tau, genomeS, fragS, chrN, chrTAG,
+                                                                               SS1, SS2, tau, genomeS, fragS, chrN, chrS, chrTAG, chromtagging,  
+                                                                               rr_limits, radseq_readL, radseq_readN, radseq_cov, missing_data,
                                                                                mu_rate, mu_random, mu_min, mu_max, 
                                                                                neq_value, neq_random, neq_min, neq_max,
                                                                                n_value, n_random, n_min, n_max,  
@@ -232,12 +233,13 @@ if(parallel_sims){
   raw_reftable <- vector("list", nsim)
   for(sim in 1:nsim){
     raw_reftable[[sim]] <- do_sim(sim, nsim, 
-                                  path_to_slim_model, slim_model_prefix, model_type,
+                                  path_to_slim_model, slim_model_prefix, model_type, model_title,
                                   path_to_slim, slim_output_folder,
                                   path_to_bgzip, path_to_tabix, path_to_bcftools,
                                   egglib_input_folder, egglib_output_folder,
                                   path_to_python, path_to_egglib_summstat, 
-                                  SS1, SS2, tau, genomeS, fragS, chrN, chrTAG,
+                                  SS1, SS2, tau, genomeS, fragS, chrN, chrS, chrTAG, chromtagging,  
+                                  rr_limits, radseq_readL, radseq_readN, radseq_cov, missing_data,
                                   mu_rate, mu_random, mu_min, mu_max, 
                                   neq_value, neq_random, neq_min, neq_max,
                                   n_value, n_random, n_min, n_max,  
@@ -260,7 +262,7 @@ if(parallel_sims){
 }
 gc()
 
-raw_reftable_header <- c("seed","sim","mu","rr","Neq","N","gammaMean","gammak","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPStrMSel","PrSAMMSel","PrSAMStrMSel", paste0("PedigreeNe",seq(from=0,to=(tau))),
+raw_reftable_header <- c("model","seed","sim","mu","rr","selfing","Neq","N","gammaMean","gammak","tc","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPStrMSel","PrSAMMSel","PrSAMStrMSel", paste0("PedigreeNe",seq(from=0,to=(tau))),
                          "PedigreeNetotal",paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWtotal",paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWNtotal",paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
                          "IBDNeGWStotal",paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau)),"IBDNeChrtotal",paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
                          "VARNeGWtotal",paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"VARNeGWNtotal",paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
