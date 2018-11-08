@@ -234,11 +234,11 @@ s7 2 late() {
 	pop_genome = pop_genome[which(pop_genome.mutationType != m4)];
 		
 	// Save the population allele frequence of the alternative allele - PAAF
-	paaf_lines = sapply(pop_genome, "paste(c((applyValue.position+1), applyValue.id, applyValue.mutationType.id, applyValue.selectionCoeff, applyValue.originGeneration, sim.mutationFrequencies(subpops=NULL,mutations=applyValue), (1 - sim.mutationFrequencies(subpops=NULL,mutations=applyValue)), 1 - ( (sim.mutationFrequencies(subpops=NULL,mutations=applyValue))^2 + (1 - sim.mutationFrequencies(subpops=NULL,mutations=applyValue))^2 ),'\\n'), '\\t');");
+	paaf_lines = sapply(pop_genome, "paste(c((applyValue.position+1), applyValue.id, applyValue.mutationType.id, applyValue.originGeneration, applyValue.selectionCoeff,  sim.mutationFrequencies(subpops=NULL,mutations=applyValue), (1 - sim.mutationFrequencies(subpops=NULL,mutations=applyValue)), 1 - ( (sim.mutationFrequencies(subpops=NULL,mutations=applyValue))^2 + (1 - sim.mutationFrequencies(subpops=NULL,mutations=applyValue))^2 ),'\\n'), '\\t');");
 	
 	// prepare the output table
 	paaf_file = paste(paaf_lines, "");
-	paaf_file = paste("POS"+"\t"+"MID"+"\t"+"MT"+"\t"+"S"+"\t"+"GO"+"\t"+paste0("PAAF" + (sim.generation - T0))+"\t"+paste0("PRAF" + (sim.generation - T0))+"\t"+paste0("HE" + (sim.generation - T0))+"\n")+paaf_file;
+	paaf_file = paste("POS"+"\t"+"MID"+"\t"+"MT"+"\t"+"GO"+"\t"+paste0("S" + (sim.generation - T0))+"\t"+paste0("PAAF" + (sim.generation - T0))+"\t"+paste0("PRAF" + (sim.generation - T0))+"\t"+paste0("HE" + (sim.generation - T0))+"\n")+paaf_file;
 	
 	// output as a TXT file - CS1
 	writeFile(filePath=paste0(outputpath + "slim_output_paaf_t" + (sim.generation - T0) + "_" + simID + ".txt"), contents=paaf_file, append=F); // CS1 freq
