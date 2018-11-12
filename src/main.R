@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 2
+nsim                    <- 3
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "./bin/slim"
@@ -50,9 +50,9 @@ arg <- commandArgs(TRUE)
 #seed                    <- arg
 seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims           <- TRUE
+parallel_sims           <- FALSE
 num_of_threads          <- 28
-remove_files            <- FALSE
+remove_files            <- TRUE
 
 ############################################
 ##            SLiM SIMULATION             ##
@@ -60,7 +60,7 @@ remove_files            <- FALSE
 ############################################
 
 # MODEL SELECTION
-model_type = 3             # 1 = de novo beneficial mutations ("DN"); 
+model_type = 1             # 1 = de novo beneficial mutations ("DN"); 
                            # 2 = background selection ("BS"); 
                            # 3 = selection on standing variation ("SV");
 

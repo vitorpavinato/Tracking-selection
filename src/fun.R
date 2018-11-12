@@ -494,134 +494,329 @@ do_sim <- function(sim, nsim,
   ### GENOME
   filenames_genome <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t[0-", tau, "]_", sim), full.names=FALSE)
   datalist_genome <- lapply(filenames_genome, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
-  all_merged_genome <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4), all = TRUE)}, datalist_genome)
   
-  # load file with the last generation - UGLY!!!
-  slim_output_lastgen <- paste0(slim_output_folder,"slim_output_lastgen_", sim, ".txt")
-  
-  if (file.exists(slim_output_lastgen)){
-    info_lastgen_file = file.info(slim_output_lastgen)
-    
-    if (info_lastgen_file$size != 0){
-      lastgen <- scan(file = slim_output_lastgen, what = integer(), na.strings = "NA")
-    } else {
-      lastgen <- as.numeric(NA)
-    }
+  if (model_type == 3){
+    all_merged_genome <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4), all = TRUE)}, datalist_genome)
   } else {
-    lastgen <- as.numeric(NA)
+    all_merged_genome <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4,5), all = TRUE)}, datalist_genome)
   }
   
   if(!is.null(all_merged_genome)){
     
-    # fill in the values of selection coefficient that are NA after the merging
-    tempoSelCoeff <- all_merged_genome[, grepl("^S", names(all_merged_genome))]
+    # load file with the last generation 
+    slim_output_lastgen <- paste0(slim_output_folder,"slim_output_lastgen_", sim, ".txt")
+    lastgen <- scan(file = slim_output_lastgen, what = integer(), na.strings = "NA")
     
-    # replace NA's of selection coefficient of mutations that arise in tc
-    tempoSelCoeff[which(all_merged_genome$GO==lastgen + (tc+1)), 1:tc][is.na(tempoSelCoeff[which(all_merged_genome$GO==lastgen + (tc+1)), 1:tc])] <- 0
-    
-    # replace NA with the last value forward and backward
-    forwardfill  <- na.locf(t(tempoSelCoeff))
-    backwardfill <- na.locf(forwardfill, fromLast = TRUE)
-    
-    tempoSelCoeff <- data.frame(MID=all_merged_genome$MID, t(backwardfill))
-  
-  } else {
-    
-    tempoSelCoeff <- as.data.frame(matrix("",0,(tau+2)))
-    colnames(tempoSelCoeff) <- c("MID", paste0("S",seq(from=0,to=(tau))))
-  }
-  
-  ## ACTUAL Pr OF SELECTED MUTATIONS IN THE POPULATION 
-  #if (any(all_merged_genome[, paste0("S",tc)] != 0)) { #S tc or S final?
-  #  actual_pop_prbe <- sum(all_merged_genome[, paste0("S",tc)] != 0, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)])
-  #} else {
-  #  actual_pop_prbe <- as.numeric(NA)
-  #}
-  
-  if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) { #S tc or S final?
-    actual_pop_prbe <- sum(tempoSelCoeff[, paste0("S",tau)] != 0, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
-  } else {
-    actual_pop_prbe <- as.numeric(0)
-  }
-  
-  ## Pr MUTATIONS UNDER STRONG POSITIVE SELECTION --[Ns > 1]-- IN THE POPULATION
-  #if (any(N*all_merged_genome[, paste0("S",tc)] > 1)){ #S tc or S final?
-  #  positive_pop_prbe <- sum(N*all_merged_genome[, paste0("S",tc)] > 1, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)])
-  #} else {
-  #  positive_pop_prbe <- as.numeric(NA)
-  #}
-  
-  if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) {
-    if (any(N*tempoSelCoeff[, paste0("S",tau)] > 1)){ #S tc or S final?
-      positive_pop_prbe <- sum(N*tempoSelCoeff[, paste0("S",tau)] > 1, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+    if (model_type == 3){
+      
+      # fill in the values of selection coefficient that are NA after the merging
+      tempoSelCoeff <- all_merged_genome[, grepl("^S", names(all_merged_genome))]
+      
+      # replace NA's of selection coefficient of mutations that arise in tc
+      tempoSelCoeff[which(all_merged_genome$GO==lastgen + (tc+1)), 1:tc][is.na(tempoSelCoeff[which(all_merged_genome$GO==lastgen + (tc+1)), 1:tc])] <- 0
+      
+      # replace NA with the last value forward and backward
+      forwardfill  <- na.locf(t(tempoSelCoeff))
+      backwardfill <- na.locf(forwardfill, fromLast = TRUE)
+      
+      tempoSelCoeff <- data.frame(MID=all_merged_genome$MID, t(backwardfill))
+      
+      ## PROPORTION OF SELECTED MUTATIONS IN THE POPULATION 
+      if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) { #S tc or S final?
+        
+        actual_pop_prbe <- sum(tempoSelCoeff[, paste0("S",tau)] != 0, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+        
+        if (any(N*tempoSelCoeff[, paste0("S",tau)] > 1)){ #S tc or S final?
+          positive_pop_prbe <- sum(N*tempoSelCoeff[, paste0("S",tau)] > 1, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+        } else {
+          positive_pop_prbe <- as.numeric(0)
+        }
+        
+        if (any(N*tempoSelCoeff[, paste0("S",tau)] < -1)){ #S tc or S final?
+          negative_pop_prbe <- sum(N*tempoSelCoeff[, paste0("S",tau)] < -1, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+        } else {
+          negative_pop_prbe <- as.numeric(0)
+        }
+        
+      } else {
+        actual_pop_prbe <- as.numeric(0)
+        positive_pop_prbe <- as.numeric(0)
+        negative_pop_prbe <- as.numeric(0)
+      }
+      
+      ## Pr MUTATIONS UNDER STRONG POSITIVE SELECTION --[Ns > 1]-- IN THE POPULATION
+      #if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) {
+      #  if (any(N*tempoSelCoeff[, paste0("S",tau)] > 1)){ #S tc or S final?
+      #    positive_pop_prbe <- sum(N*tempoSelCoeff[, paste0("S",tau)] > 1, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+      #  } else {
+      #    positive_pop_prbe <- as.numeric(0)
+      #  }
+      #} else {
+      #  positive_pop_prbe <- as.numeric(0)
+      #}
+      
+      ## Pr MUTATIONS UNDER STRONG BACKGROUND SELECTION --[Ns < -1]-- IN THE POPULATION
+      #if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) {
+      #  if (any(N*tempoSelCoeff[, paste0("S",tau)] < -1)){ #S tc or S final?
+      #    negative_pop_prbe <- sum(N*tempoSelCoeff[, paste0("S",tau)] < -1, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+      #  } else {
+      #    negative_pop_prbe <- as.numeric(0)
+      #  }
+      #  
+      #} else {
+      #  negative_pop_prbe <- as.numeric(0)
+      #}
     } else {
-      positive_pop_prbe <- as.numeric(0)
-    }
-  } else {
-    positive_pop_prbe <- as.numeric(0)
-  }
-  
-  
-  ## Pr MUTATIONS UNDER STRONG BACKGROUND SELECTION --[Ns < -1]-- IN THE POPULATION
-  #if (any(N*all_merged_genome[, paste0("S",tc)] < -1)){ #S tc or S final?
-  #  negative_pop_prbe <- sum(N*all_merged_genome[, paste0("S",tc)] < -1, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)])
-  #} else {
-  #  negative_pop_prbe <- as.numeric(NA)
-  #}
-  
-  if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) {
-    if (any(N*tempoSelCoeff[, paste0("S",tau)] < -1)){ #S tc or S final?
-      negative_pop_prbe <- sum(N*tempoSelCoeff[, paste0("S",tau)] < -1, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
-    } else {
-      negative_pop_prbe <- as.numeric(0)
+      
+      ## PROPORTION OF SELECTED MUTATIONS IN THE POPULATION 
+      if (any(all_merged_genome[, "S"] != 0)) {
+        
+        actual_pop_prbe <- sum(all_merged_genome[, "S"] != 0, na.rm = TRUE)/length(all_merged_genome[, "S"][!is.na(all_merged_genome[, "S"])])
+        
+        if (any(N*all_merged_genome[, "S"] > 1)){
+          positive_pop_prbe <- sum(N*all_merged_genome[, "S"] > 1, na.rm = TRUE)/length(all_merged_genome[, "S"][!is.na(all_merged_genome[, "S"])])
+        } else {
+          positive_pop_prbe <- as.numeric(0)
+        }
+        
+        if (any(N*all_merged_genome[, "S"] < -1)){
+          negative_pop_prbe <- sum(N*all_merged_genome[, "S"] < -1, na.rm = TRUE)/length(all_merged_genome[, "S"][!is.na(all_merged_genome[, "S"])])
+        } else {
+          negative_pop_prbe <- as.numeric(0)
+        }
+        
+      } else {
+        actual_pop_prbe <- as.numeric(0)
+        positive_pop_prbe <- as.numeric(0)
+        negative_pop_prbe <- as.numeric(0)
+      }
     }
     
-  } else {
-    negative_pop_prbe <- as.numeric(0)
-  }
-  
-  ## IBD and VAR NE CALCULATION
-  
-  # remove new mutations
-  if (!is.na(lastgen)){
+    ## IBD and VAR NE CALCULATION
+    
+    # remove new mutations for Ne calculation
     merged_genome <- all_merged_genome[which(all_merged_genome$GO <= lastgen), ]
+    
+    ## ALL MUTATION TYPES
+    if (nrow(merged_genome) != 0){
+      
+      he_merged_genome <- merged_genome[ , grepl("^HE" , names(merged_genome))]
+      he_merged_genome[is.na(he_merged_genome)] <- 0
+      
+      mean_he_merged_genome <- colMeans(he_merged_genome, na.rm = TRUE) 
+      
+      paaf_merged_genome <- merged_genome[ , grepl("^PAAF" , names(merged_genome))]
+      paaf_merged_genome[is.na(paaf_merged_genome)] <- 0
+      
+      # IBD NE Genome-wide for each time interval
+      IBDNeGWtimes <- -(1/(2*log(mean_he_merged_genome[2:length(mean_he_merged_genome)]/mean_he_merged_genome[1:(length(mean_he_merged_genome)-1)])))
+      IBDNeGWtimes <- as.data.frame(t(IBDNeGWtimes))
+      colnames(IBDNeGWtimes) <- paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+      
+      # IBD NE Genome-wide total
+      IBDNeGWtotal <- -(tau/(2*log(mean_he_merged_genome[length(mean_he_merged_genome)]/mean_he_merged_genome[1])))
+      names(IBDNeGWtotal) <- "IBDNeGWtotal"
+      
+      # VAR NE Genome-wide for each time interval
+      VARNeGWtimes <- mean_he_merged_genome[1:tau]/(2*colMeans((paaf_merged_genome[,1:tau] - paaf_merged_genome[,2:(tau+1)])^2))
+      VARNeGWtimes <- as.data.frame(t(VARNeGWtimes))
+      colnames(VARNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+      
+      # VAR NE Genome-wide total
+      VARNeGWtotal <- tau*mean_he_merged_genome[1]/(2*mean((paaf_merged_genome[,1] - paaf_merged_genome[,(tau+1)])^2))
+      names(VARNeGWtotal) <- "VARNeGWtotal"
+      
+    } else {
+      
+      IBDNeGWtimes <- as.data.frame(t(rep(NA, tau)))
+      colnames(IBDNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+      
+      IBDNeGWtotal <- as.numeric(NA)
+      names(IBDNeGWtotal) <- "VARNeGWtotal"
+      
+      VARNeGWtimes <- as.data.frame(t(rep(NA, tau)))
+      colnames(VARNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+      
+      VARNeGWtotal <- as.numeric(NA)
+      names(VARNeGWtotal) <- "VARNeGWtotal"
+    }
+    
+    ## ONLY NEUTRAL MUTATIONS
+    if (any(merged_genome$MT == 1 | merged_genome$MT == 2 )){
+      
+      m1_and_m2 <- c(1, 2)
+      merged_genome_neutral <- merged_genome[merged_genome$MT %in% m1_and_m2,]
+      
+      he_merged_genome_neutral <- merged_genome_neutral[ , grepl("HE" , names(merged_genome_neutral))]
+      he_merged_genome_neutral[is.na(he_merged_genome_neutral)] <- 0
+      
+      mean_he_merged_genome_neutral <- colMeans(he_merged_genome_neutral, na.rm = TRUE)
+      
+      paaf_merged_genome_neutral <- merged_genome_neutral[ , grepl("^PAAF" , names(merged_genome_neutral))]
+      paaf_merged_genome_neutral[is.na(paaf_merged_genome_neutral)] <- 0
+      
+      # IBD NE Genome-wide neutral for each time interval
+      IBDNeGWNtimes <- -(1/(2*log(mean_he_merged_genome_neutral[2:length(mean_he_merged_genome_neutral)]/mean_he_merged_genome_neutral[1:(length(mean_he_merged_genome_neutral)-1)])))
+      IBDNeGWNtimes <- as.data.frame(t(IBDNeGWNtimes))
+      colnames(IBDNeGWNtimes) <- paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+      
+      # IBD NE Genome-wide neutral total
+      IBDNeGWNtotal <- -(tau/(2*log(mean_he_merged_genome_neutral[length(mean_he_merged_genome_neutral)]/mean_he_merged_genome_neutral[1])))
+      names(IBDNeGWNtotal) <- "IBDNeGWNtotal"
+      
+      # VAR NE Genome-wide neutral for each time interval
+      VARNeGWNtimes <- mean_he_merged_genome_neutral[1:tau]/(2*colMeans((paaf_merged_genome_neutral[,1:tau] - paaf_merged_genome_neutral[,2:(tau+1)])^2))
+      VARNeGWNtimes <- as.data.frame(t(VARNeGWNtimes))
+      colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+      
+      # VAR NE Genome-wide neutral total
+      VARNeGWNtotal <- tau*mean_he_merged_genome_neutral[1]/(2*mean((paaf_merged_genome_neutral[,1] - paaf_merged_genome_neutral[,(tau+1)])^2))
+      names(VARNeGWNtotal) <- "VARNeGWNtotal"
+      
+    } else {
+      
+      IBDNeGWNtimes <- as.data.frame(t(rep(NA, tau)))
+      colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+      
+      IBDNeGWNtotal <- as.numeric(NA)
+      names(VARNeGWNtotal) <- "VARNeGWNtotal"
+      
+      VARNeGWNtimes <- as.data.frame(t(rep(NA, tau)))
+      colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+      
+      VARNeGWNtotal <- as.numeric(NA)
+      names(VARNeGWNtotal) <- "VARNeGWNtotal"
+    }
+    
+    ## ONLY SELECTED MUTATIONS - ##DOUBT## - HERE FOR SV
+    if (model_type == 3){
+      if (any(merged_genome[, paste0("S",tc)] != 0 | !is.na(merged_genome[, paste0("S",tc)]))){ # only the last of from the whole period?
+        
+        selectedmu <- tempoSelCoeff[which(tempoSelCoeff[, paste0("S",tc)] != 0),]
+        
+        merged_genome_selection <- merged_genome[merged_genome$MID %in% selectedmu$MID, ]
+        #merged_genome_selection <- merged_genome[which(merged_genome[, paste0("S",tc)] != 0),]
+        
+        if (!is.null(merged_genome_selection)){
+          
+          he_merged_genome_selection <- merged_genome_selection[ , grepl("HE" , names(merged_genome_selection))]
+          he_merged_genome_selection[is.na(he_merged_genome_selection)] <- 0
+          
+          mean_he_merged_genome_selection <- colMeans(he_merged_genome_selection, na.rm = TRUE)
+          
+          paaf_merged_genome_selection <- merged_genome_selection[ , grepl("^PAAF" , names(merged_genome_selection))]
+          paaf_merged_genome_selection[is.na(paaf_merged_genome_selection)] <- 0
+          
+          # IBD NE Genome-wide selection for each time interval
+          IBDNeGWStimes <- -(1/(2*log(mean_he_merged_genome_selection[2:length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1:(length(mean_he_merged_genome_selection)-1)])))
+          IBDNeGWStimes <- as.data.frame(t(IBDNeGWStimes))
+          colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+          
+          # IBD NE Genome-wide selection total
+          IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1])))
+          names(IBDNeGWStotal) <- "IBDNeGWStotal"
+          
+          # VAR NE Genome-wide selection for each time interval
+          VARNeGWStimes <- mean_he_merged_genome_selection[1:tau]/(2*colMeans((paaf_merged_genome_selection[,1:tau] - paaf_merged_genome_selection[,2:(tau+1)])^2))
+          VARNeGWStimes <- as.data.frame(t(VARNeGWStimes))
+          colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+          
+          # VAR NE Genome-wide neutral total
+          VARNeGWStotal <- tau*mean_he_merged_genome_selection[1]/(2*mean((paaf_merged_genome_selection[,1] - paaf_merged_genome_selection[,(tau+1)])^2))
+          names(VARNeGWStotal) <- "VARNeGWStotal"
+          
+        } else {
+          
+          IBDNeGWStimes <- as.data.frame(t(rep(NA, tau)))
+          colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+          
+          IBDNeGWStotal <- as.numeric(NA)
+          names(IBDNeGWStotal) <- "IBDNeGWStotal"
+          
+          VARNeGWStimes <- as.data.frame(t(rep(NA, tau)))
+          colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+          
+          VARNeGWStotal <- as.numeric(NA)
+          names(VARNeGWStotal) <- "VARNeGWStotal"
+        }
+        
+      } else {
+        
+        IBDNeGWStimes <- as.data.frame(t(rep(NA, tau)))
+        colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+        
+        IBDNeGWStotal <- as.numeric(NA)
+        names(IBDNeGWStotal) <- "IBDNeGWStotal"
+        
+        VARNeGWStimes <- as.data.frame(t(rep(NA, tau)))
+        colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+        
+        VARNeGWStotal <- as.numeric(NA)
+        names(VARNeGWStotal) <- "VARNeGWStotal"
+      }
+      
+    } else {
+      
+      if (any(merged_genome[, "S"] != 0 | !is.na(merged_genome[, "S"]))){ # only the last of from the whole period?
+        
+        merged_genome_selection <- merged_genome[merged_genome$S != 0, ]
+        
+        he_merged_genome_selection <- merged_genome_selection[ , grepl("HE" , names(merged_genome_selection))]
+        he_merged_genome_selection[is.na(he_merged_genome_selection)] <- 0
+        
+        mean_he_merged_genome_selection <- colMeans(he_merged_genome_selection, na.rm = TRUE)
+        
+        paaf_merged_genome_selection <- merged_genome_selection[ , grepl("^PAAF" , names(merged_genome_selection))]
+        paaf_merged_genome_selection[is.na(paaf_merged_genome_selection)] <- 0
+        
+        # IBD NE Genome-wide selection for each time interval
+        IBDNeGWStimes <- -(1/(2*log(mean_he_merged_genome_selection[2:length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1:(length(mean_he_merged_genome_selection)-1)])))
+        IBDNeGWStimes <- as.data.frame(t(IBDNeGWStimes))
+        colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+        
+        # IBD NE Genome-wide selection total
+        IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1])))
+        names(IBDNeGWStotal) <- "IBDNeGWStotal"
+        
+        # VAR NE Genome-wide selection for each time interval
+        VARNeGWStimes <- mean_he_merged_genome_selection[1:tau]/(2*colMeans((paaf_merged_genome_selection[,1:tau] - paaf_merged_genome_selection[,2:(tau+1)])^2))
+        VARNeGWStimes <- as.data.frame(t(VARNeGWStimes))
+        colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+        
+        # VAR NE Genome-wide neutral total
+        VARNeGWStotal <- tau*mean_he_merged_genome_selection[1]/(2*mean((paaf_merged_genome_selection[,1] - paaf_merged_genome_selection[,(tau+1)])^2))
+        names(VARNeGWStotal) <- "VARNeGWStotal"
+        
+      } else {
+        
+        IBDNeGWStimes <- as.data.frame(t(rep(NA, tau)))
+        colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+        
+        IBDNeGWStotal <- as.numeric(NA)
+        names(IBDNeGWStotal) <- "IBDNeGWStotal"
+        
+        VARNeGWStimes <- as.data.frame(t(rep(NA, tau)))
+        colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+        
+        VARNeGWStotal <- as.numeric(NA)
+        names(VARNeGWStotal) <- "VARNeGWStotal"
+      }
+    }
+    
   } else {
-    merged_empty <- as.data.frame(matrix("",0,length(all_merged_genome)))
-    colnames(merged_empty) <- colnames(all_merged_genome)
-    merged_genome <- merged_empty
-  }
-  
-  ## ALL MUTATION TYPES
-  if (nrow(merged_genome) != 0){
     
-    he_merged_genome <- merged_genome[ , grepl("^HE" , names(merged_genome))]
-    he_merged_genome[is.na(he_merged_genome)] <- 0
+    ## ACTUAL Pr OF SELECTED MUTATIONS IN THE POPULATION
+    actual_pop_prbe <- as.numeric(0)
     
-    mean_he_merged_genome <- colMeans(he_merged_genome, na.rm = TRUE) 
+    ## Pr MUTATIONS UNDER STRONG POSITIVE SELECTION --[Ns > 1]-- IN THE POPULATION
+    positive_pop_prbe <- as.numeric(0)
     
-    paaf_merged_genome <- merged_genome[ , grepl("^PAAF" , names(merged_genome))]
-    paaf_merged_genome[is.na(paaf_merged_genome)] <- 0
+    ## Pr MUTATIONS UNDER STRONG BACKGROUND SELECTION --[Ns < -1]-- IN THE POPULATION
+    negative_pop_prbe <- as.numeric(0)
     
-    # IBD NE Genome-wide for each time interval
-    IBDNeGWtimes <- -(1/(2*log(mean_he_merged_genome[2:length(mean_he_merged_genome)]/mean_he_merged_genome[1:(length(mean_he_merged_genome)-1)])))
-    IBDNeGWtimes <- as.data.frame(t(IBDNeGWtimes))
-    colnames(IBDNeGWtimes) <- paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+    ## IBD and VAR NE CALCULATION
     
-    # IBD NE Genome-wide total
-    IBDNeGWtotal <- -(tau/(2*log(mean_he_merged_genome[length(mean_he_merged_genome)]/mean_he_merged_genome[1])))
-    names(IBDNeGWtotal) <- "IBDNeGWtotal"
-    
-    # VAR NE Genome-wide for each time interval
-    VARNeGWtimes <- mean_he_merged_genome[1:tau]/(2*colMeans((paaf_merged_genome[,1:tau] - paaf_merged_genome[,2:(tau+1)])^2))
-    VARNeGWtimes <- as.data.frame(t(VARNeGWtimes))
-    colnames(VARNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
-    
-    # VAR NE Genome-wide total
-    VARNeGWtotal <- tau*mean_he_merged_genome[1]/(2*mean((paaf_merged_genome[,1] - paaf_merged_genome[,(tau+1)])^2))
-    names(VARNeGWtotal) <- "VARNeGWtotal"
-    
-  } else {
-    
+    ## ALL MUTATION TYPES
     IBDNeGWtimes <- as.data.frame(t(rep(NA, tau)))
     colnames(IBDNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
     
@@ -633,42 +828,8 @@ do_sim <- function(sim, nsim,
     
     VARNeGWtotal <- as.numeric(NA)
     names(VARNeGWtotal) <- "VARNeGWtotal"
-  }
-  
-  ## ONLY NEUTRAL MUTATIONS
-  if (any(merged_genome$MT == 1 | merged_genome$MT == 2 )){
     
-    m1_and_m2 <- c(1, 2)
-    merged_genome_neutral <- merged_genome[merged_genome$MT %in% m1_and_m2,]
-    
-    he_merged_genome_neutral <- merged_genome_neutral[ , grepl("HE" , names(merged_genome_neutral))]
-    he_merged_genome_neutral[is.na(he_merged_genome_neutral)] <- 0
-    
-    mean_he_merged_genome_neutral <- colMeans(he_merged_genome_neutral, na.rm = TRUE)
-    
-    paaf_merged_genome_neutral <- merged_genome_neutral[ , grepl("^PAAF" , names(merged_genome_neutral))]
-    paaf_merged_genome_neutral[is.na(paaf_merged_genome_neutral)] <- 0
-    
-    # IBD NE Genome-wide neutral for each time interval
-    IBDNeGWNtimes <- -(1/(2*log(mean_he_merged_genome_neutral[2:length(mean_he_merged_genome_neutral)]/mean_he_merged_genome_neutral[1:(length(mean_he_merged_genome_neutral)-1)])))
-    IBDNeGWNtimes <- as.data.frame(t(IBDNeGWNtimes))
-    colnames(IBDNeGWNtimes) <- paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
-    
-    # IBD NE Genome-wide neutral total
-    IBDNeGWNtotal <- -(tau/(2*log(mean_he_merged_genome_neutral[length(mean_he_merged_genome_neutral)]/mean_he_merged_genome_neutral[1])))
-    names(IBDNeGWNtotal) <- "IBDNeGWNtotal"
-    
-    # VAR NE Genome-wide neutral for each time interval
-    VARNeGWNtimes <- mean_he_merged_genome_neutral[1:tau]/(2*colMeans((paaf_merged_genome_neutral[,1:tau] - paaf_merged_genome_neutral[,2:(tau+1)])^2))
-    VARNeGWNtimes <- as.data.frame(t(VARNeGWNtimes))
-    colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
-    
-    # VAR NE Genome-wide neutral total
-    VARNeGWNtotal <- tau*mean_he_merged_genome_neutral[1]/(2*mean((paaf_merged_genome_neutral[,1] - paaf_merged_genome_neutral[,(tau+1)])^2))
-    names(VARNeGWNtotal) <- "VARNeGWNtotal"
-    
-  } else {
-    
+    ## ONLY NEUTRAL MUTATIONS
     IBDNeGWNtimes <- as.data.frame(t(rep(NA, tau)))
     colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
     
@@ -680,44 +841,9 @@ do_sim <- function(sim, nsim,
     
     VARNeGWNtotal <- as.numeric(NA)
     names(VARNeGWNtotal) <- "VARNeGWNtotal"
-  }
-  
-  ## ONLY SELECTED MUTATIONS - ##DOUBT## - HERE FOR SV
-  if (any(merged_genome[, paste0("S",tau)] != 0 | !is.na(merged_genome[, paste0("S",tau)]))){ # only the last of from the whole period?
     
-    selectedmu <- tempoSelCoeff[which(tempoSelCoeff[, paste0("S",tc)] != 0),]
     
-    merged_genome_selection <- merged_genome[merged_genome$MID %in% selectedmu$MID, ]
-    #merged_genome_selection <- merged_genome[which(merged_genome[, paste0("S",tc)] != 0),]
-    
-    he_merged_genome_selection <- merged_genome_selection[ , grepl("HE" , names(merged_genome_selection))]
-    he_merged_genome_selection[is.na(he_merged_genome_selection)] <- 0
-    
-    mean_he_merged_genome_selection <- colMeans(he_merged_genome_selection, na.rm = TRUE)
-    
-    paaf_merged_genome_selection <- merged_genome_selection[ , grepl("^PAAF" , names(merged_genome_selection))]
-    paaf_merged_genome_selection[is.na(paaf_merged_genome_selection)] <- 0
-    
-    # IBD NE Genome-wide selection for each time interval
-    IBDNeGWStimes <- -(1/(2*log(mean_he_merged_genome_selection[2:length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1:(length(mean_he_merged_genome_selection)-1)])))
-    IBDNeGWStimes <- as.data.frame(t(IBDNeGWStimes))
-    colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
-    
-    # IBD NE Genome-wide selection total
-    IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1])))
-    names(IBDNeGWStotal) <- "IBDNeGWStotal"
-    
-    # VAR NE Genome-wide selection for each time interval
-    VARNeGWStimes <- mean_he_merged_genome_selection[1:tau]/(2*colMeans((paaf_merged_genome_selection[,1:tau] - paaf_merged_genome_selection[,2:(tau+1)])^2))
-    VARNeGWStimes <- as.data.frame(t(VARNeGWStimes))
-    colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
-    
-    # VAR NE Genome-wide neutral total
-    VARNeGWStotal <- tau*mean_he_merged_genome_selection[1]/(2*mean((paaf_merged_genome_selection[,1] - paaf_merged_genome_selection[,(tau+1)])^2))
-    names(VARNeGWStotal) <- "VARNeGWStotal"
-  
-  } else {
-    
+    ## ONLY SELECTED MUTATIONS - ##DOUBT## - HERE FOR SV
     IBDNeGWStimes <- as.data.frame(t(rep(NA, tau)))
     colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
     
@@ -729,50 +855,306 @@ do_sim <- function(sim, nsim,
     
     VARNeGWStotal <- as.numeric(NA)
     names(VARNeGWStotal) <- "VARNeGWStotal"
+    
   }
+  
+  # remove temporary PAAF file from slim_output folder
+  if (remove_files){
+    if(file.exists(paste0(slim_output_folder,filenames_genome))){
+      file.remove(paste0(slim_output_folder,filenames_genome))
+    }
+  }
+  
+  # load file with the last generation - UGLY!!!
+  #slim_output_lastgen <- paste0(slim_output_folder,"slim_output_lastgen_", sim, ".txt")
+  
+  #if (file.exists(slim_output_lastgen)){
+  #  info_lastgen_file = file.info(slim_output_lastgen)
+  #  
+  #  if (info_lastgen_file$size != 0){
+  #    lastgen <- scan(file = slim_output_lastgen, what = integer(), na.strings = "NA")
+  #  } else {
+  #    lastgen <- as.numeric(NA)
+  #  }
+  #} else {
+  #  lastgen <- as.numeric(NA)
+  #}
+  
+  #if(!is.null(all_merged_genome)){
+  #  
+  #  # fill in the values of selection coefficient that are NA after the merging
+  #  tempoSelCoeff <- all_merged_genome[, grepl("^S", names(all_merged_genome))]
+  #  
+  #  # replace NA's of selection coefficient of mutations that arise in tc
+  #  tempoSelCoeff[which(all_merged_genome$GO==lastgen + (tc+1)), 1:tc][is.na(tempoSelCoeff[which(all_merged_genome$GO==lastgen + (tc+1)), 1:tc])] <- 0
+  #  
+  #  # replace NA with the last value forward and backward
+  #  forwardfill  <- na.locf(t(tempoSelCoeff))
+  #  backwardfill <- na.locf(forwardfill, fromLast = TRUE)
+  #  
+  #  tempoSelCoeff <- data.frame(MID=all_merged_genome$MID, t(backwardfill))
+  #  
+  #} else {
+  #  
+  #  tempoSelCoeff <- as.data.frame(matrix("",0,(tau+2)))
+  #  colnames(tempoSelCoeff) <- c("MID", paste0("S",seq(from=0,to=(tau))))
+  #}
+  
+  ## ACTUAL Pr OF SELECTED MUTATIONS IN THE POPULATION 
+  #if (any(all_merged_genome[, paste0("S",tc)] != 0)) { #S tc or S final?
+  #  actual_pop_prbe <- sum(all_merged_genome[, paste0("S",tc)] != 0, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)])
+  #} else {
+  #  actual_pop_prbe <- as.numeric(NA)
+  #}
+  
+  #if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) { #S tc or S final?
+  #  actual_pop_prbe <- sum(tempoSelCoeff[, paste0("S",tau)] != 0, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+  #} else {
+  #  actual_pop_prbe <- as.numeric(0)
+  #}
+  
+  ## Pr MUTATIONS UNDER STRONG POSITIVE SELECTION --[Ns > 1]-- IN THE POPULATION
+  #if (any(N*all_merged_genome[, paste0("S",tc)] > 1)){ #S tc or S final?
+  #  positive_pop_prbe <- sum(N*all_merged_genome[, paste0("S",tc)] > 1, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)])
+  #} else {
+  #  positive_pop_prbe <- as.numeric(NA)
+  #}
+  
+  #if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) {
+  #  if (any(N*tempoSelCoeff[, paste0("S",tau)] > 1)){ #S tc or S final?
+  #    positive_pop_prbe <- sum(N*tempoSelCoeff[, paste0("S",tau)] > 1, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+  #  } else {
+  #    positive_pop_prbe <- as.numeric(0)
+  #  }
+  #} else {
+  #  positive_pop_prbe <- as.numeric(0)
+  #}
+  
+  
+  ## Pr MUTATIONS UNDER STRONG BACKGROUND SELECTION --[Ns < -1]-- IN THE POPULATION
+  #if (any(N*all_merged_genome[, paste0("S",tc)] < -1)){ #S tc or S final?
+  #  negative_pop_prbe <- sum(N*all_merged_genome[, paste0("S",tc)] < -1, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)])
+  #} else {
+  #  negative_pop_prbe <- as.numeric(NA)
+  #}
+  
+  #if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) {
+  #  if (any(N*tempoSelCoeff[, paste0("S",tau)] < -1)){ #S tc or S final?
+  #    negative_pop_prbe <- sum(N*tempoSelCoeff[, paste0("S",tau)] < -1, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+  #  } else {
+  #    negative_pop_prbe <- as.numeric(0)
+  #  }
+  #  
+  #} else {
+  #  negative_pop_prbe <- as.numeric(0)
+  #}
+  
+  ## IBD and VAR NE CALCULATION
+  
+  # remove new mutations
+  #if (!is.na(lastgen)){
+  #  merged_genome <- all_merged_genome[which(all_merged_genome$GO <= lastgen), ]
+  #} else {
+  #  merged_empty <- as.data.frame(matrix("",0,length(all_merged_genome)))
+  #  colnames(merged_empty) <- colnames(all_merged_genome)
+  #  merged_genome <- merged_empty
+  #}
+  
+  ### ALL MUTATION TYPES
+  #if (nrow(merged_genome) != 0){
+  #  
+  #  he_merged_genome <- merged_genome[ , grepl("^HE" , names(merged_genome))]
+  #  he_merged_genome[is.na(he_merged_genome)] <- 0
+  #  
+  #  mean_he_merged_genome <- colMeans(he_merged_genome, na.rm = TRUE) 
+  #  
+  #  paaf_merged_genome <- merged_genome[ , grepl("^PAAF" , names(merged_genome))]
+  #  paaf_merged_genome[is.na(paaf_merged_genome)] <- 0
+  #  
+  #  # IBD NE Genome-wide for each time interval
+  #  IBDNeGWtimes <- -(1/(2*log(mean_he_merged_genome[2:length(mean_he_merged_genome)]/mean_he_merged_genome[1:(length(mean_he_merged_genome)-1)])))
+  #  IBDNeGWtimes <- as.data.frame(t(IBDNeGWtimes))
+  #  colnames(IBDNeGWtimes) <- paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  # IBD NE Genome-wide total
+  #  IBDNeGWtotal <- -(tau/(2*log(mean_he_merged_genome[length(mean_he_merged_genome)]/mean_he_merged_genome[1])))
+  #  names(IBDNeGWtotal) <- "IBDNeGWtotal"
+  #  
+  #  # VAR NE Genome-wide for each time interval
+  #  VARNeGWtimes <- mean_he_merged_genome[1:tau]/(2*colMeans((paaf_merged_genome[,1:tau] - paaf_merged_genome[,2:(tau+1)])^2))
+  #  VARNeGWtimes <- as.data.frame(t(VARNeGWtimes))
+  #  colnames(VARNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  # VAR NE Genome-wide total
+  #  VARNeGWtotal <- tau*mean_he_merged_genome[1]/(2*mean((paaf_merged_genome[,1] - paaf_merged_genome[,(tau+1)])^2))
+  #  names(VARNeGWtotal) <- "VARNeGWtotal"
+  #  
+  #} else {
+  #  
+  #  IBDNeGWtimes <- as.data.frame(t(rep(NA, tau)))
+  #  colnames(IBDNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  IBDNeGWtotal <- as.numeric(NA)
+  #  names(IBDNeGWtotal) <- "VARNeGWtotal"
+  #  
+  #  VARNeGWtimes <- as.data.frame(t(rep(NA, tau)))
+  #  colnames(VARNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  VARNeGWtotal <- as.numeric(NA)
+  #  names(VARNeGWtotal) <- "VARNeGWtotal"
+  #}
+  #
+  ### ONLY NEUTRAL MUTATIONS
+  #if (any(merged_genome$MT == 1 | merged_genome$MT == 2 )){
+  #  
+  #  m1_and_m2 <- c(1, 2)
+  #  merged_genome_neutral <- merged_genome[merged_genome$MT %in% m1_and_m2,]
+  #  
+  #  he_merged_genome_neutral <- merged_genome_neutral[ , grepl("HE" , names(merged_genome_neutral))]
+  #  he_merged_genome_neutral[is.na(he_merged_genome_neutral)] <- 0
+  #  
+  #  mean_he_merged_genome_neutral <- colMeans(he_merged_genome_neutral, na.rm = TRUE)
+  #  
+  #  paaf_merged_genome_neutral <- merged_genome_neutral[ , grepl("^PAAF" , names(merged_genome_neutral))]
+  #  paaf_merged_genome_neutral[is.na(paaf_merged_genome_neutral)] <- 0
+  #  
+  #  # IBD NE Genome-wide neutral for each time interval
+  #  IBDNeGWNtimes <- -(1/(2*log(mean_he_merged_genome_neutral[2:length(mean_he_merged_genome_neutral)]/mean_he_merged_genome_neutral[1:(length(mean_he_merged_genome_neutral)-1)])))
+  #  IBDNeGWNtimes <- as.data.frame(t(IBDNeGWNtimes))
+  #  colnames(IBDNeGWNtimes) <- paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  # IBD NE Genome-wide neutral total
+  #  IBDNeGWNtotal <- -(tau/(2*log(mean_he_merged_genome_neutral[length(mean_he_merged_genome_neutral)]/mean_he_merged_genome_neutral[1])))
+  #  names(IBDNeGWNtotal) <- "IBDNeGWNtotal"
+  #  
+  #  # VAR NE Genome-wide neutral for each time interval
+  #  VARNeGWNtimes <- mean_he_merged_genome_neutral[1:tau]/(2*colMeans((paaf_merged_genome_neutral[,1:tau] - paaf_merged_genome_neutral[,2:(tau+1)])^2))
+  #  VARNeGWNtimes <- as.data.frame(t(VARNeGWNtimes))
+  #  colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  # VAR NE Genome-wide neutral total
+  #  VARNeGWNtotal <- tau*mean_he_merged_genome_neutral[1]/(2*mean((paaf_merged_genome_neutral[,1] - paaf_merged_genome_neutral[,(tau+1)])^2))
+  #  names(VARNeGWNtotal) <- "VARNeGWNtotal"
+  #  
+  #} else {
+  #  
+  #  IBDNeGWNtimes <- as.data.frame(t(rep(NA, tau)))
+  #  colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  IBDNeGWNtotal <- as.numeric(NA)
+  #  names(VARNeGWNtotal) <- "VARNeGWNtotal"
+  #  
+  #  VARNeGWNtimes <- as.data.frame(t(rep(NA, tau)))
+  #  colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  VARNeGWNtotal <- as.numeric(NA)
+  #  names(VARNeGWNtotal) <- "VARNeGWNtotal"
+  #}
+  #
+  ## ONLY SELECTED MUTATIONS - ##DOUBT## - HERE FOR SV
+  #if (any(merged_genome[, paste0("S",tau)] != 0 | !is.na(merged_genome[, paste0("S",tau)]))){ # only the last of from the whole period?
+  #  
+  #  selectedmu <- tempoSelCoeff[which(tempoSelCoeff[, paste0("S",tc)] != 0),]
+  #  
+  #  merged_genome_selection <- merged_genome[merged_genome$MID %in% selectedmu$MID, ]
+  #  #merged_genome_selection <- merged_genome[which(merged_genome[, paste0("S",tc)] != 0),]
+  #  
+  #  he_merged_genome_selection <- merged_genome_selection[ , grepl("HE" , names(merged_genome_selection))]
+  #  he_merged_genome_selection[is.na(he_merged_genome_selection)] <- 0
+  #  
+  #  mean_he_merged_genome_selection <- colMeans(he_merged_genome_selection, na.rm = TRUE)
+  #  
+  #  paaf_merged_genome_selection <- merged_genome_selection[ , grepl("^PAAF" , names(merged_genome_selection))]
+  #  paaf_merged_genome_selection[is.na(paaf_merged_genome_selection)] <- 0
+  #  
+  #  # IBD NE Genome-wide selection for each time interval
+  #  IBDNeGWStimes <- -(1/(2*log(mean_he_merged_genome_selection[2:length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1:(length(mean_he_merged_genome_selection)-1)])))
+  #  IBDNeGWStimes <- as.data.frame(t(IBDNeGWStimes))
+  #  colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  # IBD NE Genome-wide selection total
+  #  IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1])))
+  #  names(IBDNeGWStotal) <- "IBDNeGWStotal"
+  #  
+  #  # VAR NE Genome-wide selection for each time interval
+  #  VARNeGWStimes <- mean_he_merged_genome_selection[1:tau]/(2*colMeans((paaf_merged_genome_selection[,1:tau] - paaf_merged_genome_selection[,2:(tau+1)])^2))
+  #  VARNeGWStimes <- as.data.frame(t(VARNeGWStimes))
+  #  colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  # VAR NE Genome-wide neutral total
+  #  VARNeGWStotal <- tau*mean_he_merged_genome_selection[1]/(2*mean((paaf_merged_genome_selection[,1] - paaf_merged_genome_selection[,(tau+1)])^2))
+  #  names(VARNeGWStotal) <- "VARNeGWStotal"
+  #
+  #} else {
+  #  
+  #  IBDNeGWStimes <- as.data.frame(t(rep(NA, tau)))
+  #  colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  IBDNeGWStotal <- as.numeric(NA)
+  #  names(IBDNeGWStotal) <- "IBDNeGWStotal"
+  #  
+  #  VARNeGWStimes <- as.data.frame(t(rep(NA, tau)))
+  #  colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+  #  
+  #  VARNeGWStotal <- as.numeric(NA)
+  #  names(VARNeGWStotal) <- "VARNeGWStotal"
+  #}
   
   ## NEUTRAL MUTATION IN EXTRA CHROMOSOME
   filenames_extraChr <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_extraChr_t[0-", tau, "]_", sim), full.names=FALSE)
   datalist_extraChr <- lapply(filenames_extraChr, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
   merged_extraChr <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4), all = TRUE)}, datalist_extraChr)
   
-  # remove new mutations
-  if (!is.na(lastgen)){
+  if(!is.null(merged_extraChr)){
+    
+    # load file with the last generation 
+    lastgen <- scan(file = slim_output_lastgen, what = integer(), na.strings = "NA")
+    
+    # remove new mutations
     merged_extraChr <- merged_extraChr[which(merged_extraChr$GO <= lastgen), ]
-  } else {
-    merged_empty <- as.data.frame(matrix("",0,length(merged_extraChr)))
-    colnames(merged_empty) <- colnames(merged_extraChr)
-    merged_extraChr <- merged_empty
-  }
-  
-  if (nrow(merged_extraChr) != 0){
     
-    he_merged_extraChr <- merged_extraChr[ , grepl("HE" , names(merged_extraChr))]
-    he_merged_extraChr[is.na(he_merged_extraChr)] <- 0
-    
-    mean_he_merged_extraChr <- colMeans(he_merged_extraChr, na.rm = TRUE)
-    
-    paaf_merged_extraChr <- merged_extraChr[ , grepl("^PAAF" , names(merged_extraChr))]
-    paaf_merged_extraChr[is.na(paaf_merged_extraChr)] <- 0
-    
-    # IBD NE extra chromosome for each time interval
-    IBDNeChrtimes <- -(1/(2*log(mean_he_merged_extraChr[2:length(mean_he_merged_extraChr)]/mean_he_merged_extraChr[1:(length(mean_he_merged_extraChr)-1)])))
-    IBDNeChrtimes <- as.data.frame(t(IBDNeChrtimes))
-    colnames(IBDNeChrtimes) <- paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
-    
-    # IBD NE extra chromosome total
-    IBDNeChrtotal <- -(tau/(2*log(mean_he_merged_extraChr[length(mean_he_merged_extraChr)]/mean_he_merged_extraChr[1])))
-    names(IBDNeChrtotal) <- "IBDNeChrtotal"
-    
-    # VAR NE extra chromosome for each time interval
-    VARNeChrtimes <- mean_he_merged_extraChr[1:tau]/(2*colMeans((paaf_merged_extraChr[,1:tau] - paaf_merged_extraChr[,2:(tau+1)])^2))
-    VARNeChrtimes <- as.data.frame(t(VARNeChrtimes))
-    colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
-    
-    # VAR NE extra chromosome total
-    VARNeChrtotal <- tau*mean_he_merged_extraChr[1]/(2*mean((paaf_merged_extraChr[,1] - paaf_merged_extraChr[,(tau+1)])^2))
-    names(VARNeChrtotal) <- "VARNeChrtotal"
-    
+    if (nrow(merged_extraChr) != 0){
+      
+      he_merged_extraChr <- merged_extraChr[ , grepl("HE" , names(merged_extraChr))]
+      he_merged_extraChr[is.na(he_merged_extraChr)] <- 0
+      
+      mean_he_merged_extraChr <- colMeans(he_merged_extraChr, na.rm = TRUE)
+      
+      paaf_merged_extraChr <- merged_extraChr[ , grepl("^PAAF" , names(merged_extraChr))]
+      paaf_merged_extraChr[is.na(paaf_merged_extraChr)] <- 0
+      
+      # IBD NE extra chromosome for each time interval
+      IBDNeChrtimes <- -(1/(2*log(mean_he_merged_extraChr[2:length(mean_he_merged_extraChr)]/mean_he_merged_extraChr[1:(length(mean_he_merged_extraChr)-1)])))
+      IBDNeChrtimes <- as.data.frame(t(IBDNeChrtimes))
+      colnames(IBDNeChrtimes) <- paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+      
+      # IBD NE extra chromosome total
+      IBDNeChrtotal <- -(tau/(2*log(mean_he_merged_extraChr[length(mean_he_merged_extraChr)]/mean_he_merged_extraChr[1])))
+      names(IBDNeChrtotal) <- "IBDNeChrtotal"
+      
+      # VAR NE extra chromosome for each time interval
+      VARNeChrtimes <- mean_he_merged_extraChr[1:tau]/(2*colMeans((paaf_merged_extraChr[,1:tau] - paaf_merged_extraChr[,2:(tau+1)])^2))
+      VARNeChrtimes <- as.data.frame(t(VARNeChrtimes))
+      colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+      
+      # VAR NE extra chromosome total
+      VARNeChrtotal <- tau*mean_he_merged_extraChr[1]/(2*mean((paaf_merged_extraChr[,1] - paaf_merged_extraChr[,(tau+1)])^2))
+      names(VARNeChrtotal) <- "VARNeChrtotal"
+      
+    } else {
+      
+      IBDNeChrtimes <- as.data.frame(t(rep(NA, tau)))
+      colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+      
+      IBDNeChrtotal <- as.numeric(NA)
+      names(VARNeChrtotal) <- "VARNeChrtotal"
+      
+      VARNeChrtimes <- as.data.frame(t(rep(NA, tau)))
+      colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+      
+      VARNeChrtotal <- as.numeric(NA)
+      names(VARNeChrtotal) <- "VARNeChrtotal"
+    } 
   } else {
     
     IBDNeChrtimes <- as.data.frame(t(rep(NA, tau)))
@@ -790,9 +1172,62 @@ do_sim <- function(sim, nsim,
   
   # remove temporary PAAF file from slim_output folder
   if (remove_files){
-    file.remove(paste0(slim_output_folder,filenames_genome))
-    file.remove(paste0(slim_output_folder,filenames_extraChr))
+    if(file.exists(paste0(slim_output_folder,filenames_extraChr))){
+      file.remove(paste0(slim_output_folder,filenames_extraChr))
+    }
   }
+  
+  # remove new mutations
+  #if (!is.na(lastgen)){
+  #  merged_extraChr <- merged_extraChr[which(merged_extraChr$GO <= lastgen), ]
+  #} else {
+  #  merged_empty <- as.data.frame(matrix("",0,length(merged_extraChr)))
+  #  colnames(merged_empty) <- colnames(merged_extraChr)
+  #  merged_extraChr <- merged_empty
+  #}
+  
+  #if (nrow(merged_extraChr) != 0){
+  #  
+  #  he_merged_extraChr <- merged_extraChr[ , grepl("HE" , names(merged_extraChr))]
+  #  he_merged_extraChr[is.na(he_merged_extraChr)] <- 0
+  #  
+  #  mean_he_merged_extraChr <- colMeans(he_merged_extraChr, na.rm = TRUE)
+  #  
+  #  paaf_merged_extraChr <- merged_extraChr[ , grepl("^PAAF" , names(merged_extraChr))]
+  #  paaf_merged_extraChr[is.na(paaf_merged_extraChr)] <- 0
+  #  
+  #  # IBD NE extra chromosome for each time interval
+  #  IBDNeChrtimes <- -(1/(2*log(mean_he_merged_extraChr[2:length(mean_he_merged_extraChr)]/mean_he_merged_extraChr[1:(length(mean_he_merged_extraChr)-1)])))
+  #  IBDNeChrtimes <- as.data.frame(t(IBDNeChrtimes))
+  #  colnames(IBDNeChrtimes) <- paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+  #  
+  #  # IBD NE extra chromosome total
+  #  IBDNeChrtotal <- -(tau/(2*log(mean_he_merged_extraChr[length(mean_he_merged_extraChr)]/mean_he_merged_extraChr[1])))
+  #  names(IBDNeChrtotal) <- "IBDNeChrtotal"
+  #  
+  #  # VAR NE extra chromosome for each time interval
+  #  VARNeChrtimes <- mean_he_merged_extraChr[1:tau]/(2*colMeans((paaf_merged_extraChr[,1:tau] - paaf_merged_extraChr[,2:(tau+1)])^2))
+  #  VARNeChrtimes <- as.data.frame(t(VARNeChrtimes))
+  #  colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+  # 
+  #  # VAR NE extra chromosome total
+  #  VARNeChrtotal <- tau*mean_he_merged_extraChr[1]/(2*mean((paaf_merged_extraChr[,1] - paaf_merged_extraChr[,(tau+1)])^2))
+  #  names(VARNeChrtotal) <- "VARNeChrtotal"
+  #  
+  #} else {
+  #  
+  #  IBDNeChrtimes <- as.data.frame(t(rep(NA, tau)))
+  #  colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+  #  
+  #  IBDNeChrtotal <- as.numeric(NA)
+  #  names(VARNeChrtotal) <- "VARNeChrtotal"
+  #  
+  #  VARNeChrtimes <- as.data.frame(t(rep(NA, tau)))
+  #  colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+  #  
+  #  VARNeChrtotal <- as.numeric(NA)
+  #  names(VARNeChrtotal) <- "VARNeChrtotal"
+  #}
   
   ## HANDLINDING SLiM2 OUTPUT - SAMPLED INDIVIDUALS
   ##---------------------------------------------------------------------------------
@@ -827,7 +1262,7 @@ do_sim <- function(sim, nsim,
   bcftools_query <- paste(path_to_bcftools, "merge --force-samples",
                           paste0(slim_output_sample_t1_sorted, ".gz"),
                           paste0(slim_output_sample_t2_sorted, ".gz"),
-                          "|", path_to_bcftools, "query -f 'chr%CHROM\t%POS\t%REF,%ALT\t%MID\t%DOM\t%GO\t%MT\tY[\t%GT]\n'", #REMOVER S
+                          "|", path_to_bcftools, "query -f 'chr%CHROM\t%POS\t%REF,%ALT\t%MID\t%DOM\t%GO\t%MT\tY[\t%GT]\n'",
                           "-e 'MT=4'",
                           ">", slim_output_sample_merged) 
   
@@ -983,12 +1418,18 @@ do_sim <- function(sim, nsim,
     write.table(slim_to_egglib_data, file = paste0(egglib_input_folder, egglib_converted_file), quote=FALSE, sep="\t", row.names = FALSE)
     
     # save only the information of the snps
+    if (model_type == 3){
+      selcoeff <- tempoSelCoeff[tempoSelCoeff$MID %in% slim_data$MID, paste0("S",tau)] ## MAYBE A PROBLEM HERE - ALL S or the last?
+    } else {
+      selcoeff <- all_merged_genome[all_merged_genome$MID %in% slim_data$MID, "S"]
+    }
     
-    selcoeff <- tempoSelCoeff[tempoSelCoeff$MID %in% slim_data$MID, paste0("S",tau)] ## MAYBE A PROBLEM HERE - ALL S or the last?
-    
-    slim_to_egglib_snps <- cbind(ID=paste0(slim_data$chrom, ":", slim_data$position), MID=slim_data$MID,
-                                 MT=slim_data$MT, S=selcoeff,
-                                 DOM=slim_data$DOM, GO=slim_data$GO,
+    slim_to_egglib_snps <- cbind(ID=paste0(slim_data$chrom, ":", slim_data$position), 
+                                 MID=slim_data$MID,
+                                 MT=slim_data$MT, 
+                                 S=selcoeff,
+                                 DOM=slim_data$DOM, 
+                                 GO=slim_data$GO,
                                  slim_data[, (length(header_1)+1):ncol(slim_data)])
     
     ## RUNNUNG EGGLIB - CALCULATING SUMMARY STATISTICS
