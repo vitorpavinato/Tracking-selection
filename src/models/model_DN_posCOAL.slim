@@ -229,7 +229,7 @@ s7 2 late() {
 	
 	// prepare the output table
 	paaf_file = paste(paaf_lines, "");
-	paaf_file = paste("POS"+"\t"+"MID"+"\t"+"MT"+"\t"+"GO"+"\t"+paste0("S" + (sim.generation - T0))+"\t"+paste0("PAAF" + (sim.generation - T0))+"\t"+paste0("PRAF" + (sim.generation - T0))+"\t"+paste0("HE" + (sim.generation - T0))+"\n")+paaf_file;
+	paaf_file = paste("POS"+"\t"+"MID"+"\t"+"MT"+"\t"+"GO"+"\t"+"S"+"\t"+paste0("PAAF" + (sim.generation - T0))+"\t"+paste0("PRAF" + (sim.generation - T0))+"\t"+paste0("HE" + (sim.generation - T0))+"\n")+paaf_file;
 	
 	// output as a TXT file - CS1
 	writeFile(filePath=paste0(outputpath + "slim_output_paaf_t" + (sim.generation - T0) + "_" + simID + ".txt"), contents=paaf_file, append=F); // CS1 freq
