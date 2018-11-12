@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 3
+nsim                    <- 2
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "./bin/slim"
@@ -52,7 +52,7 @@ seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
 parallel_sims           <- TRUE
 num_of_threads          <- 28
-remove_files            <- TRUE
+remove_files            <- FALSE
 
 ############################################
 ##            SLiM SIMULATION             ##
@@ -181,6 +181,7 @@ add_sfs_bins_2 = 20
 # load required libraries
 library(moments)
 library(ROCR)
+library(zoo)
 if(parallel_sims){
   library(foreach)    
   library(parallel)   
@@ -200,6 +201,7 @@ if(parallel_sims){
   registerDoParallel(cl)
   clusterEvalQ(cl, library(moments))
   raw_reftable <- foreach(sim=seq_len(nsim),.combine=rbind) %dopar% {   library(ROCR)
+                                                                        library(zoo)
                                                                         do_sim(sim, nsim, 
                                                                                path_to_slim_model, slim_model_prefix, model_type, model_title,
                                                                                path_to_slim, slim_output_folder,
@@ -262,11 +264,11 @@ if(parallel_sims){
 }
 gc()
 
-raw_reftable_header <- c("model","seed","sim","mu","rr","selfing","Neq","N","gammaMean","gammak","tc","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPStrMSel","PrSAMMSel","PrSAMStrMSel", paste0("PedigreeNe",seq(from=0,to=(tau))),
+raw_reftable_header <- c("model","seed","sim","mu","rr","selfing","Neq","N","gammaMean","gammak","tc","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPPosMSel", "PrPOPNegMSel","PrSAMMSel","PrSAMPosMSel","PrSAMNegMSel", paste0("PedigreeNe",seq(from=0,to=(tau))),
                          "PedigreeNetotal",paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWtotal",paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWNtotal",paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
                          "IBDNeGWStotal",paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau)),"IBDNeChrtotal",paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
                          "VARNeGWtotal",paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"VARNeGWNtotal",paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
-                         "VARNeGWStotal",paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau)),"VARNeChrtotal","FSTfdrMT05","FSTfdrMT10","FSTfdrMT25","FSTfdrNS05","FSTfdrNS10","FSTfdrNS25","FSTprecMT75","FSTprecMT95","FSTprecNS75","FSTprecNS95",
+                         "VARNeGWStotal",paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau)),"VARNeChrtotal","FSTfdrNS05","FSTfdrNS10","FSTfdrNS25","FSTprecNS75","FSTprecNS95",
                          "ID","MID","MT","S","DOM","GO","SAAF1","SAAF2","LSS_He","LSS_Dj","LSS_WCst","LSSp_He1","LSSp_He2","LSSp_Dj1","LSSp_Dj2",paste0("WSS",wss_wspan_run,"_He"),paste0("WSS",wss_wspan_run,"_Dj"),paste0("WSS",wss_wspan_run,"_WCst"),
                          paste0("WSS",wss_wspan_run,"_S"),paste0("WSS",wss_wspan_run,"_thetaW"),paste0("WSS",wss_wspan_run,"_Pi"),paste0("WSS",wss_wspan_run,"_D"),paste0("WSS",wss_wspan_run,"_Da"),paste0("WSS",wss_wspan_run,"_ZZ"),
                          paste0("WSS",wss_wspan_run,"_ZnS"),paste0("WSSp",wss_wspan_run,"_He1"),paste0("WSSp",wss_wspan_run,"_He2"),paste0("WSSp",wss_wspan_run,"_Dj1"),paste0("WSSp",wss_wspan_run,"_Dj2"),paste0("WSSp",wss_wspan_run,"_S1"),

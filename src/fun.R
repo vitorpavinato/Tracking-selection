@@ -411,7 +411,7 @@ do_sim <- function(sim, nsim,
         geneticLoad <- geneticLoad[rows_to_keep, ]
         
         # get the mean value
-        averageGenLoad <- mean(geneticLoad[, "genetiload"], na.rm = TRUE)
+        averageGenLoad <- mean(geneticLoad[, "genetiload"], na.rm = TRUE) # all NA's averageGenLoad = NaN;
         
         # get the last value
         lastGenLoad <- geneticLoad[nrow(geneticLoad), "genetiload"]
@@ -461,7 +461,7 @@ do_sim <- function(sim, nsim,
         names(pedigreeNetimes) <- paste0("PedigreeNe",seq(from=0,to=(tau)))
         
         # get the Pedigree Ne for the whole period - harmonic mean
-        pedigreeNetotal <- 1/mean(1/pedigreene$ne, na.rm = TRUE)
+        pedigreeNetotal <- 1/mean(1/pedigreene$ne, na.rm = TRUE) # all NA's pedigreeNetotal = NA;
         
       } else {
         pedigreeNetimes <- as.data.frame(t(rep(NA, tau+1)))
@@ -494,25 +494,9 @@ do_sim <- function(sim, nsim,
   ### GENOME
   filenames_genome <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t[0-", tau, "]_", sim), full.names=FALSE)
   datalist_genome <- lapply(filenames_genome, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
-  merged_genome <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4,5), all = TRUE)}, datalist_genome)
+  all_merged_genome <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4), all = TRUE)}, datalist_genome)
   
-  ## ACTUAL Pr OF FITNESS-AFFECTING MUTATIONS IN THE POPULATION 
-  if (any(merged_genome$S != 0)) {
-    actual_pop_prbe <- sum(merged_genome$S != 0)/length(merged_genome$S)
-  } else {
-    actual_pop_prbe <- as.numeric(NA)
-  }
-  
-  ## Pr MUTATIONS UNDER STRONG SELECTION --[Ns > 1]-- IN THE POPULATION
-  if (any(N*merged_genome$S > 1)){
-    strong_pop_prbe <- sum(N*merged_genome$S > 1)/length(merged_genome$S)
-  } else {
-    strong_pop_prbe <- as.numeric(NA)
-  }
-  
-  ## IBD and VAR NE CALCULATION
-  
-  # load file with the last generation
+  # load file with the last generation - UGLY!!!
   slim_output_lastgen <- paste0(slim_output_folder,"slim_output_lastgen_", sim, ".txt")
   
   if (file.exists(slim_output_lastgen)){
@@ -527,12 +511,83 @@ do_sim <- function(sim, nsim,
     lastgen <- as.numeric(NA)
   }
   
+  if(!is.null(all_merged_genome)){
+    
+    # fill in the values of selection coefficient that are NA after the merging
+    tempoSelCoeff <- all_merged_genome[, grepl("^S", names(all_merged_genome))]
+    
+    # replace NA's of selection coefficient of mutations that arise in tc
+    tempoSelCoeff[which(all_merged_genome$GO==lastgen + (tc+1)), 1:tc][is.na(tempoSelCoeff[which(all_merged_genome$GO==lastgen + (tc+1)), 1:tc])] <- 0
+    
+    # replace NA with the last value forward and backward
+    forwardfill  <- na.locf(t(tempoSelCoeff))
+    backwardfill <- na.locf(forwardfill, fromLast = TRUE)
+    
+    tempoSelCoeff <- data.frame(MID=all_merged_genome$MID, t(backwardfill))
+  
+  } else {
+    
+    tempoSelCoeff <- as.data.frame(matrix("",0,(tau+2)))
+    colnames(tempoSelCoeff) <- c("MID", paste0("S",seq(from=0,to=(tau))))
+  }
+  
+  ## ACTUAL Pr OF SELECTED MUTATIONS IN THE POPULATION 
+  #if (any(all_merged_genome[, paste0("S",tc)] != 0)) { #S tc or S final?
+  #  actual_pop_prbe <- sum(all_merged_genome[, paste0("S",tc)] != 0, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)])
+  #} else {
+  #  actual_pop_prbe <- as.numeric(NA)
+  #}
+  
+  if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) { #S tc or S final?
+    actual_pop_prbe <- sum(tempoSelCoeff[, paste0("S",tau)] != 0, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+  } else {
+    actual_pop_prbe <- as.numeric(0)
+  }
+  
+  ## Pr MUTATIONS UNDER STRONG POSITIVE SELECTION --[Ns > 1]-- IN THE POPULATION
+  #if (any(N*all_merged_genome[, paste0("S",tc)] > 1)){ #S tc or S final?
+  #  positive_pop_prbe <- sum(N*all_merged_genome[, paste0("S",tc)] > 1, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)])
+  #} else {
+  #  positive_pop_prbe <- as.numeric(NA)
+  #}
+  
+  if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) {
+    if (any(N*tempoSelCoeff[, paste0("S",tau)] > 1)){ #S tc or S final?
+      positive_pop_prbe <- sum(N*tempoSelCoeff[, paste0("S",tau)] > 1, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+    } else {
+      positive_pop_prbe <- as.numeric(0)
+    }
+  } else {
+    positive_pop_prbe <- as.numeric(0)
+  }
+  
+  
+  ## Pr MUTATIONS UNDER STRONG BACKGROUND SELECTION --[Ns < -1]-- IN THE POPULATION
+  #if (any(N*all_merged_genome[, paste0("S",tc)] < -1)){ #S tc or S final?
+  #  negative_pop_prbe <- sum(N*all_merged_genome[, paste0("S",tc)] < -1, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)])
+  #} else {
+  #  negative_pop_prbe <- as.numeric(NA)
+  #}
+  
+  if (any(tempoSelCoeff[, paste0("S",tau)] != 0)) {
+    if (any(N*tempoSelCoeff[, paste0("S",tau)] < -1)){ #S tc or S final?
+      negative_pop_prbe <- sum(N*tempoSelCoeff[, paste0("S",tau)] < -1, na.rm = TRUE)/length(tempoSelCoeff[, paste0("S",tau)][!is.na(tempoSelCoeff[, paste0("S",tau)])])
+    } else {
+      negative_pop_prbe <- as.numeric(0)
+    }
+    
+  } else {
+    negative_pop_prbe <- as.numeric(0)
+  }
+  
+  ## IBD and VAR NE CALCULATION
+  
   # remove new mutations
   if (!is.na(lastgen)){
-    merged_genome <- merged_genome[which(merged_genome$GO <= lastgen), ]
+    merged_genome <- all_merged_genome[which(all_merged_genome$GO <= lastgen), ]
   } else {
-    merged_empty <- as.data.frame(matrix("",0,length(merged_genome)))
-    colnames(merged_empty) <- colnames(merged_genome)
+    merged_empty <- as.data.frame(matrix("",0,length(all_merged_genome)))
+    colnames(merged_empty) <- colnames(all_merged_genome)
     merged_genome <- merged_empty
   }
   
@@ -628,9 +683,12 @@ do_sim <- function(sim, nsim,
   }
   
   ## ONLY SELECTED MUTATIONS - ##DOUBT## - HERE FOR SV
-  if (any(merged_genome$S > 0)){
+  if (any(merged_genome[, paste0("S",tau)] != 0 | !is.na(merged_genome[, paste0("S",tau)]))){ # only the last of from the whole period?
     
-    merged_genome_selection <- merged_genome[merged_genome$S > 0,]
+    selectedmu <- tempoSelCoeff[which(tempoSelCoeff[, paste0("S",tc)] != 0),]
+    
+    merged_genome_selection <- merged_genome[merged_genome$MID %in% selectedmu$MID, ]
+    #merged_genome_selection <- merged_genome[which(merged_genome[, paste0("S",tc)] != 0),]
     
     he_merged_genome_selection <- merged_genome_selection[ , grepl("HE" , names(merged_genome_selection))]
     he_merged_genome_selection[is.na(he_merged_genome_selection)] <- 0
@@ -646,7 +704,7 @@ do_sim <- function(sim, nsim,
     colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
     
     # IBD NE Genome-wide selection total
-    IBDNeGWStotal <- -((tau-tc)/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[tc+1])))
+    IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1])))
     names(IBDNeGWStotal) <- "IBDNeGWStotal"
     
     # VAR NE Genome-wide selection for each time interval
@@ -655,7 +713,7 @@ do_sim <- function(sim, nsim,
     colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
     
     # VAR NE Genome-wide neutral total
-    VARNeGWStotal <- (tau-tc)*mean_he_merged_genome_selection[(tc+1)]/(2*mean((paaf_merged_genome_selection[,(tc+1)] - paaf_merged_genome_selection[,(tau+1)])^2))
+    VARNeGWStotal <- tau*mean_he_merged_genome_selection[1]/(2*mean((paaf_merged_genome_selection[,1] - paaf_merged_genome_selection[,(tau+1)])^2))
     names(VARNeGWStotal) <- "VARNeGWStotal"
   
   } else {
@@ -769,7 +827,7 @@ do_sim <- function(sim, nsim,
   bcftools_query <- paste(path_to_bcftools, "merge --force-samples",
                           paste0(slim_output_sample_t1_sorted, ".gz"),
                           paste0(slim_output_sample_t2_sorted, ".gz"),
-                          "|", path_to_bcftools, "query -f 'chr%CHROM\t%POS\t%REF,%ALT\t%MID\t%S\t%DOM\t%GO\t%MT\tY[\t%GT]\n'",
+                          "|", path_to_bcftools, "query -f 'chr%CHROM\t%POS\t%REF,%ALT\t%MID\t%DOM\t%GO\t%MT\tY[\t%GT]\n'", #REMOVER S
                           "-e 'MT=4'",
                           ">", slim_output_sample_merged) 
   
@@ -778,7 +836,7 @@ do_sim <- function(sim, nsim,
   ## READ SLiM OUTPUT 1 AND CONVERT TO EGGLIB INPUT
   
   # assembly the header
-  header_1       <- c("chrom", "position","alleles", "MID", "S", "DOM", "GO", "MT", "selection")
+  header_1       <- c("chrom", "position","alleles", "MID", "DOM", "GO", "MT", "selection")
   sample_names_1 <- paste0("indiv", seq(from=1, to=SS1, by=1), "@pop1", "")
   sample_names_2 <- paste0("indiv", seq(from=1, to=SS2, by=1), "@pop2", "")
   
@@ -829,7 +887,7 @@ do_sim <- function(sim, nsim,
   if (nrow(slim_raw_data) != 0){
     
     # split the data
-    slim_snp_geno <- slim_raw_data[, 10:ncol(slim_raw_data)]
+    slim_snp_geno <- slim_raw_data[, 9:ncol(slim_raw_data)] # IF REMOVE S 9
     slim_snp_info <- slim_raw_data[, 1:length(header_1)]
     
     # change the genotype annotations
@@ -843,9 +901,9 @@ do_sim <- function(sim, nsim,
     # mark monomophormic mutations (all 11 or 22)
     count_ref_geno    <- apply(slim_snp_geno, 1, function(x){sum(x == 11)})
     count_alt_geno    <- apply(slim_snp_geno, 1, function(x){sum(x == 22)})
-    keep_snps     <- count_ref_geno < (SS1 + SS2) & count_alt_geno < (SS1 + SS2) # REMOVE FIXED MUTATIONS
+    keep_snps     <- count_ref_geno < (SS1 + SS2) & count_alt_geno < (SS1 + SS2) # MARK MONOMORPHIC MUTATIONS
     
-    # adding missing data randomly
+    # adding missing data randomly - BEFORE OR AFTER REMOVE MONOMORPHIC?
     slim_snp_geno <- as.matrix(as.data.frame(lapply(slim_snp_geno, function(mi) mi[sample(c(TRUE, NA), prob = c((1-missing_data), missing_data), size = length(mi), replace = TRUE)])))
     slim_snp_geno[is.na(slim_snp_geno)] <- "00"
     slim_snp_geno <- as.data.frame(slim_snp_geno)
@@ -925,8 +983,12 @@ do_sim <- function(sim, nsim,
     write.table(slim_to_egglib_data, file = paste0(egglib_input_folder, egglib_converted_file), quote=FALSE, sep="\t", row.names = FALSE)
     
     # save only the information of the snps
+    
+    selcoeff <- tempoSelCoeff[tempoSelCoeff$MID %in% slim_data$MID, paste0("S",tau)] ## MAYBE A PROBLEM HERE - ALL S or the last?
+    
     slim_to_egglib_snps <- cbind(ID=paste0(slim_data$chrom, ":", slim_data$position), MID=slim_data$MID,
-                                 MT=slim_data$MT, S=slim_data$S, DOM=slim_data$DOM, GO=slim_data$GO,
+                                 MT=slim_data$MT, S=selcoeff,
+                                 DOM=slim_data$DOM, GO=slim_data$GO,
                                  slim_data[, (length(header_1)+1):ncol(slim_data)])
     
     ## RUNNUNG EGGLIB - CALCULATING SUMMARY STATISTICS
@@ -993,11 +1055,26 @@ do_sim <- function(sim, nsim,
     # import egglib output
     egglib_summary_stats <- read.csv(file = paste0(egglib_output_folder,"egglib_output_sample", "_", sim, ".txt"), header = T, sep = "\t", check.names = F)
     
-    ## ACTUAL Pr BENEFICIAL MUTATIONS IN THE SAMPLE
-    actual_sample_prbe <- sum(slim_to_egglib_snps$MT == 3)/length(slim_to_egglib_snps$S)
+    ## ACTUAL Pr SELECTED MUTATIONS IN THE SAMPLE
+    if(any(slim_to_egglib_snps$S != 0)){
+      actual_sample_prbe <- sum(slim_to_egglib_snps$S != 0)/length(slim_to_egglib_snps$S)
+    } else {
+      actual_sample_prbe <- as.numeric(0)
+    }
     
-    ## Pr MUTATIONS UNDER STRONG SELECTION --[Ns > 1]-- IN THE SAMPLE
-    strong_sample_prbe <- sum(N*slim_to_egglib_snps$S > 1)/length(slim_to_egglib_snps$S)
+    ## Pr MUTATIONS UNDER STRONG POSITIVE SELECTION --[Ns > 1]-- IN THE SAMPLE
+    if(any(N*slim_to_egglib_snps$S > 1)){
+      positive_sample_prbe <- sum(N*slim_to_egglib_snps$S > 1)/length(slim_to_egglib_snps$S)
+    } else {
+      positive_sample_prbe <- as.numeric(0)
+    }
+    
+    ## Pr MUTATIONS UNDER STRONG NEGATIVE SELECTION --[Ns > 1]-- IN THE SAMPLE
+    if(any(N*slim_to_egglib_snps$S < -1)){
+      negative_sample_prbe <- sum(N*slim_to_egglib_snps$S < -1)/length(slim_to_egglib_snps$S)
+    } else {
+      negative_sample_prbe <- as.numeric(0)
+    }
     
     ## GLOBAL SUMMARY STATISTICS
     # remove redundant summary statistics
@@ -1117,9 +1194,8 @@ do_sim <- function(sim, nsim,
     }
     
     # LOCUS-SPECIFIC FST - ACCURACY, PRECISION, SENSITIVITY, FPR AND FDR
-    raw_locusFST_table <- data.frame(MT=slim_to_egglib_snps$MT, Ns=N*slim_to_egglib_snps$S, LSS_WCst=egglib_summary_stats[, "LSS_WCst"])
+    raw_locusFST_table <- data.frame(Ns=N*slim_to_egglib_snps$S, LSS_WCst=egglib_summary_stats[, "LSS_WCst"])
     
-    raw_locusFST_table$labelsMT <- ifelse(raw_locusFST_table$MT==3, 1, 0)
     raw_locusFST_table$labelsNs <- ifelse(raw_locusFST_table$Ns > 1, 1, 0)
     
     ord_locusFST_table <- raw_locusFST_table[order(-raw_locusFST_table$LSS_WCst), ]
@@ -1127,57 +1203,37 @@ do_sim <- function(sim, nsim,
     if (any(ord_locusFST_table$Ns > 1)){
       if(!all(ord_locusFST_table$Ns > 1)){
         
-        pred_locusFSTMT <- prediction(predictions = ord_locusFST_table$LSS_WCst, labels = ord_locusFST_table$labelsMT)
-        perf_locusFSTMT_1 <- performance(pred_locusFSTMT, "fpr", "prec")
-        
         pred_locusFSTNS <- prediction(predictions = ord_locusFST_table$LSS_WCst, labels = ord_locusFST_table$labelsNs)
-        perf_locusFSTNS_1 <- performance(pred_locusFSTNS, "fpr", "prec")
+        perf_locusFSTNS <- performance(pred_locusFSTNS, "fpr", "prec")
         
-        perf_table <- data.frame(fprMT=perf_locusFSTMT_1@y.values[[1]], precMT=perf_locusFSTMT_1@x.values[[1]],
-                                 fdrMT=1-perf_locusFSTMT_1@x.values[[1]],
-                                 fprNS=perf_locusFSTNS_1@y.values[[1]], precNS=perf_locusFSTNS_1@x.values[[1]],
-                                 fdrNS=1-perf_locusFSTNS_1@x.values[[1]])
+        perf_table <- data.frame(fprNS=perf_locusFSTNS@y.values[[1]], precNS=perf_locusFSTNS@x.values[[1]],
+                                 fdrNS=1-perf_locusFSTNS@x.values[[1]])
         
         perf_locusFST_table <- data.frame(ord_locusFST_table[1:dim(perf_table)[1], ], perf_table)
         
-        FSTfdr <- as.data.frame(cbind(FSTfdrMT05 = perf_locusFST_table[which.min(perf_locusFST_table$fdrMT <= 0.05) ,3],
-                                      FSTfdrMT10 = perf_locusFST_table[which.min(perf_locusFST_table$fdrMT <= 0.10) ,3],
-                                      FSTfdrMT25 = perf_locusFST_table[which.min(perf_locusFST_table$fdrMT <= 0.25) ,3],
-                                      FSTfdrNS05 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.05) ,3],
-                                      FSTfdrNS10 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.10) ,3],
-                                      FSTfdrNS25 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.25) ,3]))
+        FSTfdr <- as.data.frame(cbind(FSTfdrNS05 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.05) ,"LSS_WCst"],
+                                      FSTfdrNS10 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.10) ,"LSS_WCst"],
+                                      FSTfdrNS25 = perf_locusFST_table[which.min(perf_locusFST_table$fdrNS <= 0.25) ,"LSS_WCst"]))
         
-        FSTprec <- as.data.frame(cbind(FSTprecMT75 = perf_locusFST_table[which.min(perf_locusFST_table$precMT >= 0.75) ,3],
-                                       FSTprecMT95 = perf_locusFST_table[which.min(perf_locusFST_table$precMT >= 0.95) ,3],
-                                       FSTprecNS75 = perf_locusFST_table[which.min(perf_locusFST_table$precNS >= 0.75) ,3],
-                                       FSTprecNS95 = perf_locusFST_table[which.min(perf_locusFST_table$precNS >= 0.95) ,3]))
+        FSTprec <- as.data.frame(cbind(FSTprecNS75 = perf_locusFST_table[which.min(perf_locusFST_table$precNS >= 0.75) ,"LSS_WCst"],
+                                       FSTprecNS95 = perf_locusFST_table[which.min(perf_locusFST_table$precNS >= 0.95) ,"LSS_WCst"]))
         
       } else {
         
-        FSTfdr <- as.data.frame(cbind(FSTfdrMT05 = 0,
-                                      FSTfdrMT10 = 0,
-                                      FSTfdrMT25 = 0,
-                                      FSTfdrNS05 = 0,
+        FSTfdr <- as.data.frame(cbind(FSTfdrNS05 = 0,
                                       FSTfdrNS10 = 0,
                                       FSTfdrNS25 = 0))
         
-        FSTprec <- as.data.frame(cbind(FSTprecMT75 = 0,
-                                       FSTprecMT95 = 0,
-                                       FSTprecNS75 = 0,
+        FSTprec <- as.data.frame(cbind(FSTprecNS75 = 0,
                                        FSTprecNS95 = 0))
       }
     } else {
       
-      FSTfdr <- as.data.frame(cbind(FSTfdrMT05 = 1,
-                                    FSTfdrMT10 = 1,
-                                    FSTfdrMT25 = 1,
-                                    FSTfdrNS05 = 1,
+      FSTfdr <- as.data.frame(cbind(FSTfdrNS05 = 1,
                                     FSTfdrNS10 = 1,
                                     FSTfdrNS25 = 1))
       
-      FSTprec <- as.data.frame(cbind(FSTprecMT75 = 1,
-                                     FSTprecMT95 = 1,
-                                     FSTprecNS75 = 1,
+      FSTprec <- as.data.frame(cbind(FSTprecNS75 = 1,
                                      FSTprecNS95 = 1))
       
     }
@@ -1307,19 +1363,12 @@ do_sim <- function(sim, nsim,
       global_summary_stats <- cbind(global_summary_stats, add_global_stats_add2)
     }
     
-    FSTfdr <- as.data.frame(cbind(FSTfdrMT05 = NA,
-                                  FSTfdrMT10 = NA,
-                                  FSTfdrMT25 = NA,
-                                  FSTfdrNS05 = NA,
+    FSTfdr <- as.data.frame(cbind(FSTfdrNS05 = NA,
                                   FSTfdrNS10 = NA,
                                   FSTfdrNS25 = NA))
     
-    FSTprec <- as.data.frame(cbind(FSTprecMT75 = NA,
-                                   FSTprecMT95 = NA,
-                                   FSTprecNS75 = NA,
+    FSTprec <- as.data.frame(cbind(FSTprecNS75 = NA,
                                    FSTprecNS95 = NA))
-    
-    
     
     locus_summary_stats <- as.data.frame(t(rep(NA, 41)))
     colnames(locus_summary_stats) <- paste0("LSS","_",seq(from=1,to=dim(locus_summary_stats)[2]))
@@ -1352,8 +1401,8 @@ do_sim <- function(sim, nsim,
                                           gammaM, gammak, tc,
                                           PrGWSel, prbe, 
                                           averageGenLoad, lastGenLoad,
-                                          actual_pop_prbe, strong_pop_prbe,
-                                          actual_sample_prbe, strong_sample_prbe,
+                                          actual_pop_prbe, positive_pop_prbe, negative_pop_prbe,
+                                          actual_sample_prbe, positive_sample_prbe, negative_sample_prbe,
                                           pedigreeNetimes, pedigreeNetotal,
                                           IBDNeGWtimes, IBDNeGWtotal, IBDNeGWNtimes, IBDNeGWNtotal, 
                                           IBDNeGWStimes, IBDNeGWStotal, IBDNeChrtimes, IBDNeChrtotal,
