@@ -94,13 +94,13 @@ initialize() {
 
 s1 2 early() {
 
-	if (any(sim.mutationTypes == m3))
+	if (any(sim.mutationsOfType(m3).selectionCoeff != 0))
 	{
-		if (max(sim.subpopulations.cachedFitness(NULL)) == mean(sim.subpopulations.cachedFitness(NULL)))
+		if (max(sim.subpopulations.cachedFitness(NULL)) != mean(sim.subpopulations.cachedFitness(NULL)))
 		{
-			geneticL = 0;
-		} else {
 			geneticL = (max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL));
+		} else {
+			geneticL = 0;
 		}	   
 	} else {
 		geneticL = 0;
@@ -156,12 +156,13 @@ s4 late() {
 
 s5 2 early() {
 
-	if (any(sim.mutationTypes == m3)){
-		if (max(sim.subpopulations.cachedFitness(NULL)) == mean(sim.subpopulations.cachedFitness(NULL)))
+	if (any(sim.mutationsOfType(m3).selectionCoeff != 0))
+	{
+		if (max(sim.subpopulations.cachedFitness(NULL)) != mean(sim.subpopulations.cachedFitness(NULL)))
 		{
-			geneticL = 0;
-		} else {
 			geneticL = ((max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL))) * ((N+SS1)/N);
+		} else {
+			geneticL = 0;
 		}	  
 	} else {
 		geneticL = 0;
@@ -193,12 +194,13 @@ s6 2 early() {
 	//	geneticL = 0;
 	//}
 	
-	if (any(sim.mutationTypes == m3)){
-		if (max(sim.subpopulations.cachedFitness(NULL)) == mean(sim.subpopulations.cachedFitness(NULL)))
+	if (any(sim.mutationsOfType(m3).selectionCoeff != 0))
+	{
+		if (max(sim.subpopulations.cachedFitness(NULL)) != mean(sim.subpopulations.cachedFitness(NULL)))
 		{
-			geneticL = 0;
-		} else {
 			geneticL = (max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL));
+		} else {
+			geneticL = 0;
 		}   
 	} else {
 		geneticL = 0;
