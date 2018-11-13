@@ -122,17 +122,3 @@ gives the identifier of a loci, in the form "chrom:position", as taken from the 
 file. All subsequent columns provide the values for a statistic. The column name is 
 the statistic code (with a "LSS", "WSS", or "GSS" prefix). For GSS, the value of the 
 statistics is identical for all loci. Missing data are denoted by "NA".
-
-##egglib summstats.py bug fixes
-
-**all v0 bugs were fixed in v1**
-
-**List of bugs v0:**
-- SFS calculation;
-- select=list error;
-- select=rand and select-num error;
-- Some GSS are repeated before GSS columns in the output;
-- Mutation with same position caused a problem in egglib;
-	- Mutations in same position were likely with the output code for the first version of the pipeline; however one of the redundant position is removed now during the egglib file conversion in the pipeline v1 and v2;
-	- With the new code to produce the ouputs it is unlikely to have mutations with same positions in the sample; but if it is the case, they it is also checked and redundant positions are removed with the R code;
-	- With the use the vcf-style slim output, if we use the argument MULTIALLELIC=F, BOTH mutation with same position are removed.
