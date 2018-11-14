@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 3
+nsim                    <- 5
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "./bin/slim"
@@ -50,9 +50,9 @@ arg <- commandArgs(TRUE)
 #seed                    <- arg
 seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims           <- FALSE
+parallel_sims           <- TRUE
 num_of_threads          <- 28
-remove_files            <- TRUE
+remove_files            <- FALSE
 
 ############################################
 ##            SLiM SIMULATION             ##
@@ -60,7 +60,7 @@ remove_files            <- TRUE
 ############################################
 
 # MODEL SELECTION
-model_type = 1             # 1 = de novo beneficial mutations ("DN"); 
+model_type = 3             # 1 = de novo beneficial mutations ("DN"); 
                            # 2 = background selection ("BS"); 
                            # 3 = selection on standing variation ("SV");
 
@@ -72,13 +72,14 @@ chrN    = 4                # chrN    => Chromosome number to define independent 
 chrTAG = TRUE              # chrTAG  => if TRUE, SNPs are tagged with chromosome ID based on its position;
 
 # DATASET SPECIFICATION 
-data_type = 2              # 1 = Whole genome sequencing (WGS);
+data_type = 1              # 1 = Whole genome sequencing (WGS);
                            # 2 = RADseq;
 radseq_readL = 100         # radseq_readL => the read length produced by the RAD library (bp);
 radseq_cov = 0.20          # radseq_cov   => the proportion of the genome covered by the RADseq reads;
 
-
 missing_data = 0.25        # missing_data => specify the proportion of missing genotypes per locus;
+
+haplotype = FALSE           # haplotype => define how the homozygotes genotypes in the sample will be processed;
 
 SS1 = 80                   # SS1 => Sample Size for T=1;
 SS2 = 115                  # SS2 => Sample Size for T=2; Total sample size (SS1+SS2) should be at least > 3;
@@ -98,16 +99,16 @@ mu_max  = 1e-5
 
 # POPULATION SIZE Neq
 # Ne equilibrium phase (aka burn-in)
-neq_random = FALSE
+neq_random = TRUE
 neq_value <- 50
 neq_min = 1
-neq_max = 1000
+neq_max = 100
 
 # POPULATION SIZE N
-n_random = FALSE
+n_random = TRUE
 n_value <- 50
 n_min = 1
-n_max = 1000
+n_max = 100
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
 gammaM_random = TRUE
@@ -209,7 +210,7 @@ if(parallel_sims){
                                                                                egglib_input_folder, egglib_output_folder,
                                                                                path_to_python, path_to_egglib_summstat, 
                                                                                SS1, SS2, tau, genomeS, fragS, chrN, chrS, chrTAG, chromtagging,  
-                                                                               rr_limits, radseq_readL, radseq_readN, radseq_cov, missing_data,
+                                                                               rr_limits, data_type, radseq_readL, radseq_readN, radseq_cov, missing_data, haplotype,
                                                                                mu_rate, mu_random, mu_min, mu_max, 
                                                                                neq_value, neq_random, neq_min, neq_max,
                                                                                n_value, n_random, n_min, n_max,  
@@ -241,7 +242,7 @@ if(parallel_sims){
                                   egglib_input_folder, egglib_output_folder,
                                   path_to_python, path_to_egglib_summstat, 
                                   SS1, SS2, tau, genomeS, fragS, chrN, chrS, chrTAG, chromtagging,  
-                                  rr_limits, radseq_readL, radseq_readN, radseq_cov, missing_data,
+                                  rr_limits, data_type, radseq_readL, radseq_readN, radseq_cov, missing_data, haplotype,
                                   mu_rate, mu_random, mu_min, mu_max, 
                                   neq_value, neq_random, neq_min, neq_max,
                                   n_value, n_random, n_min, n_max,  
@@ -264,7 +265,7 @@ if(parallel_sims){
 }
 gc()
 
-raw_reftable_header <- c("model","seed","sim","mu","rr","selfing","Neq","N","gammaMean","gammak","tc","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPPosMSel", "PrPOPNegMSel","PrSAMMSel","PrSAMPosMSel","PrSAMNegMSel", paste0("PedigreeNe",seq(from=0,to=(tau))),
+raw_reftable_header <- c("model","seed","sim","mu","rr","selfing","Neq","N","gammaMean","gammak","tc","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPStrongMSel","PrSAMMSel","PrSAMStrongMSel", paste0("PedigreeNe",seq(from=0,to=(tau))),
                          "PedigreeNetotal",paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWtotal",paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWNtotal",paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
                          "IBDNeGWStotal",paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau)),"IBDNeChrtotal",paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
                          "VARNeGWtotal",paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"VARNeGWNtotal",paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
