@@ -196,7 +196,7 @@ s5 2 early() {
 	{
 		if (max(sim.subpopulations.cachedFitness(NULL)) != mean(sim.subpopulations.cachedFitness(NULL)))
 		{
-			geneticL = ((max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL))) * ((N+SS1)/N);
+			geneticL = ((max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL))) * (p1.individualCount/(p1.individualCount-SS1));
 		} else {
 			geneticL = 0;
 		}	  
