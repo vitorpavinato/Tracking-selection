@@ -144,7 +144,7 @@ s2 late() {
 	
 	// Output as a VCF file - SS1
 	sam_inds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_sample_t1_" + simID + ".vcf"), outputMultiallelics = F); // SS1 - mutations in the sample - postprocess to remove m4 with bcftools
-	// outputMultiallelics = F ensure no redundant mutations - change it when egglib summstats work with it
+	// outputMultiallelics = F ensure no redundant mutations
 }
 
 s3 fitness(NULL) {
@@ -169,7 +169,8 @@ s5 2 early() {
 	{
 		if (max(sim.subpopulations.cachedFitness(NULL)) != mean(sim.subpopulations.cachedFitness(NULL)))
 		{
-			geneticL = ((max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL))) * (p1.individualCount/(p1.individualCount-SS1));
+			geneticL = (max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL));
+			//geneticL = ((max(sim.subpopulations.cachedFitness(NULL)) - mean(sim.subpopulations.cachedFitness(NULL)))/max(sim.subpopulations.cachedFitness(NULL))) * (p1.individualCount/(p1.individualCount-SS1));
 		} else {
 			geneticL = 0;
 		}	  
@@ -310,7 +311,7 @@ s9 late() {
 	
 	// output as a VCF file - SS2
 	sam_inds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_sample_t2_" + simID + ".vcf"), outputMultiallelics = F); // SS2 - mutations in the sample - postprocess to remove m4 with bcftools
-	// outputMultiallelics = F ensure no redundant mutations - change it when egglib summstats work with it
+	// outputMultiallelics = F ensure no redundant mutations
 	
 	sim.simulationFinished();
 }
