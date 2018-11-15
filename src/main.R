@@ -30,13 +30,6 @@ ls()
 # (usually bgzip and tabis come with bcftools installation)
 
 ###########################################
-##          CBGP CLUSTER ONLY            ##
-###########################################
-
-# to run slim3.1
-system("export LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH")
-
-###########################################
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
