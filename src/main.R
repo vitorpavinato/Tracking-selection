@@ -33,10 +33,10 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 10
+nsim                    <- 20
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
-path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "./bin/slim"
+path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim"
 slim_output_folder      <- "results/slim_output/"
 path_to_bgzip           <- "/usr/local/bin/bgzip"                         #cluster# "./bin/bgzip"
 path_to_tabix           <- "/usr/local/bin/tabix"                         #cluster# "./bin/tabix"
@@ -65,8 +65,8 @@ model_type = 1             # 1 = de novo beneficial mutations ("DN");
                            # 3 = selection on standing variation ("SV");
 
 # GENOME SPECIFICATION
-genomeS = 135e+6           # genomeS => Genome Size;
-fragS   = 4.5e+4           # fragS   => Fragment size to define g1 or g2 elements;
+genomeS = 200e+5           # genomeS => Genome Size;
+fragS   = 5e+4             # fragS   => Fragment size to define g1 or g2 elements;
 chrN    = 4                # chrN    => Chromosome number to define independent genome blocks;
 
 chrTAG = TRUE              # chrTAG  => if TRUE, SNPs are tagged with chromosome ID based on its position;
@@ -81,9 +81,9 @@ missing_data = 0.0         # missing_data => specify the proportion of missing g
 
 haplotype = FALSE          # haplotype => define how the homozygotes genotypes in the sample will be processed;
 
-SS1 = 80                   # SS1 => Sample Size for T=1;
-SS2 = 115                  # SS2 => Sample Size for T=2; Total sample size (SS1+SS2) should be at least > 3;
-tau = 8                    # tau => Time between samples;
+SS1 = 100                  # SS1 => Sample Size for T=1;
+SS2 = 100                  # SS2 => Sample Size for T=2; Total sample size (SS1+SS2) should be at least > 3;
+tau = 10                   # tau => Time between samples;
 
 ############################################
 ##            SLiM SIMULATION             ##
