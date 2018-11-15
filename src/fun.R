@@ -824,10 +824,10 @@ do_sim <- function(sim, nsim,
     } else {
       
       IBDNeChrtimes <- as.data.frame(t(rep(NA, tau)))
-      colnames(VARNeChrtimes) <- paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+      colnames(IBDNeChrtimes) <- paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
       
       IBDNeChrtotal <- as.numeric(NA)
-      names(VARNeChrtotal) <- "IBDNeChrtotal"
+      names(IBDNeChrtotal) <- "IBDNeChrtotal"
       
       VARNeChrtimes <- as.data.frame(t(rep(NA, tau)))
       colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
@@ -838,10 +838,10 @@ do_sim <- function(sim, nsim,
   } else {
     
     IBDNeChrtimes <- as.data.frame(t(rep(NA, tau)))
-    colnames(VARNeChrtimes) <- paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+    colnames(IBDNeChrtimes) <- paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
     
     IBDNeChrtotal <- as.numeric(NA)
-    names(VARNeChrtotal) <- "IBDNeChrtotal"
+    names(IBDNeChrtotal) <- "IBDNeChrtotal"
     
     VARNeChrtimes <- as.data.frame(t(rep(NA, tau)))
     colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
