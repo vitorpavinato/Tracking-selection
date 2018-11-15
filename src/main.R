@@ -65,7 +65,7 @@ model_type = 1             # 1 = de novo beneficial mutations ("DN");
                            # 3 = selection on standing variation ("SV");
 
 # GENOME SPECIFICATION
-genomeS = 135e+5           # genomeS => Genome Size;
+genomeS = 135e+6           # genomeS => Genome Size;
 fragS   = 4.5e+4           # fragS   => Fragment size to define g1 or g2 elements;
 chrN    = 4                # chrN    => Chromosome number to define independent genome blocks;
 
@@ -77,9 +77,9 @@ data_type = 1              # 1 = Whole genome sequencing (WGS);
 radseq_readL = 100         # radseq_readL => the read length produced by the RAD library (bp);
 radseq_cov = 0.20          # radseq_cov   => the proportion of the genome covered by the RADseq reads;
 
-missing_data = 0.25        # missing_data => specify the proportion of missing genotypes per locus;
+missing_data = 0.0         # missing_data => specify the proportion of missing genotypes per locus;
 
-haplotype = FALSE           # haplotype => define how the homozygotes genotypes in the sample will be processed;
+haplotype = FALSE          # haplotype => define how the homozygotes genotypes in the sample will be processed;
 
 SS1 = 80                   # SS1 => Sample Size for T=1;
 SS2 = 115                  # SS2 => Sample Size for T=2; Total sample size (SS1+SS2) should be at least > 3;
