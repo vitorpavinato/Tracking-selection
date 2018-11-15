@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 5
+nsim                    <- 10
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "./bin/slim"
@@ -47,12 +47,12 @@ path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #clust
 path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b22
 reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
-#seed                    <- arg
-seed                    <- 1234
+seed                    <- arg
+#seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims           <- TRUE
+parallel_sims           <- FALSE
 num_of_threads          <- 28
-remove_files            <- FALSE
+remove_files            <- TRUE
 
 ############################################
 ##            SLiM SIMULATION             ##
@@ -60,7 +60,7 @@ remove_files            <- FALSE
 ############################################
 
 # MODEL SELECTION
-model_type = 3             # 1 = de novo beneficial mutations ("DN"); 
+model_type = 1             # 1 = de novo beneficial mutations ("DN"); 
                            # 2 = background selection ("BS"); 
                            # 3 = selection on standing variation ("SV");
 
@@ -102,13 +102,13 @@ mu_max  = 1e-5
 neq_random = TRUE
 neq_value <- 50
 neq_min = 1
-neq_max = 100
+neq_max = 1000
 
 # POPULATION SIZE N
 n_random = TRUE
 n_value <- 50
 n_min = 1
-n_max = 100
+n_max = 1000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
 gammaM_random = TRUE
@@ -155,7 +155,7 @@ rr_min  = 4.2 * 1e-8
 rr_max  = 4.2 * 1e-5
 
 # SELFING RATE
-selfing_random = TRUE
+selfing_random = FALSE
 selfing_rate = 0.0         
 selfing_min = 0.80
 selfing_max = 1.00
@@ -182,7 +182,7 @@ add_sfs_bins_2 = 20
 # load required libraries
 library(moments)
 library(ROCR)
-library(zoo)
+#library(zoo)
 if(parallel_sims){
   library(foreach)    
   library(parallel)   
@@ -202,7 +202,7 @@ if(parallel_sims){
   registerDoParallel(cl)
   clusterEvalQ(cl, library(moments))
   raw_reftable <- foreach(sim=seq_len(nsim),.combine=rbind) %dopar% {   library(ROCR)
-                                                                        library(zoo)
+                                                                        #library(zoo)
                                                                         do_sim(sim, nsim, 
                                                                                path_to_slim_model, slim_model_prefix, model_type, model_title,
                                                                                path_to_slim, slim_output_folder,

@@ -11,7 +11,6 @@ if (chrN == 1){
   chrS = as.integer(0.25 * genomeS) 
   
   rr_limits = c((genomeS-1), genomeS, ((genomeS+chrS)-1))
-  #rr_rates = c(rr, 0.5, rr)
 } else {
   chrS = as.integer(genomeS/chrN)
   
