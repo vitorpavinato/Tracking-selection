@@ -501,10 +501,10 @@ do_sim <- function(sim, nsim,
     } else {
       
       IBDNeGWtimes <- as.data.frame(t(rep(NA, tau)))
-      colnames(IBDNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+      colnames(IBDNeGWtimes) <- paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
       
       IBDNeGWtotal <- as.numeric(NA)
-      names(IBDNeGWtotal) <- "VARNeGWtotal"
+      names(IBDNeGWtotal) <- "IBDNeGWtotal"
       
       VARNeGWtimes <- as.data.frame(t(rep(NA, tau)))
       colnames(VARNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
@@ -548,10 +548,10 @@ do_sim <- function(sim, nsim,
     } else {
       
       IBDNeGWNtimes <- as.data.frame(t(rep(NA, tau)))
-      colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+      colnames(VARNeGWNtimes) <- paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
       
       IBDNeGWNtotal <- as.numeric(NA)
-      names(VARNeGWNtotal) <- "VARNeGWNtotal"
+      names(VARNeGWNtotal) <- "IBDNeGWNtotal"
       
       VARNeGWNtimes <- as.data.frame(t(rep(NA, tau)))
       colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
@@ -727,10 +727,10 @@ do_sim <- function(sim, nsim,
     
     ## ALL MUTATION TYPES
     IBDNeGWtimes <- as.data.frame(t(rep(NA, tau)))
-    colnames(IBDNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+    colnames(IBDNeGWtimes) <- paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
     
     IBDNeGWtotal <- as.numeric(NA)
-    names(IBDNeGWtotal) <- "VARNeGWtotal"
+    names(IBDNeGWtotal) <- "IBDNeGWtotal"
     
     VARNeGWtimes <- as.data.frame(t(rep(NA, tau)))
     colnames(VARNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
@@ -740,10 +740,10 @@ do_sim <- function(sim, nsim,
     
     ## ONLY NEUTRAL MUTATIONS
     IBDNeGWNtimes <- as.data.frame(t(rep(NA, tau)))
-    colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
+    colnames(VARNeGWNtimes) <- paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
     
     IBDNeGWNtotal <- as.numeric(NA)
-    names(VARNeGWNtotal) <- "VARNeGWNtotal"
+    names(VARNeGWNtotal) <- "IBDNeGWNtotal"
     
     VARNeGWNtimes <- as.data.frame(t(rep(NA, tau)))
     colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
@@ -824,10 +824,10 @@ do_sim <- function(sim, nsim,
     } else {
       
       IBDNeChrtimes <- as.data.frame(t(rep(NA, tau)))
-      colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+      colnames(VARNeChrtimes) <- paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
       
       IBDNeChrtotal <- as.numeric(NA)
-      names(VARNeChrtotal) <- "VARNeChrtotal"
+      names(VARNeChrtotal) <- "IBDNeChrtotal"
       
       VARNeChrtimes <- as.data.frame(t(rep(NA, tau)))
       colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
@@ -838,10 +838,10 @@ do_sim <- function(sim, nsim,
   } else {
     
     IBDNeChrtimes <- as.data.frame(t(rep(NA, tau)))
-    colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
+    colnames(VARNeChrtimes) <- paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
     
     IBDNeChrtotal <- as.numeric(NA)
-    names(VARNeChrtotal) <- "VARNeChrtotal"
+    names(VARNeChrtotal) <- "IBDNeChrtotal"
     
     VARNeChrtimes <- as.data.frame(t(rep(NA, tau)))
     colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
