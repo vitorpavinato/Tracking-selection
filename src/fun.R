@@ -447,8 +447,17 @@ do_sim <- function(sim, nsim,
   ##-------------------------------------------------------------------------------
   
   ### GENOME
-  filenames_genome <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t[0-", tau, "]_", sim), full.names=FALSE)
-  datalist_genome <- lapply(filenames_genome, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
+  if (tau >= 10){
+    filenames_genome_1 <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t","[0-9]_", sim), full.names=FALSE)
+    filenames_genome_2 <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t","[1-9][0-9]_", sim), full.names=FALSE)
+    filenames_genome <- c(filenames_genome_1,filenames_genome_2)
+    
+    datalist_genome <- lapply(filenames_genome, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
+  
+  } else {
+    filenames_genome <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t","[0-9]_", sim), full.names=FALSE)
+    datalist_genome <- lapply(filenames_genome, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
+  }
   
   if (model_type == 3){
     all_merged_genome <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4), all = TRUE)}, datalist_genome)
@@ -486,7 +495,8 @@ do_sim <- function(sim, nsim,
       colnames(IBDNeGWtimes) <- paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
       
       # IBD NE Genome-wide total
-      IBDNeGWtotal <- -(tau/(2*log(mean_he_merged_genome[length(mean_he_merged_genome)]/mean_he_merged_genome[1])))
+      #IBDNeGWtotal <- -(tau/(2*log(mean_he_merged_genome[length(mean_he_merged_genome)]/mean_he_merged_genome[1])))
+      IBDNeGWtotal <- -(tau/(2*log(mean_he_merged_genome[paste0("HE",tau)]/mean_he_merged_genome[paste0("HE0")])))
       names(IBDNeGWtotal) <- "IBDNeGWtotal"
       
       # VAR NE Genome-wide for each time interval
@@ -495,7 +505,8 @@ do_sim <- function(sim, nsim,
       colnames(VARNeGWtimes) <- paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
       
       # VAR NE Genome-wide total
-      VARNeGWtotal <- tau*mean_he_merged_genome[1]/(2*mean((paaf_merged_genome[,1] - paaf_merged_genome[,(tau+1)])^2))
+      #VARNeGWtotal <- tau*mean_he_merged_genome[1]/(2*mean((paaf_merged_genome[,1] - paaf_merged_genome[,(tau+1)])^2))
+      VARNeGWtotal <- tau*mean_he_merged_genome[paste0("HE0")]/(2*mean((paaf_merged_genome[,paste0("PAAF0")] - paaf_merged_genome[,paste0("PAAF",tau)])^2))
       names(VARNeGWtotal) <- "VARNeGWtotal"
       
     } else {
@@ -533,7 +544,8 @@ do_sim <- function(sim, nsim,
       colnames(IBDNeGWNtimes) <- paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
       
       # IBD NE Genome-wide neutral total
-      IBDNeGWNtotal <- -(tau/(2*log(mean_he_merged_genome_neutral[length(mean_he_merged_genome_neutral)]/mean_he_merged_genome_neutral[1])))
+      #IBDNeGWNtotal <- -(tau/(2*log(mean_he_merged_genome_neutral[length(mean_he_merged_genome_neutral)]/mean_he_merged_genome_neutral[1])))
+      IBDNeGWNtotal <- -(tau/(2*log(mean_he_merged_genome_neutral[paste0("HE",tau)]/mean_he_merged_genome_neutral[paste0("HE0")])))
       names(IBDNeGWNtotal) <- "IBDNeGWNtotal"
       
       # VAR NE Genome-wide neutral for each time interval
@@ -542,7 +554,8 @@ do_sim <- function(sim, nsim,
       colnames(VARNeGWNtimes) <- paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
       
       # VAR NE Genome-wide neutral total
-      VARNeGWNtotal <- tau*mean_he_merged_genome_neutral[1]/(2*mean((paaf_merged_genome_neutral[,1] - paaf_merged_genome_neutral[,(tau+1)])^2))
+      #VARNeGWNtotal <- tau*mean_he_merged_genome_neutral[1]/(2*mean((paaf_merged_genome_neutral[,1] - paaf_merged_genome_neutral[,(tau+1)])^2))
+      VARNeGWNtotal <- tau*mean_he_merged_genome_neutral[paste0("HE0")]/(2*mean((paaf_merged_genome_neutral[,paste0("PAAF0")] - paaf_merged_genome_neutral[,paste0("PAAF",tau)])^2))
       names(VARNeGWNtotal) <- "VARNeGWNtotal"
       
     } else {
@@ -607,7 +620,8 @@ do_sim <- function(sim, nsim,
           colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
           
           # IBD NE Genome-wide selection total
-          IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1])))
+          #IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1])))
+          IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[paste0("HE",tau)]/mean_he_merged_genome_selection[paste0("HE0")])))
           names(IBDNeGWStotal) <- "IBDNeGWStotal"
           
           # VAR NE Genome-wide selection for each time interval
@@ -616,7 +630,8 @@ do_sim <- function(sim, nsim,
           colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
           
           # VAR NE Genome-wide neutral total
-          VARNeGWStotal <- tau*mean_he_merged_genome_selection[1]/(2*mean((paaf_merged_genome_selection[,1] - paaf_merged_genome_selection[,(tau+1)])^2))
+          #VARNeGWStotal <- tau*mean_he_merged_genome_selection[1]/(2*mean((paaf_merged_genome_selection[,1] - paaf_merged_genome_selection[,(tau+1)])^2))
+          VARNeGWStotal <- tau*mean_he_merged_genome_selection[paste0("HE0")]/(2*mean((paaf_merged_genome_selection[,paste0("PAAF0")] - paaf_merged_genome_selection[,paste0("PAAF",tau)])^2))
           names(VARNeGWStotal) <- "VARNeGWStotal"
           
         } else {
@@ -694,7 +709,8 @@ do_sim <- function(sim, nsim,
         colnames(IBDNeGWStimes) <- paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
         
         # IBD NE Genome-wide selection total
-        IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1])))
+        #IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[length(mean_he_merged_genome_selection)]/mean_he_merged_genome_selection[1])))
+        IBDNeGWStotal <- -(tau/(2*log(mean_he_merged_genome_selection[paste0("HE",tau)]/mean_he_merged_genome_selection[paste0("HE0")])))
         names(IBDNeGWStotal) <- "IBDNeGWStotal"
         
         # VAR NE Genome-wide selection for each time interval
@@ -703,7 +719,8 @@ do_sim <- function(sim, nsim,
         colnames(VARNeGWStimes) <- paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau))
         
         # VAR NE Genome-wide neutral total
-        VARNeGWStotal <- tau*mean_he_merged_genome_selection[1]/(2*mean((paaf_merged_genome_selection[,1] - paaf_merged_genome_selection[,(tau+1)])^2))
+        #VARNeGWStotal <- tau*mean_he_merged_genome_selection[1]/(2*mean((paaf_merged_genome_selection[,1] - paaf_merged_genome_selection[,(tau+1)])^2))
+        VARNeGWStotal <- tau*mean_he_merged_genome_selection[paste0("HE0")]/(2*mean((paaf_merged_genome_selection[,paste0("PAAF0")] - paaf_merged_genome_selection[,paste0("PAAF",tau)])^2))
         names(VARNeGWStotal) <- "VARNeGWStotal"
         
       } else {
@@ -772,14 +789,24 @@ do_sim <- function(sim, nsim,
   
   # remove temporary PAAF file from slim_output folder
   if (remove_files){
-    if(file.exists(paste0(slim_output_folder,filenames_genome))){
+    if(any(file.exists(paste0(slim_output_folder,filenames_genome)))){
       file.remove(paste0(slim_output_folder,filenames_genome))
     }
   }
   
   ## NEUTRAL MUTATION IN EXTRA CHROMOSOME
-  filenames_extraChr <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_extraChr_t[0-", tau, "]_", sim), full.names=FALSE)
-  datalist_extraChr <- lapply(filenames_extraChr, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
+  if (tau >= 10){
+    filenames_extraChr_1 <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_extraChr_t","[0-9]_", sim), full.names=FALSE)
+    filenames_extraChr_2 <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_extraChr_t","[1-9][0-9]_", sim), full.names=FALSE)
+    filenames_extraChr <- c(filenames_extraChr_1,filenames_extraChr_2)
+    
+    datalist_extraChr <- lapply(filenames_extraChr, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
+    
+  } else {
+    filenames_extraChr <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_extraChr_t","[0-9]_", sim), full.names=FALSE)
+    datalist_extraChr <- lapply(filenames_extraChr, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
+  }
+  
   merged_extraChr <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4), all = TRUE)}, datalist_extraChr)
   
   if(!is.null(merged_extraChr)){
@@ -809,7 +836,8 @@ do_sim <- function(sim, nsim,
       colnames(IBDNeChrtimes) <- paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
       
       # IBD NE extra chromosome total
-      IBDNeChrtotal <- -(tau/(2*log(mean_he_merged_extraChr[length(mean_he_merged_extraChr)]/mean_he_merged_extraChr[1])))
+      #IBDNeChrtotal <- -(tau/(2*log(mean_he_merged_extraChr[length(mean_he_merged_extraChr)]/mean_he_merged_extraChr[1])))
+      IBDNeChrtotal <- -(tau/(2*log(mean_he_merged_extraChr[paste0("HE",tau)]/mean_he_merged_extraChr[paste0("HE0")])))
       names(IBDNeChrtotal) <- "IBDNeChrtotal"
       
       # VAR NE extra chromosome for each time interval
@@ -818,7 +846,8 @@ do_sim <- function(sim, nsim,
       colnames(VARNeChrtimes) <- paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau))
       
       # VAR NE extra chromosome total
-      VARNeChrtotal <- tau*mean_he_merged_extraChr[1]/(2*mean((paaf_merged_extraChr[,1] - paaf_merged_extraChr[,(tau+1)])^2))
+      #VARNeChrtotal <- tau*mean_he_merged_extraChr[1]/(2*mean((paaf_merged_extraChr[,1] - paaf_merged_extraChr[,(tau+1)])^2))
+      VARNeChrtotal <- tau*mean_he_merged_extraChr[paste0("HE0")]/(2*mean((paaf_merged_extraChr[,paste0("PAAF0")] - paaf_merged_extraChr[,paste0("PAAF",tau)])^2))
       names(VARNeChrtotal) <- "VARNeChrtotal"
       
     } else {
@@ -852,7 +881,7 @@ do_sim <- function(sim, nsim,
   
   # remove temporary PAAF file from slim_output folder
   if (remove_files){
-    if(file.exists(paste0(slim_output_folder,filenames_extraChr))){
+    if(any(file.exists(paste0(slim_output_folder,filenames_extraChr)))){
       file.remove(paste0(slim_output_folder,filenames_extraChr))
     }
   }
@@ -974,8 +1003,15 @@ do_sim <- function(sim, nsim,
     slim_data <- slim_data[!duplicated(slim_data[ ,1:2]), ]
     
     # re-code the chromosome name
-    if (chrTAG){
-      if(chrN > 1){
+    #if (chrTAG){
+    #  if(chrN > 1){
+    #    slim_data$chrom <- sapply(slim_data$position, chromtagging)
+    #  }
+    #}
+    
+    # re-code the chromosome name
+    if(chrN > 1){
+      if (chrTAG){
         slim_data$chrom <- sapply(slim_data$position, chromtagging)
       }
     }

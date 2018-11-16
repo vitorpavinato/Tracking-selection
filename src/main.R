@@ -43,7 +43,7 @@ path_to_tabix           <- "/usr/local/bin/tabix"                         #clust
 path_to_bcftools        <- "/usr/local/bin/bcftools"                      #cluster# "./bin/bcftools"
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
-path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #cluster# "./bin/pyegglib21/bin/python"
+path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #cluster# "./bin/pyegglib22/bin/python"
 path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b22
 reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
@@ -67,9 +67,9 @@ model_type = 1             # 1 = de novo beneficial mutations ("DN");
 # GENOME SPECIFICATION
 genomeS = 200e+5           # genomeS => Genome Size;
 fragS   = 5e+4             # fragS   => Fragment size to define g1 or g2 elements;
-chrN    = 4                # chrN    => Chromosome number to define independent genome blocks;
+chrN    = 1                # chrN    => Chromosome number to define independent genome blocks;
 
-chrTAG = TRUE              # chrTAG  => if TRUE, SNPs are tagged with chromosome ID based on its position;
+chrTAG = FALSE             # chrTAG  => if TRUE, SNPs are tagged with chromosome ID based on its position;
 
 # DATASET SPECIFICATION 
 data_type = 1              # 1 = Whole genome sequencing (WGS);
