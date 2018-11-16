@@ -8,7 +8,7 @@ src/.Rhistory
 .Rhistory
 #bin/bcftools
 #bin/bgzip
-bin/pyegglib21/
+bin/pyegglib22/
 bin/slim
 #bin/tabix
 batch.*/
