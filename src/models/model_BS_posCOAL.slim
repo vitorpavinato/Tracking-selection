@@ -41,10 +41,12 @@ initialize() {
 	
 	// Assign each GenomicElementType:
 	// g2
+	if(!isNULL(g2_idx))
 	for(i in g2_idx){
 		initializeGenomicElement(g2, asInteger(e_starts[i]), asInteger(e_ends[i]));
 	}
 	// g1
+	if(!isNULL(g1_idx))
 	for(j in g1_idx){
 		initializeGenomicElement(g1, asInteger(e_starts[j]), asInteger(e_ends[j]));
 	}

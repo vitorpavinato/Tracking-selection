@@ -182,7 +182,6 @@ add_sfs_bins_2 = 20
 # load required libraries
 library(moments)
 library(ROCR)
-#library(zoo)
 if(parallel_sims){
   library(foreach)    
   library(parallel)   
@@ -202,7 +201,6 @@ if(parallel_sims){
   registerDoParallel(cl)
   clusterEvalQ(cl, library(moments))
   raw_reftable <- foreach(sim=seq_len(nsim),.combine=rbind) %dopar% {   library(ROCR)
-                                                                        #library(zoo)
                                                                         do_sim(sim, nsim, 
                                                                                path_to_slim_model, slim_model_prefix, model_type, model_title,
                                                                                path_to_slim, slim_output_folder,
