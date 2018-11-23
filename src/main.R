@@ -65,7 +65,7 @@ model_type = 1             # 1 = de novo beneficial mutations ("DN");
                            # 3 = selection on standing variation ("SV");
 
 # GENOME SPECIFICATION
-genomeS = 200e+5           # genomeS => Genome Size;
+genomeS = 150e+5           # genomeS => Genome Size;
 fragS   = 5e+4             # fragS   => Fragment size to define g1 or g2 elements;
 chrN    = 1                # chrN    => Chromosome number to define independent genome blocks;
 
