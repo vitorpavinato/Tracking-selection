@@ -53,6 +53,8 @@ set.seed(seed,"Mersenne-Twister")
 parallel_sims           <- FALSE
 num_of_threads          <- 28
 remove_files            <- TRUE
+debug_sim               <- TRUE
+debug_output_folder     <- "results/debug_output/"
 
 ############################################
 ##            SLiM SIMULATION             ##
@@ -114,7 +116,7 @@ n_max = 1000
 gammaM_random = TRUE
 gammaM_value <- 0.4
 gammaM_min = 0.001
-gammaM_max = 1
+gammaM_max = 1              # set gamma_max = 0.1 for model "BS" - model 2;
 
 gammak_random = TRUE
 gammak_value <- 0.1         # gamma shape k must be positive;
@@ -224,7 +226,7 @@ if(parallel_sims){
                                                                                wss_wspan_run, sfs_bins_run,
                                                                                add_WSSwspan_SFSbins_1, add_wss_wspan_1, add_sfs_bins_1,
                                                                                add_WSSwspan_SFSbins_2, add_wss_wspan_2, add_sfs_bins_2,
-                                                                               remove_files
+                                                                               remove_files, debug_sim, debug_output_folder
                                                                                )
     }
 
@@ -256,7 +258,7 @@ if(parallel_sims){
                                   wss_wspan_run, sfs_bins_run,
                                   add_WSSwspan_SFSbins_1, add_wss_wspan_1, add_sfs_bins_1,
                                   add_WSSwspan_SFSbins_2, add_wss_wspan_2, add_sfs_bins_2,
-                                  remove_files
+                                  remove_files, debug_sim, debug_output_folder
                                   )
   }
   raw_reftable <- do.call(rbind, raw_reftable)

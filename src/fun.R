@@ -96,7 +96,7 @@ do_sim <- function(sim, nsim,
                    wss_wspan_run, sfs_bins_run,
                    add_WSSwspan_SFSbins_1, add_wss_wspan_1, add_sfs_bins_1,
                    add_WSSwspan_SFSbins_2, add_wss_wspan_2, add_sfs_bins_2,
-                   remove_files
+                   remove_files, debug_sim, debug_output_folder
                    ){
   
   # write progress of simulation on screen 
@@ -385,6 +385,25 @@ do_sim <- function(sim, nsim,
       }
       
     } else {
+      
+      if (debug_sim){
+        
+        # check if the folder exists
+        if (!file_test("-d", debug_output_folder)){
+          dir.create(file.path(debug_output_folder))
+        }
+        
+        debug_message <- "no slim_output_load file found"
+        
+        debug_dump  <- suppressWarnings(cbind(as.factor(model_type), 
+                                              sim_seed, sim, 
+                                              mu, rr, selfing, Neq, N,
+                                              gammaM, gammak, tc,
+                                              PrGWSel, prbe, debug_message))
+        rownames(debug_dump) <- sim
+        write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+      }
+      
       averageGenLoad <- as.numeric(NA)
       lastGenLoad <- as.numeric(NA)
     }
@@ -434,6 +453,25 @@ do_sim <- function(sim, nsim,
       }
       
     } else {
+      
+      if (debug_sim){
+        
+        # check if the folder exists
+        if (!file_test("-d", debug_output_folder)){
+          dir.create(file.path(debug_output_folder))
+        }
+        
+        debug_message <- "no slim_output_pedigreeNe file found"
+        
+        debug_dump  <- suppressWarnings(cbind(as.factor(model_type), 
+                                              sim_seed, sim, 
+                                              mu, rr, selfing, Neq, N,
+                                              gammaM, gammak, tc,
+                                              PrGWSel, prbe, debug_message))
+        rownames(debug_dump) <- sim
+        write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+      }
+      
       pedigreeNetimes <- as.data.frame(t(rep(NA, tau+1)))
       names(pedigreeNetimes) <- paste0("PedigreeNe",seq(from=0,to=(tau)))
       pedigreeNetotal <- as.numeric(NA)
@@ -449,32 +487,44 @@ do_sim <- function(sim, nsim,
     ## HANDLING SLiM2 OUTPUT t1:t2 - POPULATION ALLELE FREQUENCIES
     ##-------------------------------------------------------------------------------
     
-    ### GENOME
-    if (tau >= 10){
-      filenames_genome_1 <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t","[0-9]_", sim), full.names=FALSE)
-      filenames_genome_2 <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t","[1-9][0-9]_", sim), full.names=FALSE)
-      filenames_genome <- c(filenames_genome_1,filenames_genome_2)
+    filenames_genome <- paste0(slim_output_folder, "slim_output_paaf_t", seq(from=1, to=tau, by=1), "_", sim, ".txt")
+    filenames_extraChr <- paste0(slim_output_folder, "slim_output_paaf_extraChr_t", seq(from=1, to=tau, by=1), "_", sim, ".txt")
       
-      datalist_genome <- lapply(filenames_genome, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
-      
-    } else {
-      filenames_genome <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t","[0-9]_", sim), full.names=FALSE)
-      datalist_genome <- lapply(filenames_genome, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
-    }
-    
-    if (model_type == 3){
-      all_merged_genome <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4), all = TRUE)}, datalist_genome)
-    } else {
-      all_merged_genome <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4,5), all = TRUE)}, datalist_genome)
-    }
-    
-    if(!is.null(all_merged_genome)){
+    if(all(file.exists(c(filenames_genome, filenames_extraChr)))){
       
       # last generation file
       slim_output_lastgen <- paste0(slim_output_folder,"slim_output_lastgen_", sim, ".txt")
       
       # load file with the last generation 
       lastgen <- scan(file = slim_output_lastgen, what = integer(), na.strings = "NA", quiet = TRUE)
+      
+      ### GENOME
+      datalist_genome <- lapply(filenames_genome, function(x){read.table(file= x, header=T, na.strings = "NA")})
+      
+      if (model_type == 3){
+        all_merged_genome <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4), all = TRUE)}, datalist_genome)
+      } else {
+        all_merged_genome <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4,5), all = TRUE)}, datalist_genome)
+      }
+      
+      
+    } else {
+      
+    }
+    
+    #if (tau >= 10){
+    #  filenames_genome_1 <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t","[0-9]_", sim), full.names=FALSE)
+    #  filenames_genome_2 <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t","[1-9][0-9]_", sim), full.names=FALSE)
+    #  filenames_genome <- c(filenames_genome_1,filenames_genome_2)
+    #
+    #} else {
+    #  filenames_genome <- list.files(path=slim_output_folder, pattern = paste0("slim_output_paaf_t","[0-9]_", sim), full.names=FALSE)
+    #  datalist_genome <- lapply(filenames_genome, function(x){read.table(file=paste0(slim_output_folder, x), header=T, na.strings = "NA")})
+    #}
+    
+    
+    
+    if(!is.null(all_merged_genome)){
       
       ## IBD and VAR NE CALCULATION
       
@@ -1458,6 +1508,24 @@ do_sim <- function(sim, nsim,
     }
     
   } else {
+    
+    if (debug_sim){
+      
+      # check if the folder exists
+      if (!file_test("-d", debug_output_folder)){
+        dir.create(file.path(debug_output_folder))
+      }
+      
+      debug_message <- "no .tree file found"
+      
+      debug_dump  <- suppressWarnings(cbind(as.factor(model_type), 
+                                            sim_seed, sim, 
+                                            mu, rr, selfing, Neq, N,
+                                            gammaM, gammak, tc,
+                                            PrGWSel, prbe, debug_message))
+      rownames(debug_dump) <- sim
+      write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+    }
     
     averageGenLoad <- as.numeric(NA)
     lastGenLoad <- as.numeric(NA)
