@@ -103,13 +103,13 @@ mu_max  = 1e-5
 # Ne equilibrium phase (aka burn-in)
 neq_random = TRUE
 neq_value <- 50
-neq_min = 1
+neq_min = 2
 neq_max = 1000
 
 # POPULATION SIZE N
 n_random = TRUE
 n_value <- 50
-n_min = 1
+n_min = 2
 n_max = 1000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
