@@ -58,6 +58,10 @@ initialize() {
 	executeLambda(RECOMBRATES);
 }
 
+fitness(m3, p1)  { 
+	return 1/relFitness; 
+}
+
 1 {
 	sim.readFromPopulationFile(filePath=paste0(outputpath + "slim_coalesced_BS_" + simID + ".tree"));				
 	catn("Read .tree file at generation: " + sim.generation);
@@ -93,15 +97,6 @@ initialize() {
 	p1.setSubpopulationSize(CS1);
 	cat("N = " + N + "\t" + "'Census Size 1' = " + CS1 + "\n");
 }
-
-//fitness(m3){
-//
-// // convert fecundity-based selection to survival-based selection
-// if (runif(1) < relFitness)
-//   return 1.0;
-// else
-//   return 0.0;
-// }
 
 s1 2 early() {
 

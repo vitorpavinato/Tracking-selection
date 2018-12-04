@@ -50,6 +50,10 @@ initialize() {
 	executeLambda(RECOMBRATES);
 }
 
+fitness(m3, p1)  { 
+	return 1/relFitness; 
+}
+
 1 {
 	sim.addSubpop("p1", Neq);
 	cat("mu = " + mu + "\t" + "Neq = " + Neq + "\n");
@@ -78,15 +82,6 @@ initialize() {
 			sim.simulationFinished();	
 	}			
 }
-
-//fitness(m3){
-//
-// // convert fecundity-based selection to survival-based selection
-// if (runif(1) < relFitness)
-//   return 1.0;
-// else
-//   return 0.0;
-// }
 
 s1 late() {
 	
