@@ -62,7 +62,7 @@ debug_output_folder     <- "results/debug_output/"
 ############################################
 
 # MODEL SELECTION
-model_type = 1             # 1 = de novo beneficial mutations ("DN"); 
+model_type = 2             # 1 = de novo beneficial mutations ("DN"); 
                            # 2 = background selection ("BS"); 
                            # 3 = selection on standing variation ("SV");
 
@@ -103,20 +103,20 @@ mu_max  = 1e-5
 # Ne equilibrium phase (aka burn-in)
 neq_random = TRUE
 neq_value <- 50
-neq_min = 2
+neq_min = 1
 neq_max = 1000
 
 # POPULATION SIZE N
 n_random = TRUE
 n_value <- 50
-n_min = 2
+n_min = 1
 n_max = 1000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
 gammaM_random = TRUE
 gammaM_value <- 0.4
 gammaM_min = 0.001
-gammaM_max = 1              # set gamma_max = 0.1 for model "BS" - model 2;
+gammaM_max = 1              
 
 gammak_random = TRUE
 gammak_value <- 0.1         # gamma shape k must be positive;

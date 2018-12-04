@@ -139,9 +139,9 @@ do_sim <- function(sim, nsim,
     gammaM <- gammaM_value
   }
   
-  if (model_type == 2){
-    gammaM = (-1)*gammaM
-  }
+  #if (model_type == 2){
+  #  gammaM = (-1)*gammaM
+  #}
     
   # gamma shape 
   if (gammak_random){

@@ -1,4 +1,4 @@
-bin/older_versions/
+bin/summstatsVersions/
 data/*
 results/*
 src/older_pipelines/
