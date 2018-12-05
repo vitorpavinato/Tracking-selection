@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 20
+nsim                    <- 2
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim"
@@ -263,7 +263,6 @@ if(parallel_sims){
   }
   raw_reftable <- do.call(rbind, raw_reftable)
 }
-gc()
 
 raw_reftable_header <- c("model","seed","sim","mu","rr","selfing","Neq","N","gammaMean","gammak","tc","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPStrongMSel","PrSAMMSel","PrSAMStrongMSel", paste0("PedigreeNe",seq(from=0,to=(tau))),
                          "PedigreeNetotal",paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWtotal",paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWNtotal",paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
@@ -493,5 +492,7 @@ if (add_WSSwspan_SFSbins_1 & add_WSSwspan_SFSbins_2){
 colnames(raw_reftable) <- raw_reftable_header
 
 save(raw_reftable,file=paste0(reftable_file,".RData"))
+
+gc()
 
 cat("\n Simulations finished\n\n")

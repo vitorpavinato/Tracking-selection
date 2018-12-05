@@ -52,7 +52,12 @@ if (data_type == 2){
     interval   = radseq_sampled[i]:(radseq_sampled[i]+(radseq_readL-1))
     rad_interval = c(rad_interval, interval)
   }
+  
+  # remove list of RADseq loci starting position after use it 
+  rm(rad_starts)
 }
+
+
 
 ## ADDITIONAL FUNCTIONS
 ##---------------------------------------------------------------------------------------------
@@ -146,11 +151,11 @@ do_sim <- function(sim, nsim,
   # gamma shape 
   if (gammak_random){
     if (gammaM_gammak){
-      if(model_type != 2){
+      #if(model_type != 2){
        gammak = gammaM
-      }else {
-        gammak = (-1)*gammaM
-      }
+      #}else {
+      #  gammak = (-1)*gammaM
+      #}
     } else {
       gammak <- 10^runif(n = 1, min = log10(gammak_min), max = log10(gammak_max))
     }
@@ -379,6 +384,9 @@ do_sim <- function(sim, nsim,
           lastGenLoad <- as.numeric(NA)
         }
         
+        # remove genetic load data after use it
+        rm(geneticLoad)
+        
       } else {
         averageGenLoad <- as.numeric(NA)
         lastGenLoad <- as.numeric(NA)
@@ -440,6 +448,9 @@ do_sim <- function(sim, nsim,
           pedigreeNetotal <- as.numeric(NA)
         }
         
+        # remove pedigreeNe data after use it
+        rm(pedigreene)
+        
       } else {
         pedigreeNetimes <- as.data.frame(t(rep(NA, tau+1)))
         names(pedigreeNetimes) <- paste0("PedigreeNe",seq(from=0,to=(tau)))
@@ -492,6 +503,9 @@ do_sim <- function(sim, nsim,
       } else {
         all_merged_genome <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4,5), all = TRUE)}, datalist_genome)
       }
+      
+      # remove population allele frequency data after use it
+      rm(datalist_genome)
       
       if(!is.null(all_merged_genome)){
         
@@ -808,6 +822,9 @@ do_sim <- function(sim, nsim,
       datalist_extraChr <- lapply(filenames_extraChr, function(x){read.table(file= x, header=T, na.strings = "NA")})
       all_merged_extraChr <- Reduce(function(x,y) {merge(x,y, by=c(1,2,3,4), all = TRUE)}, datalist_extraChr)
       
+      # remove population allele frequency data after use it
+      rm(datalist_extraChr)
+      
       if(!is.null(all_merged_extraChr)){
         
         # remove new mutations
@@ -1018,6 +1035,9 @@ do_sim <- function(sim, nsim,
           slim_snp_geno <- slim_raw_data[, 9:ncol(slim_raw_data)]
           slim_snp_info <- slim_raw_data[, 1:length(header_1)]
           
+          # remove raw snp data after use it
+          rm(slim_raw_data)
+          
           # change the genotype annotations
           slim_snp_geno <- as.matrix(slim_snp_geno)
           slim_snp_geno[is.na(slim_snp_geno)]   <- "11"
@@ -1052,6 +1072,10 @@ do_sim <- function(sim, nsim,
           
           # re-assemble the data
           slim_data <- cbind(slim_snp_info, slim_snp_geno)
+          
+          # remove raw snp data information after use it
+          rm(slim_snp_geno)
+          rm(slim_snp_info)
           
           # remove monomorphic mutations
           slim_data <- slim_data[keep_snps, ]
@@ -1098,6 +1122,10 @@ do_sim <- function(sim, nsim,
                                        DOM=slim_data$DOM, 
                                        GO=slim_data$GO,
                                        slim_data[, (length(header_1)+1):ncol(slim_data)])
+          
+          # remove snp datasets after use it
+          rm(slim_data)
+          rm(slim_to_egglib_data)
           
           ## RUNNUNG EGGLIB - CALCULATING SUMMARY STATISTICS
           ##-----------------------------------------------------------------------------------
@@ -1404,6 +1432,9 @@ do_sim <- function(sim, nsim,
               snps_in_reftable <- sample(which(slim_to_egglib_snps$MT == 1 | slim_to_egglib_snps$MT == 2 | slim_to_egglib_snps$MT == 3), size=1)
               sampled_snp <- slim_to_egglib_snps[snps_in_reftable, ]
               
+              # remove complete snp table after use it
+              rm(slim_to_egglib_snps)
+              
               # calculate sample minor allele frequency
               sampled_snp_genotypes <- sampled_snp[, (grep("GO", names(sampled_snp)) + 1):(SS1 + SS2 + 5)]
               
@@ -1426,6 +1457,9 @@ do_sim <- function(sim, nsim,
               locus_lss_stats <- egglib_summary_stats[egglib_summary_stats$ID %in% sampled_snp$ID, grepl("^LSS" , unique(names(egglib_summary_stats)))]
               locus_wss_stats <- egglib_summary_stats[egglib_summary_stats$ID %in% sampled_snp$ID , grepl("^WSS" , unique(names(egglib_summary_stats)))]
               
+              # remove summary statistics data after use it
+              rm(egglib_summary_stats)
+              
               # ASSEMBLY default LOCUS-SPECIFIC summary statistics
               locus_summary_stats <- cbind(locus_lss_info, SAAF1, SAAF2, locus_lss_stats, locus_wss_stats)
               #locus_summary_stats <- locus_summary_stats[ !duplicated(locus_summary_stats[ , 3]), ]
@@ -1434,11 +1468,17 @@ do_sim <- function(sim, nsim,
               if (add_WSSwspan_SFSbins_1){
                 locus_wss_stats_add1 <- egglib_summary_stats_add1[egglib_summary_stats_add1$ID %in% sampled_snp$ID , grepl("^WSS" , unique(names(egglib_summary_stats_add1)))]
                 colnames(locus_wss_stats_add1) <- paste0("ADD_1_LSS","_",seq(from=1,to=dim(locus_wss_stats_add1)[2]))
+                
+                # remove additional summary statistics 1 data after use it
+                rm(egglib_summary_stats_add1)
               }
               
               if (add_WSSwspan_SFSbins_2){
                 locus_wss_stats_add2 <- egglib_summary_stats_add2[egglib_summary_stats_add2$ID %in% sampled_snp$ID , grepl("^WSS" , unique(names(egglib_summary_stats_add2)))]
                 colnames(locus_wss_stats_add2) <- paste0("ADD_2_LSS","_",seq(from=1,to=dim(locus_wss_stats_add2)[2]))
+                
+                # remove additional summary statistics 2 data after use it
+                rm(egglib_summary_stats_add2)
               }
               
               if (exists("locus_wss_stats_add1") & exists("locus_wss_stats_add2")){
