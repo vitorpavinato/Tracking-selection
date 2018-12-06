@@ -36,11 +36,11 @@ ls()
 nsim                    <- 20
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
-path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"        #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim"
+path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"  #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim" #GENOTOUL# /usr/local/bioinfo/src/SLiM/SLiM-3.2/SLiM_build/slim
 slim_output_folder      <- "results/slim_output/"
-path_to_bgzip           <- "/usr/local/bin/bgzip"                         #cluster# "./bin/bgzip"
-path_to_tabix           <- "/usr/local/bin/tabix"                         #cluster# "./bin/tabix"
-path_to_bcftools        <- "/usr/local/bin/bcftools"                      #cluster# "./bin/bcftools"
+path_to_bgzip           <- "/usr/local/bin/bgzip"                   #cluster# "./bin/bgzip"    #GENOTOUL# /usr/local/bioinfo/src/Tabix/tabix-0.2.5/bgzip
+path_to_tabix           <- "/usr/local/bin/tabix"                   #cluster# "./bin/tabix"    #GENOTOUL# /usr/local/bioinfo/src/Tabix/tabix-0.2.5/tabix
+path_to_bcftools        <- "/usr/local/bin/bcftools"                #cluster# "./bin/bcftools" #GENOTOUL# /usr/local/bioinfo/src/BCFtools/bcftools-1.6/bin/bcftools
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
 path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #cluster# "./bin/pyegglib22/bin/python"
@@ -62,7 +62,7 @@ debug_output_folder     <- "results/debug_output/"
 ############################################
 
 # MODEL SELECTION
-model_type = 2             # 1 = de novo beneficial mutations ("DN"); 
+model_type = 1             # 1 = de novo beneficial mutations ("DN"); 
                            # 2 = background selection ("BS"); 
                            # 3 = selection on standing variation ("SV");
 
