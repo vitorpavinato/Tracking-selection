@@ -9,7 +9,8 @@ do
   #echo '#SBATCH -t 01:00:00'                             >> trackingselsim.$i.sh;
   echo '#SBATCH --mem=4G'                                >> trackingselsim.$i.sh;
   echo '#SBATCH --mail-type=BEGIN,END,FAIL'              >> trackingselsim.$i.sh;
-  #echo 'module purge'                                    >> trackingselsim.$i.sh;
+  echo 'module purge'                                    >> trackingselsim.$i.sh;
+  echo 'module load system/R-3.5.1'                      >> trackingselsim.$i.sh;
   #echo 'module load bioinfo/SLiM-3.2'                    >> trackingselsim.$i.sh;
   #echo 'module load bioinfo/tabix-0.2.5'                 >> trackingselsim.$i.sh;
   #echo 'module load bioinfo/bcftools-1.6'                >> trackingselsim.$i.sh;
