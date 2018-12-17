@@ -38,9 +38,9 @@ path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"  #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim" #GENOTOUL# /usr/local/bioinfo/src/SLiM/SLiM-3.2/SLiM_build/slim
 slim_output_folder      <- "results/slim_output/"
-path_to_bgzip           <- "/usr/local/bin/bgzip"                   #cluster# "./bin/bgzip"    #GENOTOUL# /usr/local/bioinfo/src/Tabix/tabix-0.2.5/bgzip
-path_to_tabix           <- "/usr/local/bin/tabix"                   #cluster# "./bin/tabix"    #GENOTOUL# /usr/local/bioinfo/src/Tabix/tabix-0.2.5/tabix
-path_to_bcftools        <- "/usr/local/bin/bcftools"                #cluster# "./bin/bcftools" #GENOTOUL# /usr/local/bioinfo/src/BCFtools/bcftools-1.6/bin/bcftools
+path_to_bgzip           <- "/usr/local/bin/bgzip"                   #cluster# "./bin/bgzip"    #GENOTOUL# "/usr/local/bioinfo/src/Tabix/tabix-0.2.5/bgzip"
+path_to_tabix           <- "/usr/local/bin/tabix"                   #cluster# "./bin/tabix"    #GENOTOUL# "/usr/local/bioinfo/src/Tabix/tabix-0.2.5/tabix"
+path_to_bcftools        <- "/usr/local/bin/bcftools"                #cluster# "./bin/bcftools" #GENOTOUL# "/usr/local/bioinfo/src/BCFtools/bcftools-1.6/bin/bcftools"
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
 path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #cluster# "./bin/pyegglib22/bin/python"
@@ -102,19 +102,19 @@ mu_max  = 1e-5
 # POPULATION SIZE Neq
 # Ne equilibrium phase (aka burn-in)
 neq_random = TRUE
-neq_value <- 50
+neq_value <- 500
 neq_min = 1
 neq_max = 1000
 
 # POPULATION SIZE N
 n_random = TRUE
-n_value <- 50
+n_value <- 500
 n_min = 1
 n_max = 1000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
 gammaM_random = TRUE
-gammaM_value <- 0.4
+gammaM_value <- 0.1
 gammaM_min = 0.001
 gammaM_max = 1              
 
@@ -152,7 +152,7 @@ domB_max = 1
 
 # GENOME-WIDE RECOMBINATION RATE
 rr_random = TRUE
-rr_rate <- 4.2 * 1e-7
+rr_rate <- 5 * 1e-7
 rr_min  = 4.2 * 1e-8
 rr_max  = 4.2 * 1e-5
 
@@ -161,6 +161,10 @@ selfing_random = FALSE
 selfing_rate = 0.0         
 selfing_min = 0.80
 selfing_max = 1.00
+
+# TIME OF SELECTION CHANGE
+tc_random = TRUE
+tc_value = 5.0            # from = 1 to = tau     
 
 ###########################################
 ##      EGGLIB SUMMSTAT SETTINGS         ##

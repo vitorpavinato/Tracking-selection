@@ -219,7 +219,11 @@ do_sim <- function(sim, nsim,
   
   # SELECTION ON STANDING VARIATION
   if (model_type == 3){
-    tc = as.integer(runif(1, min = 0, max = tau))
+    if(tc_random){
+      tc = as.integer(runif(1, min = 0, max = tau))
+    } else {
+      tc = tc_value
+    }
   } else {
     tc = 0
   }
