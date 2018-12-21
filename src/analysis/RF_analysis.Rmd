@@ -1,0 +1,2797 @@
+---
+title: "Tracking Selection with ABC-RF"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## ABC Random Forests Analysis
+
+#### Install required packages
+```{r install packages, echo=TRUE}
+#install.packages(c("DataExplorer", 
+#                   "dplyr",
+#                   "abcrf",
+#                   "weights",
+#                   "grDevices"),
+#                 dependencies = T)
+```
+
+#### Load packages and source file
+```{r load packages, echo=TRUE, eval=TRUE, include=FALSE}
+library(DataExplorer)
+library(dplyr)
+library(abcrf)
+library(weights)
+library(grDevices)
+
+source("RF_analysis_fun.R")
+```
+
+#### Upload the reference table files
+```{r load superbatch 1, echo=TRUE, eval=TRUE, include=FALSE}
+# Super-batch 1
+load("/home/pavinato/My_repositories/Tracking-selection/results/lastPipelineModels/Tracking-selection-1.0/results/pooled_reftable_1.RData")
+pooled_raw_reftable_1 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
+```
+
+```{r load superbatch 2, echo=TRUE, eval=TRUE, include=FALSE}
+# Super-batch 2
+load("/home/pavinato/My_repositories/Tracking-selection/results/lastPipelineModels/Tracking-selection-1.1/results/pooled_reftable_2.RData")
+pooled_raw_reftable_2 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
+```
+
+```{r load superbatch 3, echo=TRUE, eval=TRUE, include=FALSE}
+# Super-batch 3
+load("/home/pavinato/My_repositories/Tracking-selection/results/lastPipelineModels/Tracking-selection-1.2/results/pooled_reftable_3.RData")
+pooled_raw_reftable_3 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
+```
+
+```{r load superbatch 4, echo=TRUE, eval=TRUE, include=FALSE}
+# Super-batch 4
+load("/home/pavinato/My_repositories/Tracking-selection/results/lastPipelineModels/Tracking-selection-1.3/results/pooled_reftable_4.RData")
+pooled_raw_reftable_4 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
+```
+
+#### Pool together the reftables from super-batches
+```{r pooling reftable, echo=TRUE, eval=TRUE, include=FALSE}
+pooled_raw_reftable_model_1 <- rbind(pooled_raw_reftable_1,pooled_raw_reftable_2,pooled_raw_reftable_3,pooled_raw_reftable_4)
+```
+
+#### Prepare the reftable
+```{r data preparation, echo=TRUE, eval=TRUE, include=TRUE}
+# Check missing data
+plot_missing(pooled_raw_reftable_model_1) 
+missing_count <- sapply(pooled_raw_reftable_model_1, function(x) sum(is.na(x)))
+
+# produce a data.frame with only summary statistics that contain missing values higher than a threshold
+pooled_reftable_model_1 <- pooled_raw_reftable_model_1[,missing_count < nrow(pooled_raw_reftable_model_1)/10]
+
+# check it!
+plot_missing(pooled_reftable_model_1) 
+
+# remove remaining rows with missing data
+pooled_reftable_model_1 <- pooled_reftable_model_1[complete.cases(pooled_reftable_model_1), ]
+
+# check it again
+plot_missing(pooled_reftable_model_1)
+#missing_count <- sapply(pooled_reftable_model_1, function(x) sum(is.na(x)))
+
+# Check != numeric values
+#infinite_count <- sapply(pooled_reftable_model_1, function(x) sum(is.infinite(x)))
+
+# Sample 1000 random simulations to use as PODs
+random_pods <- sample(1:dim(pooled_reftable_model_1)[1], 1000, replace = F)
+
+# Prepare the global summary statistics table by removing columns that do not contain summary stats
+global_sumstats <- pooled_reftable_model_1[-random_pods, -c(1:169)]
+```
+
+### ABC-RF Regression for Selection: Growing Trees
+
+#### Genetic Load
+```{r regression genetic load, echo=TRUE, eval=TRUE, include=TRUE}
+averageGenLoad <- pooled_reftable_model_1[-random_pods, "averageGeneticLoad"]
+#hist(averageGenLoad, freq = TRUE, xlab = "averaged genetic load", main = "", col = "#bdbdbd")
+
+logaverageGenload <- -log10(1-averageGenLoad)
+#hist(logaverageGenload, freq = TRUE, xlab = expression(-log[10]("averaged genetic load")), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_averageGenLoad <- regAbcrf(formula = logaverageGenload~.,
+                               data    = data.frame(logaverageGenload, global_sumstats),
+                               ntree   = 1000,
+                               paral   = T,
+                               ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_averageGenLoad, n.var = 20)
+
+#head(sort(reg_averageGenLoad$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_averageGenLoad$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_averageGenLoad,
+#             training = data.frame(logaverageGenload, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+# oob predictions vs true value
+plot(x    = logaverageGenload,
+     y    = reg_averageGenLoad$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,3),
+     ylim = c(0,3),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+```
+
+#### FDR 5% of the FST hypothesis of Ns>1
+```{r regression fdrFST, echo=TRUE, eval=TRUE, include=TRUE}
+fstfdrNs05 <- pooled_reftable_model_1[-random_pods, "FSTfdrNS05"]
+#hist(fstfdrNs05, freq = TRUE, xlab = "5% FST FDR Ns>1", main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_fstfdrNs05 <- regAbcrf(formula = fstfdrNs05~.,
+                           data    = data.frame(fstfdrNs05, global_sumstats),
+                           ntree   = 1000,
+                           paral   = T,
+                           ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_fstfdrNs05, n.var = 20)
+
+#head(sort(reg_fstfdrNs05$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_fstfdrNs05$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_fstfdrNs05,
+#             training = data.frame(fstfdrNs05, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = fstfdrNs05,
+     y    = reg_fstfdrNs05$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,1),
+     ylim = c(0,1),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+```
+
+#### Proportion of Selected regions
+```{r regression selected regions, echo=TRUE, eval=TRUE, include=TRUE}
+
+## proportion of selected regions
+prRSel <- pooled_reftable_model_1$PrGWSel[-random_pods] * pooled_reftable_model_1$PrMSel[-random_pods]
+
+# PrRsel = prior (PrGWSel * PrMSel)
+#hist(prRSel, freq = TRUE, xlab = "proportion of selected regions", main = "", col = "#bdbdbd")
+
+# correlation between the compound parameter PrRSel and the calculated PrPOPMSel
+cor(prRSel, pooled_reftable_model_1$PrPOPMSel[-random_pods])
+
+plot(prRSel, pooled_reftable_model_1$PrPOPMSel[-random_pods], 
+     xlab = "proportion of selected regions",
+     ylab = "PrPOPMSel")
+abline(lm(pooled_reftable_model_1$PrPOPMSel[-random_pods] ~ prRSel), col="#cb181d")
+
+# correlation between the compound parameter PrRSel and the calculated PrSAMMSel
+cor(prRSel, pooled_reftable_model_1$PrSAMMSel[-random_pods])
+
+plot(prRSel, pooled_reftable_model_1$PrSAMMSel[-random_pods], 
+     xlab = "proportion of selected regions",
+     ylab = "PrSAMMSel")
+abline(lm(pooled_reftable_model_1$PrSAMMSel[-random_pods] ~ prRSel), col="#cb181d")
+
+# correlation between the the calculated PrPOPMSel and PrSAMMSel
+cor(pooled_reftable_model_1$PrPOPMSel[-random_pods], pooled_reftable_model_1$PrSAMMSel[-random_pods])
+
+plot(pooled_reftable_model_1$PrPOPMSel[-random_pods], pooled_reftable_model_1$PrSAMMSel[-random_pods], 
+     xlab = "PrPOPMSel",
+     ylab = "PrSAMMSel")
+abline(lm(pooled_reftable_model_1$PrSAMMSel[-random_pods] ~ pooled_reftable_model_1$PrPOPMSel[-random_pods]), col="#cb181d")
+
+# abf-rf regression
+reg_prRSel <- regAbcrf(formula = prRSel~.,
+                       data    = data.frame(prRSel, global_sumstats),
+                       ntree   = 1000,
+                       paral   = T,
+                       ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_prRSel, n.var = 20)
+
+#head(sort(reg_prRSel$model.rf$variable.importance, decreasing = T), n=10)
+
+# prediction error
+reg_prRSel$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_prRSel,
+#             training = data.frame(prRSel, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = prRSel,
+     y    = reg_prRSel$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,1),
+     ylim = c(0,1),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+## log prRSel
+logrsel <- log10(prRSel)
+
+# PrRsel = log prior (PrGWSel * PrMSel)
+#hist(logrsel, freq = TRUE, xlab = expression(log[10]("proportion of selected regions")), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_logrsel <- regAbcrf(formula = logrsel~.,
+                        data    = data.frame(logrsel, global_sumstats),
+                        ntree   = 1000,
+                        paral   = T,
+                        ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_logrsel, n.var = 20)
+
+#head(sort(reg_logrsel$model.rf$variable.importance, decreasing = T), n=10)
+
+# prediction error
+reg_logrsel$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_logrsel,
+#             training = data.frame(logrsel, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logrsel,
+     y    = reg_logrsel$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-5,0),
+     ylim = c(-5,0),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+## PrPOPMSel
+prPOPMSel <- pooled_reftable_model_1[-random_pods, "PrPOPMSel"]
+
+#hist(prPOPMSel, freq = TRUE, xlab = "PrPOPMSel", main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_prPOPMSel <- regAbcrf(formula = prPOPMSel~.,
+                          data    = data.frame(prPOPMSel, global_sumstats),
+                          ntree   = 1000,
+                          paral   = T,
+                          ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_prPOPMSel, n.var = 20)
+
+#head(sort(reg_prPOPMSel$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_prPOPMSel$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_prPOPMSel,
+#             training = data.frame(prPOPMSel, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = prPOPMSel,
+     y    = reg_prPOPMSel$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,1),
+     ylim = c(0,1),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+## log PrPOPMSel
+logpopmsel <- log10(prPOPMSel) 
+
+#hist(logpopmsel, freq = TRUE, xlab = expression(log[10]("PrPOPMSel")), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_logpopmsel <- regAbcrf(formula = logpopmsel~.,
+                           data    = data.frame(logpopmsel, global_sumstats),
+                           ntree   = 1000,
+                           paral   = T,
+                           ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_logpopmsel, n.var = 20)
+
+#head(sort(reg_logpopmsel$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logpopmsel$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_logpopmsel,
+#             training = data.frame(logpopmsel, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logpopmsel,
+     y    = reg_logpopmsel$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-5,0),
+     ylim = c(-5,0),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+```
+
+#### Proportion of Strongly Selected regions
+```{r regression strongly selected, echo=TRUE, eval=TRUE, include=TRUE}
+# correlation between the the calculated PrPOPStrongMSel and PrSAMStrongMSel
+cor(pooled_reftable_model_1$PrPOPStrongMSel[-random_pods], pooled_reftable_model_1$PrSAMStrongMSel[-random_pods] )
+
+plot(pooled_reftable_model_1$PrPOPStrongMSel[-random_pods], pooled_reftable_model_1$PrSAMStrongMSel[-random_pods] , 
+     xlab = "PrPOPStrongMSel",
+     ylab = "PrSAMStrongMSel")
+abline(lm(pooled_reftable_model_1$PrSAMStrongMSel[-random_pods] ~ pooled_reftable_model_1$PrPOPStrongMSel[-random_pods]), col="#cb181d")
+
+# PrPOPStrongMSel
+prPOPStrongMSel <- pooled_reftable_model_1[-random_pods, "PrPOPStrongMSel"]
+#hist(prPOPStrongMSel, freq = TRUE, xlab = "PrPOPStrongMSel", main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_prPOPStrongMSel <- regAbcrf(formula = prPOPStrongMSel~.,
+                                data    = data.frame(prPOPStrongMSel, global_sumstats),
+                                ntree   = 1000,
+                                paral   = T,
+                                ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_prPOPStrongMSel, n.var = 20)
+
+#head(sort(reg_prPOPStrongMSel$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_prPOPStrongMSel$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_prPOPStrongMSel,
+#             training = data.frame(prPOPStrongMSel, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = prPOPStrongMSel,
+     y    = reg_prPOPStrongMSel$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,1),
+     ylim = c(0,1),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+## log10 PrPOPStrongMSel
+logpopstrongmsel <- log10(prPOPStrongMSel)
+logpopstrongmsel[which(logpopstrongmsel == -Inf)] <- -6
+
+#hist(logpopstrongmsel, freq = TRUE, xlab = expression(log[10]("PrPOPStrongMSel")), main = "", col = "#bdbdbd")
+
+reg_logpopstrongmsel <- regAbcrf(formula = logpopstrongmsel~.,
+                                 data    = data.frame(logpopstrongmsel, global_sumstats),
+                                 ntree   = 1000,
+                                 paral   = T,
+                                 ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_logpopstrongmsel, n.var = 20)
+
+#head(sort(reg_logpopstrongmsel$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logpopstrongmsel$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_logpopstrongmsel,
+#             training = data.frame(logpopstrongmsel, global_sumstats_logpopstrongmsel),
+#             paral    = T,
+#            ncores   = 28)
+
+plot(x    = logpopstrongmsel,
+     y    = reg_logpopstrongmsel$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-6,0),
+     ylim = c(-6,0),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+```
+
+#### DFE Gamma mean
+```{r regression gamma mean, echo=TRUE, eval=TRUE, include=TRUE}
+gammamean <- pooled_reftable_model_1[-random_pods, "gammaMean"]
+
+#hist(gammamean, freq = TRUE, xlab = expression(paste("gamma ", kappa, theta)), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_gammamean <- regAbcrf(formula = gammamean~.,
+                          data    = data.frame(gammamean, global_sumstats),
+                          ntree   = 1000,
+                          paral   = T,
+                          ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_gammamean, n.var = 20)
+
+#head(sort(reg_gammamean$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_gammamean$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_gammamean,
+#             training = data.frame(gammamean, global_sumstats),
+#            paral    = T,
+#             ncores   = 28)
+
+plot(x    = gammamean,
+     y    = reg_gammamean$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,1),
+     ylim = c(0,1),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+
+## log gammamean
+loggammamean <- log10(gammamean)
+
+#hist(loggammamean, freq = TRUE, xlab = expression(log[10](paste("gamma ", kappa, theta))), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_loggammamean <- regAbcrf(formula = loggammamean~.,
+                             data    = data.frame(loggammamean, global_sumstats),
+                             ntree   = 1000,
+                             paral   = T,
+                             ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_loggammamean, n.var = 20)
+
+#head(sort(reg_loggammamean$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_loggammamean$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_loggammamean,
+#             training = data.frame(loggammamean, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = loggammamean,
+     y    = reg_loggammamean$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-3,0),
+     ylim = c(-3,0),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+```
+#### ThetaS 
+```{r regression thetaS, echo=TRUE, eval=TRUE, include=TRUE}
+genomeS = 150e+5
+
+logthetaS <- log10(4 * pooled_reftable_model_1$PedigreeNetotal[-random_pods] * (pooled_reftable_model_1$mu[-random_pods]*prRSel) * genomeS)
+
+#hist(logthetaS, freq = TRUE, xlab = expression(log[10](theta[S])), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_logthetaS <- regAbcrf(formula = logthetaS~.,
+                          data    = data.frame(logthetaS, global_sumstats),
+                          ntree   = 1000,
+                          paral   = T,
+                          ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_logthetaS, n.var = 20)
+
+#head(sort(reg_logthetaS$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logthetaS$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_logthetaS,
+#             training = data.frame(logthetaS, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logthetaS,
+     y    = reg_logthetaS$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-3,5),
+     ylim = c(-3,5),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+```
+
+### ABC-RF Regression for Demography: Growing Trees
+
+#### Per site mutation rate mu
+```{r regression site mutation rate, echo=TRUE, eval=TRUE, include=TRUE}
+
+logmu <- log10(pooled_reftable_model_1$mu[-random_pods])
+
+#hist(logmu, freq = TRUE, xlab = expression(log[10](mu)), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_logmu <- regAbcrf(formula = logmu~.,
+                      data    = data.frame(logmu, global_sumstats),
+                      ntree   = 1000,
+                      paral   = T,
+                      ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_logmu, n.var = 20)
+
+#head(sort(reg_logmu$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logmu$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_logmu,
+#             training = data.frame(logmu, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logmu,
+     y    = reg_logmu$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-8,-4),
+     ylim = c(-8,-4),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+```
+#### Per site recombination rate
+```{r regression site recombination rate, echo=TRUE, eval=TRUE, include=TRUE}
+
+logrr <- log10(pooled_reftable_model_1$rr[-random_pods])
+
+#hist(logrr, freq = TRUE, xlab = expression(log[10](r)), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_logrr <- regAbcrf(formula = logrr~.,
+                      data    = data.frame(logrr, global_sumstats),
+                      ntree   = 1000,
+                      paral   = T,
+                      ncores  = 28)
+
+# variable Importance plot
+plot(x = reg_logrr, n.var = 20)
+
+#head(sort(reg_logmu$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logrr$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_logrr,
+#             training = data.frame(logrr, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logrr,
+     y    = reg_logrr$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-7,-4),
+     ylim = c(-7,-4),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+```
+
+
+#### Pedigree Effective Population Size - PedigreeNetotal
+```{r regression PedigreeNetotal, echo=TRUE, eval=TRUE, include=TRUE}
+pedigreeNetotal <- pooled_reftable_model_1[-random_pods, "PedigreeNetotal"]
+
+logpedigreeNetotal <- log10(pedigreeNetotal)
+
+#hist(logpedigreeNetotal, freq = TRUE, xlab = expression(log[10]("pedigree N"[e])), main = "", col = "#bdbdbd")
+
+reg_logpedigreeNetotal <- regAbcrf(formula = logpedigreeNetotal~.,
+                                   data    = data.frame(logpedigreeNetotal, global_sumstats),
+                                   ntree   = 1000,
+                                   paral   = T,
+                                   ncores  = 28)
+
+# Variable Importance plot
+plot(x = reg_logpedigreeNetotal, n.var = 20)
+
+#head(sort(reg_logpedigreeNetotal$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logpedigreeNetotal$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_logpedigreeNetotal,
+#             training = data.frame(logpedigreeNetotal, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logpedigreeNetotal,
+     y    = reg_logpedigreeNetotal$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-3,4),
+     ylim = c(-3,4),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+```
+
+#### Population Census Size for the Sampling Phase - N
+```{r regression N, echo=TRUE, eval=TRUE, include=TRUE}
+n <- pooled_reftable_model_1[-random_pods, "N"]
+
+logn <- log10(n)
+
+#hist(logn, freq = TRUE, xlab = expression(log[10]("N"[c])), main = "", col = "#bdbdbd")
+
+reg_logn <- regAbcrf(formula = logn~.,
+                        data = data.frame(logn, global_sumstats),
+                       ntree = 1000,
+                       paral = T,
+                      ncores = 28)
+
+# Variable Importance plot
+plot(x = reg_logn, n.var = 20)
+
+#head(sort(reg_logn$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logn$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_logn,
+#             training = data.frame(logn, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logn,
+     y    = reg_logn$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,4),
+     ylim = c(0,4),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+```
+
+#### Population Census Size for the Equilibrium Phase - Neq
+```{r regression Neq, echo=TRUE, eval=TRUE, include=TRUE}
+neq <- pooled_reftable_model_1[-random_pods, "Neq"]
+
+logneq <- log10(neq)
+
+#hist(logneq, freq = TRUE, xlab = expression(log[10]("N"[eq])), main = "", col = "#bdbdbd")
+
+reg_logneq <- regAbcrf(formula = logneq~.,
+                       data    = data.frame(logneq, global_sumstats),
+                       ntree   = 1000,
+                       paral   = T,
+                       ncores  = 28)
+
+# Variable Importance plot
+plot(x = reg_logneq, n.var = 20)
+
+#head(sort(reg_logneq$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logneq$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_logneq,
+#             training = data.frame(logneq, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logneq,
+     y    = reg_logneq$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,4),
+     ylim = c(0,4),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+```
+
+### ABC-RF Regression for Selection: Prediction
+
+#### RANDOM PODS
+```{r random pods sumstats, echo=TRUE, eval=TRUE, include=TRUE}
+global_sumstats_randompods <- pooled_reftable_model_1[random_pods, -c(1:169)]
+```
+
+#### Load PODs
+```{r loading neutral pods, echo=TRUE, eval=TRUE, include=TRUE}
+load("/home/pavinato/My_repositories/Tracking-selection/results/lastPipelineModels/PODs/model_Neutral/reference_table_neutral.RData")
+
+neutral_pods_reftable <- raw_reftable[, names(raw_reftable) %in% names(pooled_reftable_model_1), drop=FALSE]
+  
+global_sumstats_neutralpods <- neutral_pods_reftable[, -c(1:169)]
+```
+
+```{r loading DS_LSelection pods, echo=TRUE, eval=TRUE, include=TRUE}
+load("/home/pavinato/My_repositories/Tracking-selection/results/lastPipelineModels/PODs/model_DN/LSelection/reference_table_DN_LSelection.RData")
+
+dnlsel_pods_reftable <- raw_reftable[, names(raw_reftable) %in% names(pooled_reftable_model_1), drop=FALSE]
+  
+global_sumstats_dnlselpods <- dnlsel_pods_reftable[, -c(1:169)]
+```
+
+```{r loading DS_HSelection pods, echo=TRUE, eval=TRUE, include=TRUE}
+load("/home/pavinato/My_repositories/Tracking-selection/results/lastPipelineModels/PODs/model_DN/HSelection/reference_table_DN_HSelection.RData")
+
+dnhsel_pods_reftable <- raw_reftable[, names(raw_reftable) %in% names(pooled_reftable_model_1), drop=FALSE]
+  
+global_sumstats_dnhselpods <- dnhsel_pods_reftable[, -c(1:169)]
+```
+
+
+#### Genetic Load
+```{r prediction genetic load, echo=TRUE, eval=TRUE, include=TRUE}
+
+## Random PODs
+log_radnompods_averageGenLoad <- -log10(1-pooled_reftable_model_1[random_pods, "averageGeneticLoad"])
+
+posterior_radnompods_averageGenLoad <- predict(object     = reg_averageGenLoad,
+                                               obs        = global_sumstats_randompods,
+                                               training   = data.frame(logaverageGenload, global_sumstats),
+                                               quantiles  = c(0.025,0.5,0.975),
+                                               paral      = T,
+                                               ncores     = 28,
+                                               rf.weights = T)
+(posterior_radnompods_averageGenLoad)
+
+# Expected True vs estimated
+plot(x    = log_radnompods_averageGenLoad, 
+     y    = posterior_radnompods_averageGenLoad$expectation,
+     xlim = c(0,3),
+     ylim = c(0,3),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Expected Random PODs",
+     pch  = 1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+# Median True vs estimated
+plot(x = log_radnompods_averageGenLoad, 
+     y = posterior_radnompods_averageGenLoad$med,
+     xlim = c(0,3),
+     ylim = c(0,3),
+     xlab="True values", 
+     ylab="Estimated values",
+     main="Median Random PODs",
+     pch=1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+## Fixed PODs 
+
+# Neutral PODs
+log_neutralpods_averageGenLoad <- -log10(1-neutral_pods_reftable[, "averageGeneticLoad"])
+
+posterior_neutralpods_averageGenLoad <- predict(object     = reg_averageGenLoad,
+                                                obs        = global_sumstats_neutralpods,
+                                                training   = data.frame(logaverageGenload, global_sumstats),
+                                                quantiles  = c(0.025,0.5,0.975),
+                                                paral      = T,
+                                                ncores     = 28,
+                                                rf.weights = T)
+(posterior_neutralpods_averageGenLoad)
+
+# Low Selection PODs
+log_dnlselpods_averageGenLoad <- -log10(1-dnlsel_pods_reftable[, "averageGeneticLoad"])
+
+posterior_dnlselpods_averageGenLoad <- predict(object     = reg_averageGenLoad,
+                                               obs        = global_sumstats_dnlselpods,
+                                               training   = data.frame(logaverageGenload, global_sumstats),
+                                               quantiles  = c(0.025,0.5,0.975),
+                                               paral      = T,
+                                               ncores     = 28,
+                                               rf.weights = T)
+(posterior_dnlselpods_averageGenLoad)
+
+# High Selection PODs
+log_dnhselpods_averageGenLoad <- -log10(1-dnhsel_pods_reftable[, "averageGeneticLoad"])
+
+posterior_dnhselpods_averageGenLoad <- predict(object     = reg_averageGenLoad,
+                                               obs        = global_sumstats_dnhselpods,
+                                               training   = data.frame(logaverageGenload, global_sumstats),
+                                               quantiles  = c(0.025,0.5,0.975),
+                                               paral      = T,
+                                               ncores     = 28,
+                                               rf.weights = T)
+(posterior_dnhselpods_averageGenLoad)
+
+# Expected True vs estimated
+plot(x    = c(log_neutralpods_averageGenLoad,log_dnlselpods_averageGenLoad, log_dnhselpods_averageGenLoad), 
+     y    = c(posterior_neutralpods_averageGenLoad$expectation, posterior_dnlselpods_averageGenLoad$expectation, posterior_dnhselpods_averageGenLoad$expectation),
+     xlim = c(0,2),
+     ylim = c(0,2),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Expected Fixed PODs",
+     col  = c(rep("#969696",100), rep("#08519c",100), rep("#a50f15",100)),
+     pch=1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+legend("bottomright", legend = c("Neutral", "1.0% Selection", "2.5% Selection"), col = c("#969696", "#08519c", "#a50f15"), pch = 1, bty = "n", cex = 1.2)
+abline(a=0, b=1, col = "#cb181d")
+
+# Median True vs estimated
+plot(x    = c(log_neutralpods_averageGenLoad,log_dnlselpods_averageGenLoad, log_dnhselpods_averageGenLoad), 
+     y    = c(posterior_neutralpods_averageGenLoad$med, posterior_dnlselpods_averageGenLoad$med, posterior_dnhselpods_averageGenLoad$med),
+     xlim = c(0,2),
+     ylim = c(0,2),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Median Fixed PODs",
+     col  = c(rep("#969696",100), rep("#08519c",100), rep("#a50f15",100)),
+     pch  = 1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+legend("bottomright", legend = c("Neutral", "1.0% Selection", "2.5% Selection"), col = c("#969696", "#08519c", "#a50f15"), pch = 1, bty = "n", cex = 1.2)
+abline(a=0, b=1, col = "#cb181d")
+
+# Boxplot
+
+## boxplot
+pred_averageGenLoad <- data.frame(model  = c(rep("Neutral", 300), rep("Low_selection", 300), rep("High_selection", 300)), 
+                                  type   = c(rep("True",100), rep("Expected",100), rep("Median",100), 
+                                             rep("True",100), rep("Expected",100), rep("Median",100),
+                                             rep("True",100), rep("Expected",100), rep("Median",100)),
+                                  values = c(log_neutralpods_averageGenLoad, posterior_neutralpods_averageGenLoad$expectation, posterior_neutralpods_averageGenLoad$med,
+                                             log_dnlselpods_averageGenLoad, posterior_dnlselpods_averageGenLoad$expectation, posterior_dnlselpods_averageGenLoad$med,
+                                             log_dnhselpods_averageGenLoad, posterior_dnhselpods_averageGenLoad$expectation, posterior_dnhselpods_averageGenLoad$med))
+
+boxplot(pred_averageGenLoad$values ~ pred_averageGenLoad$type * pred_averageGenLoad$model,
+        lwd = 2,
+        ylab = expression(-log[10]*(1 - "average genetic load")),
+        xlab = "",
+        xaxt = "n",
+        cex.axis = 1.2,
+        cex.lab  = 1.2,
+        col = c(rep("#a50f15",3),rep("#08519c",3),rep("#969696",3)))
+legend("topright", legend = c("Neutral", "1.0% Selection", "2.5% Selection"), col = c("#969696", "#08519c", "#a50f15"), pch = 15, bty = "n", cex = 1.2)
+axis(side = 1, at = 1:9, labels = FALSE)
+text(x = 1:9, 
+     y = par()$usr[3]-0.03*(par()$usr[4]-par()$usr[3]), 
+     srt=90, 
+     adj=1, 
+     xpd=TRUE, 
+     labels = paste(rep(c("Expected", "Median", "True"),3)),
+     cex = 1.2)
+  
+
+## Multiple histogram-like plots
+#par(mfrow=c(1,3)) 
+# Neutral
+#hist(x      = logaverageGenload,
+#     breaks = seq(0,3,0.05),
+#     col    = "grey",
+#     freq   = FALSE,
+#     ylim   = c(0,6),
+#     main   = "1.0% of Selection",
+#     xlab   = expression(-log[10]*(1 - "average genetic load")),
+#     ylab   = "Probability density")
+#wtd.hist(x      = logaverageGenload,
+#         breaks = seq(0,3,0.05),
+#         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+#         weight = posterior_neutralpod_averageGenLoad$weights)
+
+# 1.0% Selection
+#hist(x      = logaverageGenload,
+#     breaks = seq(0,3,0.05),
+#     col    = "grey",
+#     freq   = FALSE,
+#     ylim   = c(0,6),
+#     main   = "Neutral",
+#     xlab   = expression(-log[10]*(1 - "average genetic load")),
+#     ylab   = "Probability density")
+#wtd.hist(x      = logaverageGenload,
+#         breaks = seq(0,3,0.05),
+#         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+#        weight = posterior_dnlselpod_averageGenLoad$weights)
+#
+# 2.5% Selection
+#hist(x      = logaverageGenload,
+#     breaks = seq(0,3,0.05),
+#     col    = "grey",
+#     freq   = FALSE,
+#     ylim   = c(0,6),
+#     main   = "2.5% of Selection",
+#     xlab   = expression(-log[10]*(1 - "average genetic load")),
+#     ylab   = "Probability density")
+#wtd.hist(x      = logaverageGenload,
+#         breaks = seq(0,3,0.05),
+#         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+#         weight = posterior_dnhselpod_averageGenLoad$weights)
+#
+## Multiple density plot
+#par(mfrow=c(1,3)) 
+# Neutral
+#densityPlot(object    = reg_averageGenLoad,
+#            obs       = neutralpod_sumstats,
+#            training  = data.frame(logaverageGenload, global_sumstats),
+#            main      = "Neutral",
+#            xlab      = expression(-log[10]*(1 - "average genetic load")),
+#            ylab      = "Probability density", 
+#            paral     = T, 
+#            ncores    = 28)
+#abline(v=c(logneutralpod_averageGenLoad,
+#           posterior_neutralpod_averageGenLoad$expectation,
+#           posterior_neutralpod_averageGenLoad$quantiles[1], 
+#           posterior_neutralpod_averageGenLoad$quantiles[3]),
+#       col="red",
+#       lty=c(1, rep(2,3)))
+#
+# 1.0% Selection
+#densityPlot(object    = reg_averageGenLoad,
+#            obs       = dnlselpod_sumstats,
+#            training  = data.frame(logaverageGenload, global_sumstats),
+#            main      = "1.0% of Selection",
+#            xlab      = expression(-log[10]*(1 - "average genetic load")),
+#            ylab      = "Probability density", 
+#           paral     = T, 
+#            ncores    = 28)
+#abline(v=c(logdnlselpod_averageGenLoad,
+#           posterior_dnlselpod_averageGenLoad$expectation,
+#           posterior_dnlselpod_averageGenLoad$quantiles[1], 
+#           posterior_dnlselpod_averageGenLoad$quantiles[3]),
+#       col="red",
+#       lty=c(1, rep(2,3)))
+#
+# 2.5% Selection
+#densityPlot(object    = reg_averageGenLoad,
+#            obs       = dnhselpod_sumstats,
+#            training  = data.frame(logaverageGenload, global_sumstats),
+#            main      = "2.5% of Selection",
+#            xlab      = expression(-log[10]*(1 - "average genetic load")),
+#            ylab      = "Probability density", 
+#            paral     = T, 
+#            ncores    = 28)
+#abline(v=c(logdnhselpod_averageGenLoad,
+#           posterior_dnhselpod_averageGenLoad$expectation,
+#           posterior_dnhselpod_averageGenLoad$quantiles[1], 
+#           posterior_dnhselpod_averageGenLoad$quantiles[3]),
+#       col="red",
+#       lty=c(1, rep(2,3)))
+```
+
+#### FDR 5% of the FST hypothesis of Ns>1
+```{r prediction fdrFST, echo=TRUE, eval=TRUE, include=TRUE}
+
+## One neutral pod
+neutralpod_fstfdrNs05 <- neutral_pods_reftable[1,"FSTfdrNS05"]
+
+posterior_neutralpod_fstfdrNs05 <- predict(   object  = reg_fstfdrNs05,
+                                              obs     = neutralpod_sumstats,
+                                            training  = data.frame(fstfdrNs05, global_sumstats),
+                                            quantiles = c(0.025,0.5,0.975),
+                                            paral     = T,
+                                            ncores    = 28,
+                                           rf.weights = T)
+(posterior_neutralpod_fstfdrNs05)
+
+## One low selection pod
+dnlselpod_fstfdrNs05 <- dnlsel_pods_reftable[1,"FSTfdrNS05"]
+
+posterior_dnlselpod_fstfdrNs05 <- predict(   object  = reg_fstfdrNs05,
+                                              obs     = dnlselpod_sumstats,
+                                            training  = data.frame(fstfdrNs05, global_sumstats),
+                                            quantiles = c(0.025,0.5,0.975),
+                                            paral     = T,
+                                            ncores    = 28,
+                                           rf.weights = T)
+(posterior_dnlselpod_fstfdrNs05)
+
+
+## One high selection pod
+dnhselpod_fstfdrNs05 <- dnhsel_pods_reftable[2,"FSTfdrNS05"]
+
+posterior_dnhselpod_fstfdrNs05 <- predict(   object  = reg_fstfdrNs05,
+                                              obs     = dnhselpod_sumstats,
+                                            training  = data.frame(fstfdrNs05, global_sumstats),
+                                            quantiles = c(0.025,0.5,0.975),
+                                            paral     = T,
+                                            ncores    = 28,
+                                           rf.weights = T)
+(posterior_dnhselpod_fstfdrNs05)
+
+## Multiple histogram-like plots
+par(mfrow=c(1,3)) 
+# Neutral
+hist(x      = fstfdrNs05,
+     col    = "grey",
+     freq   = FALSE,
+     main   = "Neutral",
+     xlab   = "5% FST FDR Ns>1",
+     ylab   = "Probability density")
+wtd.hist(x      = fstfdrNs05,
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_neutralpod_fstfdrNs05$weights)
+
+# 1.0% Selection
+hist(x      = fstfdrNs05,
+     col    = "grey",
+     freq   = FALSE,
+     main   = "1.0% of Selection",
+     xlab   = "5% FST FDR Ns>1",
+     ylab   = "Probability density")
+wtd.hist(x      = fstfdrNs05,
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnlselpod_fstfdrNs05$weights)
+
+# 2.5% Selection
+hist(x      = fstfdrNs05,
+     col    = "grey",
+     freq   = FALSE,
+     main   = "2.5% of Selection",
+     xlab   = "5% FST FDR Ns>1",
+     ylab   = "Probability density")
+wtd.hist(x      = fstfdrNs05,
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnhselpod_fstfdrNs05$weights)
+
+# Multiple density plot
+par(mfrow=c(1,3))
+# Neutral
+densityPlot(object    = reg_fstfdrNs05,
+            obs       = neutralpod_sumstats,
+            training  = data.frame(fstfdrNs05, global_sumstats),
+            main      = "Neutral",
+            xlab      = expression(paste("F"[ST], " FDR 5%")),
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(neutralpod_fstfdrNs05,
+           posterior_neutralpod_fstfdrNs05$expectation,
+           posterior_neutralpod_fstfdrNs05$quantiles[1], 
+           posterior_neutralpod_fstfdrNs05$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 1.0% Selection
+densityPlot(object    = reg_fstfdrNs05,
+            obs       = dnlselpod_sumstats,
+            training  = data.frame(fstfdrNs05, global_sumstats),
+            main      = "1.0% of Selection",
+            xlab      = expression(paste("F"[ST], " FDR 5%")),
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(dnlselpod_fstfdrNs05,
+           posterior_dnlselpod_fstfdrNs05$expectation,
+           posterior_dnlselpod_fstfdrNs05$quantiles[1], 
+           posterior_dnlselpod_fstfdrNs05$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 2.5% Selection
+densityPlot(object    = reg_fstfdrNs05,
+            obs       = dnhselpod_sumstats,
+            training  = data.frame(fstfdrNs05, global_sumstats),
+            main      = "2.5% of Selection",
+            xlab      = expression(paste("F"[ST], " FDR 5%")),
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(dnhselpod_fstfdrNs05,
+           posterior_dnhselpod_fstfdrNs05$expectation,
+           posterior_dnhselpod_fstfdrNs05$quantiles[1], 
+           posterior_dnhselpod_fstfdrNs05$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+```
+
+```{r batch prediction fdrFST, echo=TRUE, eval=TRUE, include=TRUE}
+## prediction for all pods
+# neutral pods
+neutralpred_fstfdrNs05 <- loopPrediction(  pods_reftable = neutral_pods_reftable,
+                                                 reg_ABC_obj = reg_fstfdrNs05,
+                                                  vector_par = fstfdrNs05,
+                                             global_reftable = global_sumstats)
+
+# low selection pods
+dnlselpred_fstfdrNs05 <- loopPrediction(  pods_reftable = dnlsel_pods_reftable,
+                                                 reg_ABC_obj = reg_fstfdrNs05,
+                                                  vector_par = fstfdrNs05,
+                                             global_reftable = global_sumstats)
+
+# high selection pods
+dnhselpred_fstfdrNs05 <- loopPrediction(  pods_reftable = dnhsel_pods_reftable,
+                                                 reg_ABC_obj = reg_fstfdrNs05,
+                                                  vector_par = fstfdrNs05,
+                                             global_reftable = global_sumstats)
+```
+
+```{r plots prediction fdrFST, echo=TRUE, eval=TRUE, include=TRUE}
+## Coverage plots
+# neutral pods
+neutralpred_fstfdrNs05_covplot <- ggplot(as.data.frame(neutralpred_fstfdrNs05), aes(x=1:100, y=expectation, group=1)) + 
+                                  geom_point(aes(x=1:100), colour = "#2171b5") + 
+                                  ggtitle("Neutral PODs") +      
+                                  xlab("Simulation") + 
+                                  ylab(expression(paste("F"[ST], " FDR 5%"))) +
+                                  geom_hline(yintercept = 1, color = "#737373", linetype = "dashed") +             
+                                  geom_errorbar(width = .1, aes(ymin=q1, ymax=q3), colour = "#2171b5") +
+                                  scale_y_continuous(limits = c(min(0), max(1.5)),
+                                                     breaks = c(0, 0.5, 1.0, 1.5)) + 
+                                  theme_bw() + 
+                                  theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                                        legend.position = "", axis.text = element_text(size = 12),
+                                        axis.title=element_text(size=16))
+
+print(neutralpred_fstfdrNs05_covplot)
+
+# low selection pods
+dnlselpred_fstfdrNs05_covplot <- ggplot(as.data.frame(dnlselpred_fstfdrNs05), aes(x=1:100, y=expectation, group=1)) + 
+                                 geom_point(aes(x=1:100), colour = "#2171b5") + 
+                                 ggtitle("1.0% of Selection PODs") +                               
+                                 xlab("Simulation") + 
+                                 ylab(expression(paste("F"[ST], " FDR 5%"))) +
+                                 geom_hline(yintercept = 1, color = "#737373", linetype = "dashed") +             
+                                 geom_errorbar(width = .1, aes(ymin=q1, ymax=q3), colour = "#2171b5") +
+                                 scale_y_continuous(limits = c(min(0), max(1.5)),
+                                                    breaks = c(0, 0.5, 1.0, 1.5)) + 
+                                 theme_bw() + 
+                                 theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                                       legend.position = "", axis.text = element_text(size = 12),
+                                       axis.title=element_text(size=16))
+
+print(dnlselpred_fstfdrNs05_covplot)
+
+# high selection pods
+dnhselpred_fstfdrNs05_covplot <- ggplot(as.data.frame(dnhselpred_fstfdrNs05), aes(x=1:100, y=expectation, group=1)) + 
+                                 geom_point(aes(x=1:100), colour = "#2171b5") + 
+                                 ggtitle("2.5% of Selection PODs") +         
+                                 xlab("Simulation") + 
+                                 ylab(expression(paste("F"[ST], " FDR 5%"))) +
+                                 geom_hline(yintercept = 1, color = "#737373", linetype = "dashed") +             
+                                 geom_errorbar(width = .1, aes(ymin=q1, ymax=q3), colour = "#2171b5") +
+                                 scale_y_continuous(limits = c(min(0), max(1.5)),
+                                                    breaks = c(0, 0.5, 1.0, 1.5)) + 
+                                 theme_bw() + 
+                                 theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                                       legend.position = "", axis.text = element_text(size = 12),
+                                       axis.title=element_text(size=16))
+
+print(dnhselpred_fstfdrNs05_covplot)
+
+multiplot(neutralpred_fstfdrNs05_covplot, dnlselpred_fstfdrNs05_covplot, dnhselpred_fstfdrNs05_covplot)
+
+## boxplot
+pred_fstfdrNs05 <- data.frame(pod_type   = c(rep("Neutral", 100), rep("Low_selection", 100), rep("High_selection", 100)), 
+                              pod_data   = c(neutralpred_fstfdrNs05$expectation, dnlselpred_fstfdrNs05$expectation, dnhselpred_fstfdrNs05$expectation))
+                                      
+pred_fstfdrNs05_boxplot <- ggplot(data = pred_fstfdrNs05, aes(x=pod_type, y=pod_data)) +
+                           geom_boxplot(aes(fill=pod_type)) +
+                           xlab("") + 
+                           ylab(expression(paste("F"[ST], " FDR 5%"))) +
+                           scale_x_discrete(name = "Selection", 
+                                           labels=c("2.5% of Selection", "1.0% of Selection", "Neutral")) +
+                           scale_y_continuous(breaks = c(0, 0.5, 1.0, 1.5)) + 
+                           scale_fill_manual(values=c("#a50f15", "#08519c", "#969696")
+                           #                  name="POD Type: ",
+                           #                  breaks=c("High_selection", "Low_selection", "Neutral")
+                           #                  labels=c("High selection", "Low selection", "Neutral")
+                           ) +
+                           theme_bw() + 
+                           theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                 panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                                 legend.position = "none", axis.text = element_text(size = 12),
+                                 axis.title=element_text(size=16))
+
+print(pred_fstfdrNs05_boxplot)
+```
+
+#### Proportion of Selected regions
+```{r prediction PrRSel, echo=TRUE, eval=TRUE, include=TRUE}
+
+### prRSel = PrGWSel * PrMSel
+
+## One neutral pod
+neutralpod_prRSel <- neutral_pods_reftable[1,"PrGWSel"] * neutral_pods_reftable[1,"PrMSel"]
+
+
+posterior_neutralpod_prRSel <- predict(  object  = reg_prRSel,
+                                         obs     = neutralpod_sumstats,
+                                       training  = data.frame(prRSel, global_sumstats),
+                                       quantiles = c(0.025,0.5,0.975),
+                                       paral     = T,
+                                       ncores    = 28,
+                                      rf.weights = T)
+(posterior_neutralpod_prRSel)
+
+## One low selection pod
+dnlselpod_prRSel <- dnlsel_pods_reftable[1,"PrGWSel"] * dnlsel_pods_reftable[1,"PrMSel"]
+
+posterior_dnlselpod_prRSel <- predict(  object  = reg_prRSel,
+                                         obs     = dnlselpod_sumstats,
+                                       training  = data.frame(prRSel, global_sumstats),
+                                       quantiles = c(0.025,0.5,0.975),
+                                       paral     = T,
+                                       ncores    = 28,
+                                      rf.weights = T)
+(posterior_dnlselpod_prRSel)
+
+## One high selection pod
+dnhselpod_prRSel <- dnhsel_pods_reftable[2,"PrGWSel"] * dnhsel_pods_reftable[2,"PrMSel"]
+
+posterior_dnhselpod_prRSel <- predict(  object  = reg_prRSel,
+                                         obs     = dnhselpod_sumstats,
+                                       training  = data.frame(prRSel, global_sumstats),
+                                       quantiles = c(0.025,0.5,0.975),
+                                       paral     = T,
+                                       ncores    = 28,
+                                      rf.weights = T)
+(posterior_dnhselpod_prRSel)
+
+## Multiple histogram-like plots
+par(mfrow=c(1,3)) 
+# Neutral
+hist(x      = prRSel,
+     breaks = seq(0,1,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "Neutral",
+     xlab   = "Proportion of selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = prRSel,
+         breaks = seq(0,1,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_neutralpod_prRSel$weights)
+
+# 1.0% Selection
+hist(x      = prRSel,
+     breaks = seq(0,1,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "1.0% of Selection",
+     xlab   = "Proportion of selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = prRSel,
+         breaks = seq(0,1,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnlselpod_prRSel$weights)
+
+# 2.5% Selection
+hist(x      = prRSel,
+     breaks = seq(0,1,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "2.5% of Selection",
+     xlab   = "Proportion of selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = prRSel,
+         breaks = seq(0,1,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnhselpod_prRSel$weights)
+
+# Multiple density plot
+par(mfrow=c(1,3))
+# Neutral
+densityPlot(object    = reg_prRSel,
+            obs       = neutralpod_sumstats,
+            training  = data.frame(prRSel, global_sumstats),
+            main      = "Neutral",
+            xlab      = "Proportion of selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(neutralpod_prRSel,
+           posterior_neutralpod_prRSel$expectation,
+           posterior_neutralpod_prRSel$quantiles[1], 
+           posterior_neutralpod_prRSel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 1.0% Selection
+densityPlot(object    = reg_prRSel,
+            obs       = dnlselpod_sumstats,
+            training  = data.frame(prRSel, global_sumstats),
+            main      = "1.0% of Selection",
+            xlab      = "Proportion of selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(dnlselpod_prRSel,
+           posterior_dnlselpod_prRSel$expectation,
+           posterior_dnlselpod_prRSel$quantiles[1], 
+           posterior_dnlselpod_prRSel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 2.5% Selection
+densityPlot(object    = reg_prRSel,
+            obs       = dnhselpod_sumstats,
+            training  = data.frame(prRSel, global_sumstats),
+            main      = "2.5% of Selection",
+            xlab      = "Proportion of selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(dnhselpod_prRSel,
+           posterior_dnhselpod_prRSel$expectation,
+           posterior_dnhselpod_prRSel$quantiles[1], 
+           posterior_dnhselpod_prRSel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+### log prRSel
+
+## One neutral pod
+logneutralpod_prRSel <- log10(neutralpod_prRSel)
+logneutralpod_prRSel <- -5
+
+posterior_logneutralpod_logrsel <- predict(   object  = reg_logrsel,
+                                              obs     = neutralpod_sumstats,
+                                            training  = data.frame(logrsel, global_sumstats),
+                                            quantiles = c(0.025,0.5,0.975),
+                                            paral     = T,
+                                            ncores    = 28,
+                                           rf.weights = T)
+(posterior_logneutralpod_logrsel)
+
+## One low selection pod
+logdnlselpod_prRSel <- log10(dnlselpod_prRSel)
+
+posterior_logdnlselpod_logrsel <- predict(  object  = reg_logrsel,
+                                            obs     = dnlselpod_sumstats,
+                                          training  = data.frame(logrsel, global_sumstats),
+                                          quantiles = c(0.025,0.5,0.975),
+                                          paral     = T,
+                                          ncores    = 28,
+                                         rf.weights = T)
+(posterior_logdnlselpod_logrsel)
+
+## One high selection pod
+logdnhselpod_prRSel <- log10(dnhselpod_prRSel)
+
+posterior_logdnhselpod_logrsel <- predict(  object  = reg_logrsel,
+                                            obs     = dnhselpod_sumstats,
+                                          training  = data.frame(logrsel, global_sumstats),
+                                          quantiles = c(0.025,0.5,0.975),
+                                          paral     = T,
+                                          ncores    = 28,
+                                         rf.weights = T)
+(posterior_logdnhselpod_logrsel)
+
+## Multiple histogram-like plots
+par(mfrow=c(1,3)) 
+# Neutral
+hist(x      = logrsel,
+     breaks = seq(-5,0,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     ylim   = c(0,1),
+     main   = "Neutral",
+     xlab   = expression(log[10]("Proportion of selected regions")),
+     ylab   = "Probability density")
+wtd.hist(x      = logrsel,
+         breaks = seq(-5,0,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_logneutralpod_logrsel$weights)
+
+# 1.0% Selection
+hist(x      = logrsel,
+     breaks = seq(-5,0,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     ylim   = c(0,1),
+     main   = "1.0% of Selection",
+     xlab   = expression(log[10]("Proportion of selected regions")),
+     ylab   = "Probability density")
+wtd.hist(x      = logrsel,
+         breaks = seq(-5,0,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_logdnlselpod_logrsel$weights)
+
+# 2.5% Selection
+hist(x      = logrsel,
+     breaks = seq(-5,0,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     ylim   = c(0,1),
+     main   = "2.5% of Selection",
+     xlab   = expression(log[10]("Proportion of selected regions")),
+     ylab   = "Probability density")
+wtd.hist(x      = logrsel,
+         breaks = seq(-5,0,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_logdnhselpod_logrsel$weights)
+
+# Multiple density plot
+par(mfrow=c(1,3))
+# Neutral
+densityPlot(object    = reg_logrsel,
+            obs       = neutralpod_sumstats,
+            training  = data.frame(logrsel, global_sumstats),
+            main      = "Neutral",
+            xlab      = expression(log[10]("Proportion of selected regions")),
+            ylab      = "Probability density", 
+            xlim      = c(-5,0),
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(logneutralpod_prRSel,
+           posterior_logneutralpod_logrsel$expectation,
+           posterior_logneutralpod_logrsel$quantiles[1], 
+           posterior_logneutralpod_logrsel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 1.0% Selection
+densityPlot(object    = reg_logrsel,
+            obs       = dnlselpod_sumstats,
+            training  = data.frame(logrsel, global_sumstats),
+            main      = "1.0% of Selection",
+            xlab      = expression(log[10]("Proportion of selected regions")),
+            ylab      = "Probability density", 
+            xlim      = c(-5,0),
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(logdnlselpod_prRSel,
+           posterior_logdnlselpod_logrsel$expectation,
+           posterior_logdnlselpod_logrsel$quantiles[1], 
+           posterior_logdnlselpod_logrsel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 2.5% Selection
+densityPlot(object    = reg_logrsel,
+            obs       = dnhselpod_sumstats,
+            training  = data.frame(logrsel, global_sumstats),
+            main      = "2.5% of Selection",
+            xlab      = expression(log[10]("Proportion of selected regions")),
+            ylab      = "Probability density", 
+            xlim      = c(-5,0),
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(logdnhselpod_prRSel,
+           posterior_logdnhselpod_logrsel$expectation,
+           posterior_logdnhselpod_logrsel$quantiles[1], 
+           posterior_logdnhselpod_logrsel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+```
+
+```{r prediction PrPOPMSel, echo=TRUE, eval=TRUE, include=TRUE}
+
+### PrPOPMSel
+
+## One neutral pod
+neutralpod_prPOPMSel <- neutral_pods_reftable[1,"PrPOPMSel"]
+
+posterior_neutralpod_prPOPMSel <- predict(   object  = reg_prPOPMSel,
+                                             obs     = neutralpod_sumstats,
+                                           training  = data.frame(prPOPMSel, global_sumstats),
+                                           quantiles = c(0.025,0.5,0.975),
+                                           paral     = T,
+                                           ncores    = 28,
+                                          rf.weights = T)
+(posterior_neutralpod_prPOPMSel)
+
+## One low selection pod
+dnlselpod_prPOPMSel <- dnlsel_pods_reftable[1,"PrPOPMSel"]
+
+posterior_dnlselpod_prPOPMSel <- predict(  object  = reg_prPOPMSel,
+                                           obs     = dnlselpod_sumstats,
+                                         training  = data.frame(prPOPMSel, global_sumstats),
+                                         quantiles = c(0.025,0.5,0.975),
+                                         paral     = T,
+                                         ncores    = 28,
+                                        rf.weights = T)
+(posterior_dnlselpod_prPOPMSel)
+
+## One high selection pod
+dnhselpod_prPOPMSel <- dnhsel_pods_reftable[2,"PrPOPMSel"]
+
+posterior_dnhselpod_prPOPMSel <- predict(   object  = reg_prPOPMSel,
+                                            obs     = dnhselpod_sumstats,
+                                          training  = data.frame(prPOPMSel, global_sumstats),
+                                          quantiles = c(0.025,0.5,0.975),
+                                          paral     = T,
+                                          ncores    = 28,
+                                         rf.weights = T)
+(posterior_dnhselpod_prPOPMSel)
+
+## Multiple histogram-like plots
+par(mfrow=c(1,3)) 
+# Neutral
+hist(x      = prPOPMSel,
+     breaks = seq(0,1,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "Neutral",
+     xlab   = "Proportion of selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = prPOPMSel,
+         breaks = seq(0,1,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_neutralpod_prPOPMSel$weights)
+
+# 1.0% Selection
+hist(x      = prPOPMSel,
+     breaks = seq(0,1,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "1.0% of Selection",
+     xlab   = "Proportion of selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = prPOPMSel,
+         breaks = seq(0,1,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnlselpod_prPOPMSel$weights)
+
+# 2.5% Selection
+hist(x      = prPOPMSel,
+     breaks = seq(0,1,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "2.5% of Selection",
+     xlab   = "Proportion of selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = prPOPMSel,
+         breaks = seq(0,1,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnhselpod_prPOPMSel$weights)
+
+# Multiple density plot
+par(mfrow=c(1,3))
+# Neutral
+densityPlot(object    = reg_prPOPMSel,
+            obs       = neutralpod_sumstats,
+            training  = data.frame(prPOPMSel, global_sumstats),
+            main      = "Neutral",
+            xlab      = "Proportion of selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(neutralpod_prPOPMSel,
+           posterior_neutralpod_prPOPMSel$expectation,
+           posterior_neutralpod_prPOPMSel$quantiles[1], 
+           posterior_neutralpod_prPOPMSel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 1.0% Selection
+densityPlot(object    = reg_prPOPMSel,
+            obs       = dnlselpod_sumstats,
+            training  = data.frame(prPOPMSel, global_sumstats),
+            main      = "1.0% of Selection",
+            xlab      = "Proportion of selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(dnlselpod_prPOPMSel,
+           posterior_dnlselpod_prPOPMSel$expectation,
+           posterior_dnlselpod_prPOPMSel$quantiles[1], 
+           posterior_dnlselpod_prPOPMSel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 2.5% Selection
+densityPlot(object    = reg_prPOPMSel,
+            obs       = dnhselpod_sumstats,
+            training  = data.frame(prPOPMSel, global_sumstats),
+            main      = "2.5% of Selection",
+            xlab      = "Proportion of selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(dnhselpod_prPOPMSel,
+           posterior_dnhselpod_prPOPMSel$expectation,
+           posterior_dnhselpod_prPOPMSel$quantiles[1], 
+           posterior_dnhselpod_prPOPMSel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+
+###  log10 PrPOPMSel
+
+## Random PODs
+log_radnompods_popmsel <- log10(pooled_reftable_model_1[random_pods, "PrPOPMSel"])
+
+posterior_radnompods_logpopmsel <- predict(object     = reg_logpopmsel,
+                                           obs        = global_sumstats_randompods,
+                                           training   = data.frame(logpopmsel, global_sumstats),
+                                           quantiles  = c(0.025,0.5,0.975),
+                                           paral      = T,
+                                           ncores     = 28,
+                                           rf.weights = T)
+(posterior_radnompods_logpopmsel)
+
+# Expected True vs estimated
+plot(x    = log_radnompods_popmsel, 
+     y    = posterior_radnompods_logpopmsel$expectation,
+     xlim = c(-5,0),
+     ylim = c(-5,0),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Expected Random PODs",
+     pch  = 1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+# Median True vs estimated
+plot(x = log_radnompods_popmsel, 
+     y = posterior_radnompods_logpopmsel$med,
+     xlim = c(-5,0),
+     ylim = c(-5,0),
+     xlab="True values", 
+     ylab="Estimated values",
+     main="Median Random PODs",
+     pch=1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+## Fixed PODs 
+
+# Low Selection PODs
+log_dnlselpods_popmsel <- log10(dnlsel_pods_reftable[, "PrPOPMSel"])
+
+posterior_dnlselpods_logpopmsel <- predict(object     = reg_logpopmsel,
+                                           obs        = global_sumstats_dnlselpods,
+                                           training   = data.frame(logpopmsel, global_sumstats),
+                                           quantiles  = c(0.025,0.5,0.975),
+                                           paral      = T,
+                                           ncores     = 28,
+                                           rf.weights = T)
+(posterior_dnlselpods_logpopmsel)
+
+# High Selection PODs
+log_dnhselpods_popmsel <- log10(dnhsel_pods_reftable[, "PrPOPMSel"])
+
+posterior_dnhselpods_logpopmsel <- predict(object     = reg_logpopmsel,
+                                           obs        = global_sumstats_dnhselpods,
+                                           training   = data.frame(logpopmsel, global_sumstats),
+                                           quantiles  = c(0.025,0.5,0.975),
+                                           paral      = T,
+                                           ncores     = 28,
+                                           rf.weights = T)
+(posterior_dnhselpods_logpopmsel)
+
+# Expected True vs estimated
+plot(x    = c(log_dnlselpods_popmsel, log_dnhselpods_popmsel), 
+     y    = c(posterior_dnlselpods_logpopmsel$expectation, posterior_dnhselpods_logpopmsel$expectation),
+     xlim = c(-5,0),
+     ylim = c(-5,0),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Expected Fixed PODs",
+     col  = c(rep("#08519c",100), rep("#a50f15",100)),
+     pch=1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+legend("bottomright", legend = c("1.0% Selection", "2.5% Selection"), col = c("#08519c", "#a50f15"), pch = 1, bty = "n", cex = 1.2)
+abline(a=0, b=1, col = "#cb181d")
+
+
+# Median True vs estimated
+plot(x    = c(log_dnlselpods_popmsel, log_dnhselpods_popmsel), 
+     y    = c(posterior_dnlselpods_logpopmsel$med, posterior_dnhselpods_logpopmsel$med),
+     xlim = c(-5,0),
+     ylim = c(-5,0),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Median Fixed PODs",
+     col  = c(rep("#08519c",100), rep("#a50f15",100)),
+     pch=1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+legend("bottomright", legend = c("1.0% Selection", "2.5% Selection"), col = c("#08519c", "#a50f15"), pch = 1, bty = "n", cex = 1.2)
+abline(a=0, b=1, col = "#cb181d")
+
+# Boxplot
+
+## boxplot
+pred_logpopmsel <- data.frame(model  = c(rep("Low_selection", 300), rep("High_selection", 300)), 
+                              type   = c(rep("True",100), rep("Expected",100), rep("Median",100),
+                                         rep("True",100), rep("Expected",100), rep("Median",100)),
+                              values = c(log_dnlselpods_popmsel, posterior_dnlselpods_logpopmsel$expectation, posterior_dnlselpods_logpopmsel$med,
+                                         log_dnhselpods_popmsel, posterior_dnhselpods_logpopmsel$expectation, posterior_dnhselpods_logpopmsel$med))
+
+boxplot(pred_logpopmsel$values ~ pred_logpopmsel$type * pred_logpopmsel$model,
+        lwd = 2,
+        ylab = expression(-log[10]*("Pr Selected mutations")),
+        xlab = "",
+        xaxt = "n",
+        cex.axis = 1.2,
+        cex.lab  = 1.2,
+        col = c(rep("#a50f15",3),rep("#08519c",3)))
+legend("topright", legend = c("1.0% Selection", "2.5% Selection"), col = c("#08519c", "#a50f15"), pch = 15, bty = "n", cex = 1.2)
+axis(side = 1, at = 1:6, labels = FALSE)
+text(x = 1:6, 
+     y = par()$usr[3]-0.03*(par()$usr[4]-par()$usr[3]), 
+     srt=90, 
+     adj=1, 
+     xpd=TRUE, 
+     labels = paste(rep(c("Expected", "Median", "True"),3)),
+     cex = 1.2)
+
+## Multiple histogram-like plots
+#par(mfrow=c(1,3)) 
+# Neutral
+#hist(x      = logpopmsel,
+#     breaks = seq(-5,0,0.05),
+#     ylim   = c(0,1),
+#     col    = "grey",
+#     freq   = FALSE,
+#     main   = "Neutral",
+#     xlab   = expression(log[10]("Proportion of selected regions")),
+#     ylab   = "Probability density")
+#wtd.hist(x      = logpopmsel,
+#         breaks = seq(-5,0,0.05),
+#         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+#         weight = posterior_neutralpod_logpopmsel$weights)
+#
+# 1.0% Selection
+#hist(x      = logpopmsel,
+#     breaks = seq(-5,0,0.05),
+#     ylim   = c(0,1),
+#     col    = "grey",
+#    freq   = FALSE,
+#     main   = "1.0% of Selection",
+#    xlab   = expression(log[10]("Proportion of selected regions")),
+#     ylab   = "Probability density")
+#wtd.hist(x      = logpopmsel,
+#         breaks = seq(-5,0,0.05),
+#         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+#         weight = posterior_dnlselpod_logpopmsel$weights)
+#
+# 2.5% Selection
+#hist(x      = logpopmsel,
+#     breaks = seq(-5,0,0.05),
+#     ylim   = c(0,1),
+#     col    = "grey",
+#     freq   = FALSE,
+#     main   = "2.5% of Selection",
+#     xlab   = expression(log[10]("Proportion of selected regions")),
+#     ylab   = "Probability density")
+#wtd.hist(x      = logpopmsel,
+#         breaks = seq(-5,0,0.05),
+#         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+#         weight = posterior_dnhselpod_logpopmsel$weights)
+#
+# Multiple density plot
+#par(mfrow=c(1,3))
+# Neutral
+#densityPlot(object    = reg_logpopmsel,
+#            obs       = neutralpod_sumstats,
+#            training  = data.frame(logpopmsel, global_sumstats),
+#            main      = "Neutral",
+#            xlab      = expression(log[10]("Proportion of selected regions")),
+#            ylab      = "Probability density", 
+#            paral     = T, 
+#            ncores    = 28)
+#abline(v=c(logneutralpod_prPOPMSel,
+#           posterior_neutralpod_logpopmsel$expectation,
+#           posterior_neutralpod_logpopmsel$quantiles[1], 
+#           posterior_neutralpod_logpopmsel$quantiles[3]),
+#       col="red",
+#       lty=c(1, rep(2,3)))
+#
+# 1.0% Selection
+#densityPlot(object    = reg_logpopmsel,
+#            obs       = dnlselpod_sumstats,
+#            training  = data.frame(logpopmsel, global_sumstats),
+#            main      = "1.0% of Selection",
+#            xlab      = expression(log[10]("Proportion of selected regions")),
+#            ylab      = "Probability density", 
+#            paral     = T, 
+#            ncores    = 28)
+#abline(v=c(logdnlselpod_prPOPMSel,
+#           posterior_dnlselpod_logpopmsel$expectation,
+#           posterior_dnlselpod_logpopmsel$quantiles[1], 
+#           posterior_dnlselpod_logpopmsel$quantiles[3]),
+#       col="red",
+#       lty=c(1, rep(2,3)))
+#
+# 2.5% Selection
+#densityPlot(object    = reg_logpopmsel,
+#            obs       = dnhselpod_sumstats,
+#            training  = data.frame(logpopmsel, global_sumstats),
+#            main      = "2.5% of Selection",
+#            xlab      = expression(log[10]("Proportion of selected regions")),
+#            ylab      = "Probability density", 
+#            paral     = T, 
+#            ncores    = 28)
+#abline(v=c(logdnhselpod_prPOPMSel,
+#           posterior_dnhselpod_logpopmsel$expectation,
+#           posterior_dnhselpod_logpopmsel$quantiles[1], 
+#           posterior_dnhselpod_logpopmsel$quantiles[3]),
+#       col="red",
+#       lty=c(1, rep(2,3)))
+```
+
+#### Proportion of Strongly Selected regions
+```{r prediction strongly selected, echo=TRUE, eval=TRUE, include=TRUE}
+
+### PrPOPStrongMSel
+## One neutral pod
+neutralpod_prPOPStrongMSel <- neutral_pods_reftable[1,"PrPOPStrongMSel"]
+
+posterior_neutralpod_prPOPStrongMSel <- predict(   object  = reg_prPOPStrongMSel,
+                                                   obs     = neutralpod_sumstats,
+                                                 training  = data.frame(prPOPStrongMSel, global_sumstats),
+                                                 quantiles = c(0.025,0.5,0.975),
+                                                 paral     = T,
+                                                 ncores    = 28,
+                                                rf.weights = T)
+(posterior_neutralpod_prPOPStrongMSel)
+
+## One low selection pod
+dnlselpod_prPOPStrongMSel <- dnlsel_pods_reftable[1,"PrPOPStrongMSel"]
+
+posterior_dnlselpod_prPOPStrongMSel <- predict(   object  = reg_prPOPStrongMSel,
+                                                  obs     = dnlselpod_sumstats,
+                                                training  = data.frame(prPOPStrongMSel, global_sumstats),
+                                                quantiles = c(0.025,0.5,0.975),
+                                                paral     = T,
+                                                ncores    = 28,
+                                               rf.weights = T)
+(posterior_dnlselpod_prPOPStrongMSel)
+
+## One high selection pod
+dnhselpod_prPOPStrongMSel <- dnhsel_pods_reftable[2,"PrPOPStrongMSel"]
+
+posterior_dnhselpod_prPOPStrongMSel <- predict(  object  = reg_prPOPStrongMSel,
+                                                 obs     = dnhselpod_sumstats,
+                                               training  = data.frame(prPOPStrongMSel, global_sumstats),
+                                               quantiles = c(0.025,0.5,0.975),
+                                               paral     = T,
+                                               ncores    = 28,
+                                              rf.weights = T)
+(posterior_dnhselpod_prPOPStrongMSel)
+
+## Multiple histogram-like plots
+par(mfrow=c(1,3)) 
+# Neutral
+hist(x      = prPOPStrongMSel,
+     breaks = seq(0,1,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "Neutral",
+     xlab   = "Proportion of strongly selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = prPOPStrongMSel,
+         breaks = seq(0,1,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_neutralpod_prPOPStrongMSel$weights)
+
+# 1.0% Selection
+hist(x      = prPOPStrongMSel,
+     breaks = seq(0,1,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "1.0% of Selection",
+     xlab   = "Proportion of strongly selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = prPOPStrongMSel,
+         breaks = seq(0,1,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnlselpod_prPOPStrongMSel$weights)
+
+# 2.5% Selection
+hist(x      = prPOPStrongMSel,
+     breaks = seq(0,1,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "2.5% of Selection",
+     xlab   = "Proportion of strongly selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = prPOPStrongMSel,
+         breaks = seq(0,1,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnhselpod_prPOPStrongMSel$weights)
+
+## Multiple density plot
+par(mfrow=c(1,3))
+# Neutral
+densityPlot(object    = reg_prPOPStrongMSel,
+            obs       = neutralpod_sumstats,
+            training  = data.frame(prPOPStrongMSel, global_sumstats),
+            main      = "Neutral",
+            xlab      = "Proportion of strongly selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(neutralpod_prPOPStrongMSel,
+           posterior_neutralpod_prPOPStrongMSel$expectation,
+           posterior_neutralpod_prPOPStrongMSel$quantiles[1], 
+           posterior_neutralpod_prPOPStrongMSel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 1.0% Selection
+densityPlot(object    = reg_prPOPStrongMSel,
+            obs       = dnlselpod_sumstats,
+            training  = data.frame(prPOPStrongMSel, global_sumstats),
+            main      = "1.0% of Selection",
+            xlab      = "Proportion of strongly selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(dnlselpod_prPOPStrongMSel,
+           posterior_dnlselpod_prPOPStrongMSel$expectation,
+           posterior_dnlselpod_prPOPStrongMSel$quantiles[1], 
+           posterior_dnlselpod_prPOPStrongMSel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 2.5% Selection
+densityPlot(object    = reg_prPOPStrongMSel,
+            obs       = dnhselpod_sumstats,
+            training  = data.frame(prPOPStrongMSel, global_sumstats),
+            main      = "2.5% of Selection",
+            xlab      = "Proportion of strongly selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(dnhselpod_prPOPStrongMSel,
+           posterior_dnhselpod_prPOPStrongMSel$expectation,
+           posterior_dnhselpod_prPOPStrongMSel$quantiles[1], 
+           posterior_dnhselpod_prPOPStrongMSel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+
+### log10 PrPOPStrongMSel
+## One neutral pod
+logneutralpod_prPOPStrongMSel <- log10(neutralpod_prPOPStrongMSel)
+logneutralpod_prPOPStrongMSel <- -6
+
+posterior_neutralpod_logpopstrongmsel <- predict(   object  = reg_logpopstrongmsel,
+                                                   obs     = neutralpod_sumstats,
+                                                 training  = data.frame(logpopstrongmsel, global_sumstats_logpopstrongmsel),
+                                                 quantiles = c(0.025,0.5,0.975),
+                                                 paral     = T,
+                                                 ncores    = 28,
+                                                rf.weights = T)
+(posterior_neutralpod_logpopstrongmsel)
+
+## One low selection pod
+logdnlselpod_prPOPStrongMSel <- log10(dnlselpod_prPOPStrongMSel)
+
+posterior_dnlselpod_logpopstrongmsel <- predict(   object  = reg_logpopstrongmsel,
+                                                  obs     = dnlselpod_sumstats,
+                                                training  = data.frame(logpopstrongmsel, global_sumstats_logpopstrongmsel),
+                                                quantiles = c(0.025,0.5,0.975),
+                                                paral     = T,
+                                                ncores    = 28,
+                                               rf.weights = T)
+(posterior_dnlselpod_logpopstrongmsel)
+
+## One high selection pod
+logdnhselpod_prPOPStrongMSel <- log10(dnhselpod_prPOPStrongMSel)
+
+posterior_dnhselpod_logpopstrongmsel <- predict(  object  = reg_logpopstrongmsel,
+                                                 obs     = dnhselpod_sumstats,
+                                               training  = data.frame(logpopstrongmsel, global_sumstats_logpopstrongmsel),
+                                               quantiles = c(0.025,0.5,0.975),
+                                               paral     = T,
+                                               ncores    = 28,
+                                              rf.weights = T)
+(posterior_dnhselpod_logpopstrongmsel)
+
+## Multiple histogram-like plots
+par(mfrow=c(1,3)) 
+# Neutral
+hist(x      = logpopstrongmsel,
+     breaks = seq(-6,0,0.05),
+     ylim   = c(0,1), 
+     col    = "grey",
+     freq   = FALSE,
+     main   = "Neutral",
+     xlab   = "Proportion of strongly selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = logpopstrongmsel,
+         breaks = seq(-6,0,0.05),
+         ylim   = c(0,1),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_neutralpod_logpopstrongmsel$weights)
+
+# 1.0% Selection
+hist(x      = logpopstrongmsel,
+     breaks = seq(-6,0,0.05),
+     ylim   = c(0,1),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "1.0% of Selection",
+     xlab   = "Proportion of strongly selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = logpopstrongmsel,
+         breaks = seq(-6,0,0.05),
+         ylim   = c(0,1),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnlselpod_logpopstrongmsel$weights)
+
+# 2.5% Selection
+hist(x      = logpopstrongmsel,
+     breaks = seq(-6,0,0.05),
+     ylim   = c(0,1),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "2.5% of Selection",
+     xlab   = "Proportion of strongly selected regions",
+     ylab   = "Probability density")
+wtd.hist(x      = logpopstrongmsel,
+         breaks = seq(-6,0,0.05),
+         ylim   = c(0,1),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnhselpod_logpopstrongmsel$weights)
+
+# Multiple density plot
+par(mfrow=c(1,3))
+# Neutral
+densityPlot(object    = reg_logpopstrongmsel,
+            obs       = neutralpod_sumstats,
+            training  = data.frame(logpopstrongmsel, global_sumstats_logpopstrongmsel),
+            main      = "Neutral",
+            xlab      = "Proportion of strongly selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(logneutralpod_prPOPStrongMSel,
+           posterior_neutralpod_logpopstrongmsel$expectation,
+           posterior_neutralpod_logpopstrongmsel$quantiles[1], 
+           posterior_neutralpod_logpopstrongmsel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 1.0% Selection
+densityPlot(object    = reg_logpopstrongmsel,
+            obs       = dnlselpod_sumstats,
+            training  = data.frame(logpopstrongmsel, global_sumstats_logpopstrongmsel),
+            main      = "1.0% of Selection",
+            xlab      = "Proportion of strongly selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(logdnlselpod_prPOPStrongMSel,
+           posterior_dnlselpod_logpopstrongmsel$expectation,
+           posterior_dnlselpod_logpopstrongmsel$quantiles[1], 
+           posterior_dnlselpod_logpopstrongmsel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 2.5% Selection
+densityPlot(object    = reg_logpopstrongmsel,
+            obs       = dnhselpod_sumstats,
+            training  = data.frame(logpopstrongmsel, global_sumstats_logpopstrongmsel),
+            main      = "2.5% of Selection",
+            xlab      = "Proportion of strongly selected regions",
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(logdnhselpod_prPOPStrongMSel,
+           posterior_dnhselpod_logpopstrongmsel$expectation,
+           posterior_dnhselpod_logpopstrongmsel$quantiles[1], 
+           posterior_dnhselpod_logpopstrongmsel$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+```
+
+#### DFE Gamma mean
+```{r prediction gamma mean, echo=TRUE, eval=TRUE, include=TRUE}
+dnlselpod_gammamean <- dnlsel_pods_reftable[1, "gammaMean"]
+
+posterior_dnlselpod_gammamean <- predict(   object  = reg_gammamean,
+                                            obs     = dnlselpod_sumstats,
+                                          training  = data.frame(gammamean, global_sumstats),
+                                          quantiles = c(0.025,0.5,0.975),
+                                          paral     = T,
+                                          ncores    = 28,
+                                         rf.weights = T)
+
+(posterior_dnlselpod_gammamean)
+
+dnhselpod_gammamean <- dnhsel_pods_reftable[2, "gammaMean"]
+
+posterior_dnhselpod_gammamean <- predict(   object  = reg_gammamean,
+                                            obs     = dnhselpod_sumstats,
+                                          training  = data.frame(gammamean, global_sumstats),
+                                          quantiles = c(0.025,0.5,0.975),
+                                          paral     = T,
+                                          ncores    = 28,
+                                         rf.weights = T)
+
+(posterior_dnhselpod_gammamean)
+
+## Multiple histogram-like plots
+par(mfrow=c(1,2)) 
+# 1.0% Selection
+hist(x      = gammamean,
+     breaks = seq(0,1,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "1.0% of Selection",
+     xlab   = expression(paste("gamma ", kappa, theta)),
+     ylab   = "Probability density")
+wtd.hist(x      = gammamean,
+         breaks = seq(0,1,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnlselpod_gammamean$weights)
+
+# 2.5% Selection
+hist(x      = gammamean,
+     breaks = seq(0,1,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "2.5% of Selection",
+     xlab   = expression(paste("gamma ", kappa, theta)),
+     ylab   = "Probability density")
+wtd.hist(x      = gammamean,
+         breaks = seq(0,1,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnhselpod_gammamean$weights)
+
+## Multiple density plot
+par(mfrow=c(1,2))
+# 1.0% Selection
+densityPlot(object    = reg_gammamean,
+            obs       = dnlselpod_sumstats,
+            training  = data.frame(gammamean, global_sumstats),
+            main      = "1.0% of Selection",
+            xlab      = expression(paste("gamma ", kappa, theta)),
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(dnlselpod_gammamean,
+           posterior_dnlselpod_gammamean$expectation,
+           posterior_dnlselpod_gammamean$quantiles[1], 
+           posterior_dnlselpod_gammamean$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 2.5% Selection
+densityPlot(object    = reg_gammamean,
+            obs       = dnhselpod_sumstats,
+            training  = data.frame(gammamean, global_sumstats),
+            main      = "2.5% of Selection",
+            xlab      = expression(paste("gamma ", kappa, theta)),
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(dnhselpod_gammamean,
+           posterior_dnhselpod_gammamean$expectation,
+           posterior_dnhselpod_gammamean$quantiles[1], 
+           posterior_dnhselpod_gammamean$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+### log gammamean
+logdnlselpod_gammamean <- log10(dnlselpod_gammamean)
+
+posterior_dnlselpod_loggammamean <- predict(   object  = reg_loggammamean,
+                                            obs     = dnlselpod_sumstats,
+                                          training  = data.frame(loggammamean, global_sumstats),
+                                          quantiles = c(0.025,0.5,0.975),
+                                          paral     = T,
+                                          ncores    = 28,
+                                         rf.weights = T)
+
+(posterior_dnlselpod_loggammamean)
+
+logdnhselpod_gammamean <- log10(dnhselpod_gammamean)
+
+posterior_dnhselpod_loggammamean <- predict(   object  = reg_loggammamean,
+                                            obs     = dnhselpod_sumstats,
+                                          training  = data.frame(loggammamean, global_sumstats),
+                                          quantiles = c(0.025,0.5,0.975),
+                                          paral     = T,
+                                          ncores    = 28,
+                                         rf.weights = T)
+
+(posterior_dnhselpod_loggammamean)
+
+## Multiple histogram-like plots
+par(mfrow=c(1,2)) 
+# 1.0% Selection
+hist(x      = loggammamean,
+     breaks = seq(-3,0,0.05),
+     ylim   = c(0,1), 
+     col    = "grey",
+     freq   = FALSE,
+     main   = "1.0% of Selection",
+     xlab   = expression(log[10](paste("gamma ", kappa, theta))),
+     ylab   = "Probability density")
+wtd.hist(x      = loggammamean,
+         breaks = seq(-3,0,0.05),
+         ylim   = c(0,1),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnlselpod_loggammamean$weights)
+
+# 2.5% Selection
+hist(x      = loggammamean,
+     breaks = seq(-3,0,0.05),
+     ylim   = c(0,1),
+     col    = "grey",
+     freq   = FALSE,
+     main   = "2.5% of Selection",
+     xlab   = expression(log[10](paste("gamma ", kappa, theta))),
+     ylab   = "Probability density")
+wtd.hist(x      = loggammamean,
+         breaks = seq(-3,0,0.05),
+         ylim   = c(0,1),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnhselpod_loggammamean$weights)
+
+## Multiple density plot
+par(mfrow=c(1,2))
+# 1.0% Selection
+densityPlot(object    = reg_loggammamean,
+            obs       = dnlselpod_sumstats,
+            training  = data.frame(loggammamean, global_sumstats),
+            main      = "1.0% of Selection",
+            xlab      = expression(log[10](paste("gamma ", kappa, theta))),
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(logdnlselpod_gammamean,
+           posterior_dnlselpod_loggammamean$expectation,
+           posterior_dnlselpod_loggammamean$quantiles[1], 
+           posterior_dnlselpod_loggammamean$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 2.5% Selection
+densityPlot(object    = reg_loggammamean,
+            obs       = dnhselpod_sumstats,
+            training  = data.frame(loggammamean, global_sumstats),
+            main      = "2.5% of Selection",
+            xlab      = expression(log[10](paste("gamma ", kappa, theta))),
+            ylab      = "Probability density", 
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(logdnhselpod_gammamean,
+           posterior_dnhselpod_loggammamean$expectation,
+           posterior_dnhselpod_loggammamean$quantiles[1], 
+           posterior_dnhselpod_loggammamean$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+```
+
+### ABC-RF Regression for Demography: Prediction
+
+#### Pedigree Effective Population Size - PedigreeNetotal
+```{r prediction PedigreeNe, echo=TRUE, eval=TRUE, include=TRUE}
+
+## Random PODs
+log_radnompods_pedigreeNetotal <- log10(pooled_reftable_model_1[random_pods, "PedigreeNetotal"])
+
+posterior_radnompods_logpedigreeNetotal <- predict(object     = reg_logpedigreeNetotal,
+                                                   obs        = global_sumstats_randompods,
+                                                   training   = data.frame(logpedigreeNetotal, global_sumstats),
+                                                   quantiles  = c(0.025,0.5,0.975),
+                                                   paral      = T,
+                                                   ncores     = 28,
+                                                   rf.weights = T)
+(posterior_radnompods_logpedigreeNetotal)
+
+# Expected True vs estimated
+plot(x    = log_radnompods_pedigreeNetotal, 
+     y    = posterior_radnompods_logpedigreeNetotal$expectation,
+     xlim = c(-2,3),
+     ylim = c(-2,3),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Expected Random PODs",
+     pch  = 1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+# Median True vs estimated
+plot(x = log_radnompods_pedigreeNetotal, 
+     y = posterior_radnompods_logpedigreeNetotal$med,
+     xlim = c(-2,3),
+     ylim = c(-2,3),
+     xlab="True values", 
+     ylab="Estimated values",
+     main="Median Random PODs",
+     pch=1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+## Fixed PODs 
+
+# Neutral PODs
+log_neutralpods_pedigreeNetotal <- log10(neutral_pods_reftable[, "PedigreeNetotal"])
+
+posterior_neutralpods_logpedigreeNetotal <- predict(object     = reg_logpedigreeNetotal,
+                                                    obs        = global_sumstats_neutralpods,
+                                                    training   = data.frame(logpedigreeNetotal, global_sumstats),
+                                                    quantiles  = c(0.025,0.5,0.975),
+                                                    paral      = T,
+                                                    ncores     = 28,
+                                                    rf.weights = T)
+(posterior_neutralpods_logpedigreeNetotal)
+
+# Low Selection PODs
+log_dnlselpods_pedigreeNetotal <- log10(dnlsel_pods_reftable[, "PedigreeNetotal"])
+
+posterior_dnlselpods_logpedigreeNetotal <- predict(object     = reg_logpedigreeNetotal,
+                                                   obs        = global_sumstats_dnlselpods,
+                                                   training   = data.frame(logpedigreeNetotal, global_sumstats),
+                                                   quantiles  = c(0.025,0.5,0.975),
+                                                   paral      = T,
+                                                   ncores     = 28,
+                                                   rf.weights = T)
+(posterior_dnlselpods_logpedigreeNetotal)
+
+# High Selection PODs
+log_dnhselpods_pedigreeNetotal <- log10(dnhsel_pods_reftable[, "PedigreeNetotal"])
+
+posterior_dnhselpods_logpedigreeNetotal <- predict(object     = reg_logpedigreeNetotal,
+                                                   obs        = global_sumstats_dnhselpods,
+                                                   training   = data.frame(logpedigreeNetotal, global_sumstats),
+                                                   quantiles  = c(0.025,0.5,0.975),
+                                                   paral      = T,
+                                                   ncores     = 28,
+                                                   rf.weights = T)
+(posterior_dnhselpods_logpedigreeNetotal)
+
+# Expected True vs estimated
+plot(x    = c(log_neutralpods_pedigreeNetotal,log_dnlselpods_pedigreeNetotal, log_dnhselpods_pedigreeNetotal), 
+     y    = c(posterior_neutralpods_logpedigreeNetotal$expectation, posterior_dnlselpods_logpedigreeNetotal$expectation, posterior_dnhselpods_logpedigreeNetotal$expectation),
+     xlim = c(1,3),
+     ylim = c(1,3),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Expected Fixed PODs",
+     col  = c(rep("#969696",100), rep("#08519c",100), rep("#a50f15",100)),
+     pch=1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+legend("bottomright", legend = c("Neutral", "1.0% Selection", "2.5% Selection"), col = c("#969696", "#08519c", "#a50f15"), pch = 1, bty = "n", cex = 1.2)
+abline(a=0, b=1, col = "#cb181d")
+
+# Median True vs estimated
+plot(x    = c(log_neutralpods_pedigreeNetotal,log_dnlselpods_pedigreeNetotal, log_dnhselpods_pedigreeNetotal), 
+     y    = c(posterior_neutralpods_logpedigreeNetotal$med, posterior_dnlselpods_logpedigreeNetotal$med, posterior_dnhselpods_logpedigreeNetotal$med),
+     xlim = c(1,3),
+     ylim = c(1,3),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Median Fixed PODs",
+     col  = c(rep("#969696",100), rep("#08519c",100), rep("#a50f15",100)),
+     pch  = 1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+legend("bottomright", legend = c("Neutral", "1.0% Selection", "2.5% Selection"), col = c("#969696", "#08519c", "#a50f15"), pch = 1, bty = "n", cex = 1.2)
+abline(a=0, b=1, col = "#cb181d")
+
+# Boxplot
+
+## boxplot
+pred_logpedigreeNetotal <- data.frame(model  = c(rep("Neutral", 300), rep("Low_selection", 300), rep("High_selection", 300)), 
+                                  type   = c(rep("True",100), rep("Expected",100), rep("Median",100), 
+                                             rep("True",100), rep("Expected",100), rep("Median",100),
+                                             rep("True",100), rep("Expected",100), rep("Median",100)),
+                                  values = c(log_neutralpods_pedigreeNetotal, posterior_neutralpods_logpedigreeNetotal$expectation, posterior_neutralpods_logpedigreeNetotal$med,
+                                             log_dnlselpods_pedigreeNetotal, posterior_dnlselpods_logpedigreeNetotal$expectation, posterior_dnlselpods_logpedigreeNetotal$med,
+                                             log_dnhselpods_pedigreeNetotal, posterior_dnhselpods_logpedigreeNetotal$expectation, posterior_dnhselpods_logpedigreeNetotal$med))
+
+boxplot(pred_logpedigreeNetotal$values ~ pred_logpedigreeNetotal$type * pred_logpedigreeNetotal$model,
+        lwd = 2,
+        ylab = expression(log[10]*("N"[e])),
+        xlab = "",
+        xaxt = "n",
+        cex.axis = 1.2,
+        cex.lab  = 1.2,
+        col = c(rep("#a50f15",3),rep("#08519c",3),rep("#969696",3)))
+legend("bottomright", legend = c("Neutral", "1.0% Selection", "2.5% Selection"), col = c("#969696", "#08519c", "#a50f15"), pch = 15, bty = "n", cex = 1.2)
+axis(side = 1, at = 1:9, labels = FALSE)
+text(x = 1:9, 
+     y = par()$usr[3]-0.03*(par()$usr[4]-par()$usr[3]), 
+     srt=90, 
+     adj=1, 
+     xpd=TRUE, 
+     labels = paste(rep(c("Expected", "Median", "True"),3)),
+     cex = 1.2)
+
+
+## Multiple histogram-like plots
+#par(mfrow=c(1,3)) 
+# Neutral
+#hist(x      = logpedigreeNetotal,
+#     breaks = seq(-2,4,0.05),
+#     col    = "grey",
+#     freq   = FALSE,
+#     ylim   = c(0,10),
+#     main   = "Neutral",
+#     xlab   = expression(log[10](N[e])),
+#     ylab   = "Probability density")
+#wtd.hist(x      = logpedigreeNetotal,
+#         breaks = seq(-2,4,0.05),
+#         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+#         weight = posterior_neutralpod_pedigreeNetotal$weights)
+#
+# 1.0% Selection
+#hist(x      = logpedigreeNetotal,
+#     breaks = seq(-2,4,0.05),
+#     col    = "grey",
+#     freq   = FALSE,
+#     ylim   = c(0,10),
+#     main   = "1.0% of Selection",
+#     xlab   = expression(log[10](N[e])),
+#     ylab   = "Probability density")
+#wtd.hist(x      = logpedigreeNetotal,
+#         breaks = seq(-2,4,0.05),
+#         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+#         weight = posterior_dnlselpod_pedigreeNetotal$weights)
+#
+# 2.5% Selection
+#hist(x      = logpedigreeNetotal,
+#     breaks = seq(-2,4,0.05),
+#     col    = "grey",
+#     freq   = FALSE,
+#     ylim   = c(0,10),
+#     main   = "2.5% of Selection",
+#     xlab   = expression(log[10](N[e])),
+#     ylab   = "Probability density")
+#wtd.hist(x      = logpedigreeNetotal,
+#         breaks = seq(-2,4,0.05),
+#         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+#         weight = posterior_dnhselpod_pedigreeNetotal$weights)
+#
+# Multiple density plot
+#par(mfrow=c(1,3))
+# Neutral
+#densityPlot(object    = reg_logpedigreeNetotal,
+#            obs       = neutralpod_sumstats,
+#            training  = data.frame(logpedigreeNetotal, global_sumstats),
+#            main      = "Neutral",
+#            xlab      = expression(log[10](N[e])),
+#            ylab      = "Probability density", 
+#            xlim      = c(0,3),
+#            ylim      = c(0,3),
+#            paral     = T, 
+#            ncores    = 28)
+#abline(v=c(logneutralpod_pedigreeNe,
+#           posterior_neutralpod_pedigreeNetotal$expectation,
+#           posterior_neutralpod_pedigreeNetotal$quantiles[1], 
+#           posterior_neutralpod_pedigreeNetotal$quantiles[3]),
+#       col="red",
+#       lty=c(1, rep(2,3)))
+#
+# 1.0% Selection
+#densityPlot(object    = reg_logpedigreeNetotal,
+#            obs       = dnlselpod_sumstats,
+#            training  = data.frame(logpedigreeNetotal, global_sumstats),
+#            main      = "1.0% of Selection",
+#            xlab      = expression(log[10](N[e])),
+#            ylab      = "Probability density", 
+#            xlim      = c(0,3),
+#            ylim      = c(0,3),
+#            paral     = T, 
+#            ncores    = 28)
+#abline(v=c(logdnlselpod_pedigreeNe,
+#           posterior_dnlselpod_pedigreeNetotal$expectation,
+#           posterior_dnlselpod_pedigreeNetotal$quantiles[1], 
+#           posterior_dnlselpod_pedigreeNetotal$quantiles[3]),
+#       col="red",
+#       lty=c(1, rep(2,3)))
+#
+# 2.5% Selection
+#densityPlot(object    = reg_logpedigreeNetotal,
+#            obs       = dnhselpod_sumstats,
+#            training  = data.frame(logpedigreeNetotal, global_sumstats),
+#            main      = "2.5% of Selection",
+#           xlab      = expression(log[10](N[e])),
+#            ylab      = "Probability density", 
+#            xlim      = c(0,3),
+#            ylim      = c(0,3),
+#            paral     = T, 
+#            ncores    = 28)
+#abline(v=c(logdnhselpod_pedigreeNe,
+#           posterior_dnhselpod_pedigreeNetotal$expectation,
+#           posterior_dnhselpod_pedigreeNetotal$quantiles[1], 
+#           posterior_dnhselpod_pedigreeNetotal$quantiles[3]),
+#       col="red",
+#       lty=c(1, rep(2,3)))
+```
+
+#### Population Census Size for the Sampling Phase - N
+```{r predition N, echo=TRUE, eval=TRUE, include=TRUE}
+log_radnompods_n <- log10(pooled_reftable_model_1[random_pods, "N"])
+
+posterior_radnompods_logn <- predict(object     = reg_logn,
+                                     obs        = global_sumstats_randompods,
+                                     training   = data.frame(logn, global_sumstats),
+                                     quantiles  = c(0.025,0.5,0.975),
+                                     paral      = T,
+                                     ncores     = 28,
+                                     rf.weights = T)
+(posterior_radnompods_logn)
+
+# Expected True vs estimated
+plot(x    = log_radnompods_n, 
+     y    = posterior_radnompods_logn$expectation,
+     xlim = c(0,3),
+     ylim = c(0,3),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Expected Random PODs",
+     pch  = 1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+# Median True vs estimated
+plot(x = log_radnompods_n, 
+     y = posterior_radnompods_logn$med,
+     xlim = c(0,3),
+     ylim = c(0,3),
+     xlab="True values", 
+     ylab="Estimated values",
+     main="Median Random PODs",
+     pch=1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+
+## Fixed PODs 
+
+# Neutral PODs
+log_neutralpods_n <- log10(neutral_pods_reftable[, "N"])
+
+posterior_neutralpods_logn <- predict(object     = reg_logn,
+                                      obs        = global_sumstats_neutralpods,
+                                      training   = data.frame(logn, global_sumstats),
+                                      quantiles  = c(0.025,0.5,0.975),
+                                      paral      = T,
+                                      ncores     = 28,
+                                      rf.weights = T)
+(posterior_neutralpods_logn)
+
+# Low Selection PODs
+log_dnlselpods_n <- log10(dnlsel_pods_reftable[, "N"])
+
+posterior_dnlselpods_logn <- predict(object     = reg_logn,
+                                     obs        = global_sumstats_dnlselpods,
+                                     training   = data.frame(logn, global_sumstats),
+                                     quantiles  = c(0.025,0.5,0.975),
+                                     paral      = T,
+                                     ncores     = 28,
+                                     rf.weights = T)
+(posterior_dnlselpods_logn)
+
+# High Selection PODs
+log_dnhselpods_n <- log10(dnhsel_pods_reftable[, "N"])
+
+posterior_dnhselpods_logn <- predict(object     = reg_logn,
+                                     obs        = global_sumstats_dnhselpods,
+                                     training   = data.frame(logn, global_sumstats),
+                                     quantiles  = c(0.025,0.5,0.975),
+                                     paral      = T,
+                                     ncores     = 28,
+                                     rf.weights = T)
+(posterior_dnhselpods_logpn)
+
+# Expected True vs estimated
+plot(x    = c(log_neutralpods_n,log_dnlselpods_n, log_dnhselpods_n), 
+     y    = c(posterior_neutralpods_logn$expectation, posterior_dnlselpods_logn$expectation, posterior_dnhselpods_logn$expectation),
+     xlim = c(0,3),
+     ylim = c(0,3),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Expected Fixed PODs",
+     col  = c(rep("#969696",100), rep("#08519c",100), rep("#a50f15",100)),
+     pch=1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+legend("bottomright", legend = c("Neutral", "1.0% Selection", "2.5% Selection"), col = c("#969696", "#08519c", "#a50f15"), pch = 1, bty = "n", cex = 1.2)
+abline(a=0, b=1, col = "#cb181d")
+
+# Median True vs estimated
+plot(x    = c(log_neutralpods_n,log_dnlselpods_n, log_dnhselpods_n), 
+     y    = c(posterior_neutralpods_logn$med, posterior_dnlselpods_logn$med, posterior_dnhselpods_logn$med),
+     xlim = c(1,3),
+     ylim = c(1,3),
+     xlab = "True values", 
+     ylab = "Estimated values",
+     main = "Median Fixed PODs",
+     col  = c(rep("#969696",100), rep("#08519c",100), rep("#a50f15",100)),
+     pch  = 1,
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+legend("bottomright", legend = c("Neutral", "1.0% Selection", "2.5% Selection"), col = c("#969696", "#08519c", "#a50f15"), pch = 1, bty = "n", cex = 1.2)
+abline(a=0, b=1, col = "#cb181d")
+
+# Boxplot
+
+## boxplot
+pred_logn <- data.frame(model  = c(rep("Neutral", 300), rep("Low_selection", 300), rep("High_selection", 300)), 
+                                  type   = c(rep("True",100), rep("Expected",100), rep("Median",100), 
+                                             rep("True",100), rep("Expected",100), rep("Median",100),
+                                             rep("True",100), rep("Expected",100), rep("Median",100)),
+                                  values = c(log_neutralpods_n, posterior_neutralpods_logn$expectation, posterior_neutralpods_logn$med,
+                                             log_dnlselpods_n, posterior_dnlselpods_logn$expectation, posterior_dnlselpods_logn$med,
+                                             log_dnhselpods_n, posterior_dnhselpods_logn$expectation, posterior_dnhselpods_logn$med))
+
+boxplot(pred_logn$values ~ pred_logn$type * pred_logn$model,
+        lwd = 2,
+        ylab = expression(log[10]*("N"[c])),
+        xlab = "",
+        xaxt = "n",
+        cex.axis = 1.2,
+        cex.lab  = 1.2,
+        col = c(rep("#a50f15",3),rep("#08519c",3),rep("#969696",3)))
+legend("bottomright", legend = c("Neutral", "1.0% Selection", "2.5% Selection"), col = c("#969696", "#08519c", "#a50f15"), pch = 15, bty = "n", cex = 1.2)
+axis(side = 1, at = 1:9, labels = FALSE)
+text(x = 1:9, 
+     y = par()$usr[3]-0.03*(par()$usr[4]-par()$usr[3]), 
+     srt=90, 
+     adj=1, 
+     xpd=TRUE, 
+     labels = paste(rep(c("Expected", "Median", "True"),3)),
+     cex = 1.2)
+
+
+## Multiple histogram-like plots
+par(mfrow=c(1,3))
+# Neutral
+hist(x      = logn,
+     breaks = seq(0,3,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     ylim   = c(0,6),
+     main   = "Neutral",
+     xlab   = expression(log[10](N[c])),
+     ylab   = "Probability density")
+wtd.hist(x      = logn,
+         breaks = seq(0,3,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_neutralpod_n$weights)
+
+# 1.0% Selection
+hist(x      = logn,
+     breaks = seq(0,3,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     ylim   = c(0,6),
+     main   = "1.0% of Selection",
+     xlab   = expression(log[10](N[c])),
+     ylab   = "Probability density")
+wtd.hist(x      = logn,
+         breaks = seq(0,3,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnlselpod_n$weights)
+
+# 2.5% Selection
+hist(x      = logn,
+     breaks = seq(0,3,0.05),
+     col    = "grey",
+     freq   = FALSE,
+     ylim   = c(0,6),
+     main   = "2.5% of Selection",
+     xlab   = expression(log[10](N[c])),
+     ylab   = "Probability density")
+wtd.hist(x      = logn,
+         breaks = seq(0,3,0.05),
+         col    = adjustcolor( "red", alpha.f = 0.2), freq=FALSE, add=TRUE,
+         weight = posterior_dnhselpod_n$weights)
+
+
+# Multiple density plot
+par(mfrow=c(1,3))
+# Neutral
+densityPlot(object    = reg_logn,
+            obs       = neutralpod_sumstats,
+            training  = data.frame(logn, global_sumstats),
+            main      = "Neutral",
+            xlab      = expression(log[10](N[c])),
+            ylab      = "Probability density", 
+            xlim      = c(0,3),
+            ylim      = c(0,3),
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(logneutralpod_n,
+           posterior_neutralpod_n$expectation,
+           posterior_neutralpod_n$quantiles[1], 
+           posterior_neutralpod_n$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 1.0% Selection
+densityPlot(object    = reg_logn,
+            obs       = dnlselpod_sumstats,
+            training  = data.frame(logn, global_sumstats),
+            main      = "1.0% of Selection",
+            xlab      = expression(log[10](N[c])),
+            ylab      = "Probability density", 
+            xlim      = c(0,3),
+            ylim      = c(0,3),
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(logdnlselpod_n,
+           posterior_dnlselpod_n$expectation,
+           posterior_dnlselpod_n$quantiles[1], 
+           posterior_dnlselpod_n$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+
+# 2.5% Selection
+densityPlot(object    = reg_logn,
+            obs       = dnhselpod_sumstats,
+            training  = data.frame(logn, global_sumstats),
+            main      = "2.5% of Selection",
+            xlab      = expression(log[10](N[c])),
+            ylab      = "Probability density", 
+            xlim      = c(0,3),
+            ylim      = c(0,3),
+            paral     = T, 
+            ncores    = 28)
+abline(v=c(logdnhselpod_n,
+           posterior_dnhselpod_n$expectation,
+           posterior_dnhselpod_n$quantiles[1], 
+           posterior_dnhselpod_n$quantiles[3]),
+       col="red",
+       lty=c(1, rep(2,3)))
+```

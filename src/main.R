@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 20
+nsim                    <- 100
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"  #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim" #GENOTOUL# /usr/local/bioinfo/src/SLiM/SLiM-3.2/SLiM_build/slim
@@ -50,9 +50,9 @@ arg <- commandArgs(TRUE)
 seed                    <- arg
 #seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims           <- FALSE
-num_of_threads          <- 28
-remove_files            <- TRUE
+parallel_sims           <- TRUE
+num_of_threads          <- 18
+remove_files            <- FALSE
 debug_sim               <- TRUE
 debug_output_folder     <- "results/debug_output/"
 
@@ -62,7 +62,7 @@ debug_output_folder     <- "results/debug_output/"
 ############################################
 
 # MODEL SELECTION
-model_type = 1             # 1 = de novo beneficial mutations ("DN"); 
+model_type = 3             # 1 = de novo beneficial mutations ("DN"); 
                            # 2 = background selection ("BS"); 
                            # 3 = selection on standing variation ("SV");
 
@@ -94,31 +94,31 @@ tau = 10                   # tau => Time between samples;
 ############################################
 
 # MUTATION RATE
-mu_random = TRUE
+mu_random = FALSE
 mu_rate <- 1e-7
-mu_min  = 1e-8
-mu_max  = 1e-5
+mu_min  = 1e-8 #1e-10
+mu_max  = 1e-7
 
 # POPULATION SIZE Neq
 # Ne equilibrium phase (aka burn-in)
-neq_random = TRUE
+neq_random = FALSE
 neq_value <- 500
 neq_min = 1
 neq_max = 1000
 
 # POPULATION SIZE N
-n_random = TRUE
+n_random = FALSE
 n_value <- 500
 n_min = 1
 n_max = 1000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
-gammaM_random = TRUE
+gammaM_random = FALSE
 gammaM_value <- 0.1
 gammaM_min = 0.001
 gammaM_max = 1              
 
-gammak_random = TRUE
+gammak_random = FALSE
 gammak_value <- 0.1         # gamma shape k must be positive;
 gammak_min = 0.001          # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
 gammak_max = 1
@@ -126,13 +126,13 @@ gammak_max = 1
 gammaM_gammak = TRUE        # if TRUE, rate=1, then only gammaM will be sample from prior;
 
 # PROPORTION OF THE GENOME THAT CONTAINS BENEFICIAL MUTATIONS - G2 ELEMENTS
-PrGWSel_random = TRUE
-PrGWSel_value <- 0.25
+PrGWSel_random = FALSE
+PrGWSel_value <- 0.1
 PrGWSel_min = 0.00001 
 PrGWSel_max = 1
 
 # PROPORTION OF GENOME-WIDE BENEFICIAL MUTATION IN G2 ELEMENTS
-prbe_random = TRUE
+prbe_random = FALSE
 prbe_value <- 0.1
 prbe_min = 0.00001 
 prbe_max = 1
@@ -151,10 +151,10 @@ domB_min = 0.5
 domB_max = 1
 
 # GENOME-WIDE RECOMBINATION RATE
-rr_random = TRUE
+rr_random = FALSE
 rr_rate <- 5 * 1e-7
-rr_min  = 4.2 * 1e-8
-rr_max  = 4.2 * 1e-5
+rr_min  = 4.2 * 1e-8 #1e-10
+rr_max  = 4.2 * 1e-5 #1e-7
 
 # SELFING RATE
 selfing_random = FALSE
@@ -163,7 +163,7 @@ selfing_min = 0.80
 selfing_max = 1.00
 
 # TIME OF SELECTION CHANGE
-tc_random = TRUE
+tc_random = FALSE
 tc_value = 5.0            # from = 1 to = tau     
 
 ###########################################
