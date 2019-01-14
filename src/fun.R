@@ -183,14 +183,10 @@ do_sim <- function(sim, nsim,
   }
   
   # PROPORTION OF BENEFICIAL MUTATION IN G2 ELEMENTS
-  if (PrGWSel != 0){
-    if (prbe_random){
-      prbe <- 10^runif(1, min = log10(prbe_min), max = log10(prbe_max))
-    } else {
-      prbe <- prbe_value
-    }
+  if (prbe_random){
+    prbe <- 10^runif(1, min = log10(prbe_min), max = log10(prbe_max))
   } else {
-    prbe <- 0
+    prbe <- prbe_value
   }
   
   # DOMINANCE FOR GENOME-WIDE MUTATIONS
@@ -236,12 +232,12 @@ do_sim <- function(sim, nsim,
   # SELECTION ON STANDING VARIATION
   if (model_type == 3){
     if(tc_random){
-      tc = as.integer(runif(1, min = 0, max = tau))
+      tc <- as.integer(runif(1, min = 0, max = tau))
     } else {
-      tc = tc_value
+      tc <- tc_value
     }
   } else {
-    tc = 0
+    tc <- 0
   }
   
   ## RANDOM VALUES DEFINING GENOMIC ELEMENTS  
@@ -580,9 +576,9 @@ do_sim <- function(sim, nsim,
                 strong_positive_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] > 1, paste0("S",tc)], na.rm = TRUE)
                 
               } else {
-                strong_positive_prbe    <- as.numeric(0) # I think it should be 0 here and these simulations should be removed later
-                strong_positive_SelMean <- as.numeric(0)
-                strong_positive_SelSd   <- as.numeric(0)
+                strong_positive_prbe    <- as.numeric(NA) # I think it should be 0 here and these simulations should be removed later
+                strong_positive_SelMean <- as.numeric(NA)
+                strong_positive_SelSd   <- as.numeric(NA)
               }
               
               if (any(meanNe2*all_merged_genome[, paste0("S",tc)] < -1, na.rm = TRUE)){
@@ -591,9 +587,9 @@ do_sim <- function(sim, nsim,
                 strong_negative_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] < -1, paste0("S",tc)], na.rm = TRUE)
                 
               } else {
-                strong_negative_prbe    <- as.numeric(0) # I think it should be 0 here and these simulations should be removed later
-                strong_negative_SelMean <- as.numeric(0)
-                strong_negative_SelSd   <- as.numeric(0)
+                strong_negative_prbe    <- as.numeric(NA) # I think it should be 0 here and these simulations should be removed later
+                strong_negative_SelMean <- as.numeric(NA)
+                strong_negative_SelSd   <- as.numeric(NA)
               }
               
               strong_pop_prbe    <- strong_positive_prbe + strong_negative_prbe
@@ -607,13 +603,13 @@ do_sim <- function(sim, nsim,
             }
             
           } else {
-            actual_pop_prbe    <- as.numeric(0)
-            actual_pop_SelMean <- as.numeric(0)
-            actual_pop_SelSd   <- as.numeric(0)
+            actual_pop_prbe    <- as.numeric(NA)
+            actual_pop_SelMean <- as.numeric(NA)
+            actual_pop_SelSd   <- as.numeric(NA)
             
-            strong_pop_prbe    <- as.numeric(0)
-            strong_pop_SelMean <- as.numeric(0)
-            strong_pop_SelSd   <- as.numeric(0)
+            strong_pop_prbe    <- as.numeric(NA)
+            strong_pop_SelMean <- as.numeric(NA)
+            strong_pop_SelSd   <- as.numeric(NA)
           }
           
         } else {
@@ -645,9 +641,9 @@ do_sim <- function(sim, nsim,
                 strong_positive_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, "S"] > 1, "S"], na.rm = TRUE)
                 
               } else {
-                strong_positive_prbe    <- as.numeric(0) # I think it should be 0 here and these simulations should be removed later
-                strong_positive_SelMean <- as.numeric(0)
-                strong_positive_SelSd   <- as.numeric(0)
+                strong_positive_prbe    <- as.numeric(NA) # I think it should be 0 here and these simulations should be removed later
+                strong_positive_SelMean <- as.numeric(NA)
+                strong_positive_SelSd   <- as.numeric(NA)
               }
               
               if (any(meanNe2*all_merged_genome[, "S"] < -1, na.rm = TRUE)){
@@ -656,9 +652,9 @@ do_sim <- function(sim, nsim,
                 strong_negative_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, "S"] < -1, "S"], na.rm = TRUE)
                 
               } else {
-                strong_negative_prbe    <- as.numeric(0) # I think it should be 0 here and these simulations should be removed later
-                strong_negative_SelMean <- as.numeric(0)
-                strong_negative_SelSd   <- as.numeric(0)
+                strong_negative_prbe    <- as.numeric(NA) # I think it should be 0 here and these simulations should be removed later
+                strong_negative_SelMean <- as.numeric(NA)
+                strong_negative_SelSd   <- as.numeric(NA)
               }
               
               strong_pop_prbe    <- strong_positive_prbe + strong_negative_prbe 
@@ -672,13 +668,13 @@ do_sim <- function(sim, nsim,
             }
             
           } else {
-            actual_pop_prbe    <- as.numeric(0)
-            actual_pop_SelMean <- as.numeric(0)
-            actual_pop_SelSd   <- as.numeric(0)
+            actual_pop_prbe    <- as.numeric(NA)
+            actual_pop_SelMean <- as.numeric(NA)
+            actual_pop_SelSd   <- as.numeric(NA)
             
-            strong_pop_prbe    <- as.numeric(0)
-            strong_pop_SelMean <- as.numeric(0)
-            strong_pop_SelSd   <- as.numeric(0)
+            strong_pop_prbe    <- as.numeric(NA)
+            strong_pop_SelMean <- as.numeric(NA)
+            strong_pop_SelSd   <- as.numeric(NA)
           }
           
         } else {
@@ -974,9 +970,9 @@ do_sim <- function(sim, nsim,
                 actual_sample_SelSd   <- sd(slim_to_egglib_snps[slim_to_egglib_snps[, "S"] != 0, "S"], na.rm = TRUE)
                 
               } else {
-                actual_sample_prbe    <- as.numeric(0)
-                actual_sample_SelMean <- as.numeric(0)
-                actual_sample_SelSd   <- as.numeric(0)
+                actual_sample_prbe    <- as.numeric(NA)
+                actual_sample_SelMean <- as.numeric(NA)
+                actual_sample_SelSd   <- as.numeric(NA)
               }
               
              if (!is.na(meanNe2)){
@@ -987,9 +983,9 @@ do_sim <- function(sim, nsim,
                   positive_sample_SelSd   <- sd(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] > 1, "S"], na.rm = TRUE)
                   
                 } else {
-                  positive_sample_prbe    <- as.numeric(0)
-                  positive_sample_SelMean <- as.numeric(0)
-                  positive_sample_SelSd   <- as.numeric(0)
+                  positive_sample_prbe    <- as.numeric(NA)
+                  positive_sample_SelMean <- as.numeric(NA)
+                  positive_sample_SelSd   <- as.numeric(NA)
                 }
                 
                 ## Pr MUTATIONS UNDER STRONG NEGATIVE SELECTION --[Ns > 1]-- IN THE SAMPLE
@@ -999,9 +995,9 @@ do_sim <- function(sim, nsim,
                   negative_sample_SelSd   <- sd(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] < -1, "S"], na.rm = TRUE)
                   
                 } else {
-                  negative_sample_prbe    <- as.numeric(0)
-                  negative_sample_SelMean <- as.numeric(0)
-                  negative_sample_SelSd   <- as.numeric(0)
+                  negative_sample_prbe    <- as.numeric(NA)
+                  negative_sample_SelMean <- as.numeric(NA)
+                  negative_sample_SelSd   <- as.numeric(NA)
                 }
                 
                 strong_sample_prbe    <- positive_sample_prbe + negative_sample_prbe
