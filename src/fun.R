@@ -576,7 +576,7 @@ do_sim <- function(sim, nsim,
                 strong_positive_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] > 1, paste0("S",tc)], na.rm = TRUE)
                 
               } else {
-                strong_positive_prbe    <- as.numeric(NA) # I think it should be 0 here and these simulations should be removed later
+                strong_positive_prbe    <- as.numeric(NA)
                 strong_positive_SelMean <- as.numeric(NA)
                 strong_positive_SelSd   <- as.numeric(NA)
               }
@@ -592,9 +592,17 @@ do_sim <- function(sim, nsim,
                 strong_negative_SelSd   <- as.numeric(NA)
               }
               
-              strong_pop_prbe    <- strong_positive_prbe + strong_negative_prbe
-              strong_pop_SelMean <- strong_positive_SelMean + strong_negative_SelMean
-              strong_pop_SelSd   <- strong_positive_SelSd + strong_negative_SelSd
+              if(is.na(strong_positive_prbe)  & is.na(strong_negative_prbe)){
+                
+                strong_pop_prbe    <- as.numeric(NA)
+                strong_pop_SelMean <- as.numeric(NA)
+                strong_pop_SelSd   <- as.numeric(NA)
+                 
+              } else {
+                strong_pop_prbe    <- sum(strong_positive_prbe, strong_negative_prbe, na.rm = TRUE)
+                strong_pop_SelMean <- sum(strong_positive_SelMean, strong_negative_SelMean, na.rm = TRUE)
+                strong_pop_SelSd   <- sum(strong_positive_SelSd, strong_negative_SelSd, na.rm = TRUE)
+              }
               
             } else {
               strong_pop_prbe    <- as.numeric(NA)
@@ -657,9 +665,17 @@ do_sim <- function(sim, nsim,
                 strong_negative_SelSd   <- as.numeric(NA)
               }
               
-              strong_pop_prbe    <- strong_positive_prbe + strong_negative_prbe 
-              strong_pop_SelMean <- strong_positive_SelMean + strong_negative_SelMean 
-              strong_pop_SelSd   <- strong_positive_SelSd + strong_negative_SelSd
+              if(is.na(strong_positive_prbe)  & is.na(strong_negative_prbe)){
+                
+                strong_pop_prbe    <- as.numeric(NA)
+                strong_pop_SelMean <- as.numeric(NA)
+                strong_pop_SelSd   <- as.numeric(NA)
+                
+              } else {
+                strong_pop_prbe    <- sum(strong_positive_prbe, strong_negative_prbe, na.rm = TRUE)
+                strong_pop_SelMean <- sum(strong_positive_SelMean, strong_negative_SelMean, na.rm = TRUE)
+                strong_pop_SelSd   <- sum(strong_positive_SelSd, strong_negative_SelSd, na.rm = TRUE)
+              }
               
             } else {
               strong_pop_prbe    <- as.numeric(NA)
@@ -1000,10 +1016,18 @@ do_sim <- function(sim, nsim,
                   negative_sample_SelSd   <- as.numeric(NA)
                 }
                 
-                strong_sample_prbe    <- positive_sample_prbe + negative_sample_prbe
-                strong_sample_SelMean <- positive_sample_SelMean + negative_sample_SelMean
-                strong_sample_SelSd   <- positive_sample_SelSd + negative_sample_SelSd
-                
+               if(is.na(positive_sample_prbe)  & is.na(negative_sample_prbe)){
+                 
+                 strong_sample_prbe    <- as.numeric(NA)
+                 strong_sample_SelMean <- as.numeric(NA)
+                 strong_sample_SelSd   <- as.numeric(NA)
+                 
+               } else {
+                 strong_sample_prbe    <- sum(positive_sample_prbe, negative_sample_prbe, na.rm = TRUE)
+                 strong_sample_SelMean <- sum(positive_sample_SelMean, negative_sample_SelMean, na.rm = TRUE)
+                 strong_sample_SelSd   <- sum(positive_sample_SelSd, negative_sample_SelSd, na.rm = TRUE)
+               }
+               
               } else {
                 strong_sample_prbe    <- as.numerica(NA)
                 strong_sample_SelMean <- as.numerica(NA)
