@@ -569,15 +569,15 @@ do_sim <- function(sim, nsim,
           if (any(all_merged_genome[, paste0("S", tc)] != 0, na.rm = TRUE)){
             
             actual_pop_prbe    <- sum(all_merged_genome[, paste0("S",tc)] != 0, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)][!is.na(all_merged_genome[, paste0("S",tc)])])
-            actual_pop_SelMean <- mean(all_merged_genome[all_merged_genome[, paste0("S",tc)] != 0, paste0("S",tc)])
-            actual_pop_SelSd   <- sd(all_merged_genome[all_merged_genome[, paste0("S",tc)] != 0, paste0("S",tc)])
+            actual_pop_SelMean <- mean(all_merged_genome[all_merged_genome[, paste0("S",tc)] != 0, paste0("S",tc)], na.rm = TRUE)
+            actual_pop_SelSd   <- sd(all_merged_genome[all_merged_genome[, paste0("S",tc)] != 0, paste0("S",tc)], na.rm = TRUE)
             
             if (!is.na(meanNe2)){
               
               if (any(meanNe2*all_merged_genome[, paste0("S",tc)] > 1, na.rm = TRUE)){
                 strong_positive_prbe    <- sum(meanNe2*all_merged_genome[, paste0("S",tc)] > 1, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)][!is.na(all_merged_genome[, paste0("S",tc)])])
-                strong_positive_SelMean <- mean(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] > 1, paste0("S",tc)])
-                strong_positive_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] > 1, paste0("S",tc)])
+                strong_positive_SelMean <- mean(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] > 1, paste0("S",tc)], na.rm = TRUE)
+                strong_positive_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] > 1, paste0("S",tc)], na.rm = TRUE)
                 
               } else {
                 strong_positive_prbe    <- as.numeric(0) # I think it should be 0 here and these simulations should be removed later
@@ -587,8 +587,8 @@ do_sim <- function(sim, nsim,
               
               if (any(meanNe2*all_merged_genome[, paste0("S",tc)] < -1, na.rm = TRUE)){
                 strong_negative_prbe    <- sum(meanNe2*all_merged_genome[, paste0("S",tc)] < -1, na.rm = TRUE)/length(all_merged_genome[, paste0("S",tc)][!is.na(all_merged_genome[, paste0("S",tc)])])
-                strong_negative_SelMean <- mean(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] < -1, paste0("S",tc)])
-                strong_negative_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] < -1, paste0("S",tc)])
+                strong_negative_SelMean <- mean(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] < -1, paste0("S",tc)], na.rm = TRUE)
+                strong_negative_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] < -1, paste0("S",tc)], na.rm = TRUE)
                 
               } else {
                 strong_negative_prbe    <- as.numeric(0) # I think it should be 0 here and these simulations should be removed later
@@ -635,14 +635,14 @@ do_sim <- function(sim, nsim,
           if (any(all_merged_genome[, "S"] != 0, na.rm = TRUE)) {
             
             actual_pop_prbe    <- sum(all_merged_genome[, "S"] != 0, na.rm = TRUE)/length(all_merged_genome[, "S"][!is.na(all_merged_genome[, "S"])])
-            actual_pop_SelMean <- mean(all_merged_genome[all_merged_genome[, "S"] != 0, "S"])
-            actual_pop_SelSd   <- sd(all_merged_genome[all_merged_genome[, "S"] != 0, "S"])
+            actual_pop_SelMean <- mean(all_merged_genome[all_merged_genome[, "S"] != 0, "S"], na.rm = TRUE)
+            actual_pop_SelSd   <- sd(all_merged_genome[all_merged_genome[, "S"] != 0, "S"], na.rm = TRUE)
             
             if (!is.na(meanNe2)){
               if (any(meanNe2*all_merged_genome[, "S"] > 1, na.rm = TRUE)){
                 strong_positive_prbe    <- sum(meanNe2*all_merged_genome[, "S"] > 1, na.rm = TRUE)/length(all_merged_genome[, "S"][!is.na(all_merged_genome[, "S"])])
-                strong_positive_SelMean <- mean(all_merged_genome[meanNe2*all_merged_genome[, "S"] > 1, "S"])
-                strong_positive_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, "S"] > 1, "S"])
+                strong_positive_SelMean <- mean(all_merged_genome[meanNe2*all_merged_genome[, "S"] > 1, "S"], na.rm = TRUE)
+                strong_positive_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, "S"] > 1, "S"], na.rm = TRUE)
                 
               } else {
                 strong_positive_prbe    <- as.numeric(0) # I think it should be 0 here and these simulations should be removed later
@@ -652,8 +652,8 @@ do_sim <- function(sim, nsim,
               
               if (any(meanNe2*all_merged_genome[, "S"] < -1, na.rm = TRUE)){
                 strong_negative_prbe    <- sum(meanNe2*all_merged_genome[, "S"] < -1, na.rm = TRUE)/length(all_merged_genome[, "S"][!is.na(all_merged_genome[, "S"])])
-                strong_negative_SelMean <- mean(all_merged_genome[meanNe2*all_merged_genome[, "S"] < -1, "S"])
-                strong_negative_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, "S"] < -1, "S"])
+                strong_negative_SelMean <- mean(all_merged_genome[meanNe2*all_merged_genome[, "S"] < -1, "S"], na.rm = TRUE)
+                strong_negative_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, "S"] < -1, "S"], na.rm = TRUE)
                 
               } else {
                 strong_negative_prbe    <- as.numeric(0) # I think it should be 0 here and these simulations should be removed later
@@ -970,8 +970,8 @@ do_sim <- function(sim, nsim,
               ## ACTUAL Pr SELECTED MUTATIONS IN THE SAMPLE
               if(any(slim_to_egglib_snps$S != 0, na.rm = TRUE)){
                 actual_sample_prbe    <- sum(slim_to_egglib_snps$S != 0, na.rm = TRUE)/length(slim_to_egglib_snps$S[!is.na(slim_to_egglib_snps$S)])
-                actual_sample_SelMean <- mean(slim_to_egglib_snps[slim_to_egglib_snps[, "S"] != 0, "S"])
-                actual_sample_SelSd   <- sd(slim_to_egglib_snps[slim_to_egglib_snps[, "S"] != 0, "S"])
+                actual_sample_SelMean <- mean(slim_to_egglib_snps[slim_to_egglib_snps[, "S"] != 0, "S"], na.rm = TRUE)
+                actual_sample_SelSd   <- sd(slim_to_egglib_snps[slim_to_egglib_snps[, "S"] != 0, "S"], na.rm = TRUE)
                 
               } else {
                 actual_sample_prbe    <- as.numeric(0)
@@ -983,8 +983,8 @@ do_sim <- function(sim, nsim,
                 ## Pr MUTATIONS UNDER STRONG POSITIVE SELECTION --[Ns > 1]-- IN THE SAMPLE
                 if(any(meanNe2*slim_to_egglib_snps$S > 1, na.rm = TRUE)){
                   positive_sample_prbe    <- sum(meanNe2*slim_to_egglib_snps$S > 1, na.rm = TRUE)/length(slim_to_egglib_snps$S[!is.na(slim_to_egglib_snps$S)])
-                  positive_sample_SelMean <- mean(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] > 1, "S"])
-                  positive_sample_SelSd   <- sd(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] > 1, "S"])
+                  positive_sample_SelMean <- mean(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] > 1, "S"], na.rm = TRUE)
+                  positive_sample_SelSd   <- sd(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] > 1, "S"], na.rm = TRUE)
                   
                 } else {
                   positive_sample_prbe    <- as.numeric(0)
@@ -995,8 +995,8 @@ do_sim <- function(sim, nsim,
                 ## Pr MUTATIONS UNDER STRONG NEGATIVE SELECTION --[Ns > 1]-- IN THE SAMPLE
                 if(any(meanNe2*slim_to_egglib_snps$S < -1, na.rm = TRUE)){
                   negative_sample_prbe    <- sum(meanNe2*slim_to_egglib_snps$S < -1, na.rm = TRUE)/length(slim_to_egglib_snps$S[!is.na(slim_to_egglib_snps$S)])
-                  negative_sample_SelMean <- mean(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] < -1, "S"])
-                  negative_sample_SelSd   <- sd(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] < -1, "S"])
+                  negative_sample_SelMean <- mean(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] < -1, "S"], na.rm = TRUE)
+                  negative_sample_SelSd   <- sd(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] < -1, "S"], na.rm = TRUE)
                   
                 } else {
                   negative_sample_prbe    <- as.numeric(0)
