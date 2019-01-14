@@ -4,15 +4,13 @@ function (io)countGametes(io$ x)
 		return n;	
 	}
 
-
 initialize() {
 	
 	// Genome-wide Neutral mutations fitness
 	defineConstant("fm1", 0.0);        									// fm1 => the fitness for all neutral mutations "m1" - it is fixed with value 0;
 	defineConstant("fm2", 0.0);       									// fm2 => the fitness for all neutral mutations "m2" - it is fixed with value 0;
-	defineConstant("fm4", 0.0);       									// fm4 => the fitness for all neutral mutations "m4" - it is fixed with value 0;
 	
-   // INITIALIZE SIMULATION PARAMETERS
+  // INITIALIZE SIMULATION PARAMETERS
 	
 	initializeSLiMOptions(keepPedigrees = T);
 	initializeTreeSeq();
@@ -31,11 +29,6 @@ initialize() {
 	initializeGenomicElementType("g1", m1, 1);
 	initializeGenomicElementType("g2", c(m2,m3), c((1 - prbe), prbe));
 	
-	// Define the GenomicElementType in the EXTRA CHROMOSOME
-	initializeMutationType("m4", dm4, "f", fm4);
-	m4.mutationStackPolicy = "s";
-	m4.convertToSubstitution = T;
-	initializeGenomicElementType("g3", m4, 1);
 	
 	// GENOME's GenomicElementTypes
 	
@@ -51,9 +44,6 @@ initialize() {
 		initializeGenomicElement(g1, asInteger(e_starts[j]), asInteger(e_ends[j]));
 	}
 	
-	// EXTRA CHROMOSOME's GenomicElementTypes	
-	initializeGenomicElement(g3, genomeS, asInteger((genomeS + chrS)-1));
-		
 	defineConstant("RECOMBRATES", "initializeRecombinationRate(rr_rates, asInteger(rr_limits));");
 	executeLambda(RECOMBRATES);
 }
@@ -87,11 +77,10 @@ initialize() {
 	m1.convertToSubstitution = F; // the effect of its change affect the next generation
 	m2.convertToSubstitution = F;
 	m3.convertToSubstitution = F;
-	m4.convertToSubstitution = F;
-
-	CS1 = asInteger(N + SS1);   // CS1 = the Census Size of T=1 - the effect of it change affect the next generation - 
+	
+	CS1 = asInteger(Ncs + SS1);   // CS1 = the Census Size of T=1 - the effect of it change affect the next generation - 
 	p1.setSubpopulationSize(CS1);
-	cat("N = " + N + "\t" + "'Census Size 1' = " + CS1 + "\n");
+	cat("Ncs = " + Ncs + "\t" + "'Census Size 1' = " + CS1 + "\n");
 }
 
 s1 2 early() {
@@ -136,7 +125,7 @@ s2 late() {
 	cat(paste0(outputpath + "slim_output_sample_t1_" + simID + ".vcf" + "\n"));
 	
 	// Output as a VCF file - SS1
-	sam_inds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_sample_t1_" + simID + ".vcf"), outputMultiallelics = F); // SS1 - mutations in the sample - postprocess to remove m4 with bcftools
+	sam_inds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_sample_t1_" + simID + ".vcf"), outputMultiallelics = F); 
 	// outputMultiallelics = F ensure no redundant mutations
 }
 
@@ -153,7 +142,7 @@ s3 fitness(NULL) {
 
 s4 late() {
 	
-	p1.setSubpopulationSize(N); //add this to force sbpopulation size to N
+	p1.setSubpopulationSize(Ncs); //add this to force sbpopulation size to Ncs
 }
 
 s5 2 early() {
@@ -227,33 +216,17 @@ s7 2 late() {
 	
 	// Take all the mutation EXCEPT m4's in the population
 	pop_genome = sortBy(unique(sim.mutations), "position");
-	pop_genome = pop_genome[which(pop_genome.mutationType != m4)];
 		
 	// Save the population allele frequence of the alternative allele - PAAF
-	paaf_lines = sapply(pop_genome, "paste(c((applyValue.position+1), applyValue.id, applyValue.mutationType.id, applyValue.originGeneration, applyValue.selectionCoeff,  sim.mutationFrequencies(subpops=NULL,mutations=applyValue), (1 - sim.mutationFrequencies(subpops=NULL,mutations=applyValue)), 1 - ( (sim.mutationFrequencies(subpops=NULL,mutations=applyValue))^2 + (1 - sim.mutationFrequencies(subpops=NULL,mutations=applyValue))^2 ),'\\n'), '\\t');");
+	pmuts_lines = sapply(pop_genome, "paste(c((applyValue.position+1), applyValue.id, applyValue.mutationType.id, applyValue.originGeneration, applyValue.selectionCoeff,'\\n'), '\\t');");
 	
 	// prepare the output table
-	paaf_file = paste(paaf_lines, "");
-	paaf_file = paste("POS"+"\t"+"MID"+"\t"+"MT"+"\t"+"GO"+"\t"+"S"+"\t"+paste0("PAAF" + (sim.generation - T0))+"\t"+paste0("PRAF" + (sim.generation - T0))+"\t"+paste0("HE" + (sim.generation - T0))+"\n")+paaf_file;
+	pmuts_file = paste(pmuts_lines, "");
+	pmuts_file = paste("POS"+"\t"+"MID"+"\t"+"MT"+"\t"+"GO"+"\t"+"S"+"\n")+pmuts_file;
 	
 	// output as a TXT file - CS1
-	writeFile(filePath=paste0(outputpath + "slim_output_paaf_t" + (sim.generation - T0) + "_" + simID + ".txt"), contents=paaf_file, append=F); // CS1 freq
+	writeFile(filePath=paste0(outputpath + "slim_output_pmuts_t" + (sim.generation - T0) + "_" + simID + ".txt"), contents=pmuts_file, append=F); // CS1 freq
 
-	// EXTRA CHROMOSOME
-	//..................
-	
-	// Take ONLY m4's in the population
-	pop_extraChr = sortBy(unique(sim.mutationsOfType(m4)), "position");
-	
-	paaf_lines_extraChr = sapply(pop_extraChr, "paste(c((applyValue.position+1), applyValue.id, applyValue.mutationType.id, applyValue.originGeneration, sim.mutationFrequencies(subpops=NULL,mutations=applyValue), (1 - sim.mutationFrequencies(subpops=NULL,mutations=applyValue)), 1 - ( (sim.mutationFrequencies(subpops=NULL,mutations=applyValue))^2 + (1 - sim.mutationFrequencies(subpops=NULL,mutations=applyValue))^2 ),'\\n'), '\\t');"); 
-
-	// prepare the output table
-	paaf_file_extraChr = paste(paaf_lines_extraChr, "");
-	paaf_file_extraChr = paste("POS"+"\t"+"MID"+"\t"+"MT"+"\t"+"GO"+"\t"+paste0("PAAF" + (sim.generation - T0))+"\t"+paste0("PRAF" + (sim.generation - T0))+"\t"+paste0("HE" + (sim.generation - T0))+"\n")+paaf_file_extraChr;
-	
-	// output as a TXT file - CS1
-	writeFile(filePath=paste0(outputpath + "slim_output_paaf_extraChr_t" + (sim.generation - T0) + "_" + simID + ".txt"), contents=paaf_file_extraChr, append=F); // CS1 - output PAF only for all m4 - extra chr
-	
 	// PEDIGREE EFFECTIVE SIZE
 	//...................
 	
@@ -263,23 +236,23 @@ s7 2 late() {
 
 	if (size(gametes) > 1)
 	{
-		pedigreene = (4*p1.individualCount)/(2+var(gametes));
+		ne = (4*p1.individualCount)/(2+var(gametes));
 	} else {
-		pedigreene = (4*p1.individualCount)/(2+0);
+		ne = (4*p1.individualCount)/(2+0);
 	}
 	
 	// Save the generation and the number of unique parentes IDs
-	pedigreene = paste(sim.generation + "\t" + (sim.generation - T0) + "\t" + pedigreene);
+	timene = paste(sim.generation + "\t" + (sim.generation - T0) + "\t" + ne);
 	
 	// Output as a TXT file
-	writeFile(filePath=paste0(outputpath + "slim_output_pedigreeNe_" + simID + ".txt"), contents=pedigreene , append=T);
+	writeFile(filePath=paste0(outputpath + "slim_output_ne2_" + simID + ".txt"), contents=timene , append=T);
 }
 
 s8 late() {
 	
-	CS2 = asInteger(N + SS2); //the effect of it change affect the next generation - CS2 = Census Size 2
+	CS2 = asInteger(Ncs + SS2); //the effect of it change affect the next generation - CS2 = Census Size 2
 	p1.setSubpopulationSize(CS2);
-	cat("N = " + N + "\t" + "'Census Size 2' = " + CS2 + "\n");
+	cat("Ncs = " + Ncs + "\t" + "'Census Size 2' = " + CS2 + "\n");
 }
 
 s9 late() {
@@ -303,7 +276,7 @@ s9 late() {
 	cat(paste0(outputpath + "slim_output_sample_t2_" + simID + ".vcf" + "\n"));
 	
 	// output as a VCF file - SS2
-	sam_inds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_sample_t2_" + simID + ".vcf"), outputMultiallelics = F); // SS2 - mutations in the sample - postprocess to remove m4 with bcftools
+	sam_inds.genomes.outputVCF(filePath=paste0(outputpath + "slim_output_sample_t2_" + simID + ".vcf"), outputMultiallelics = F);
 	// outputMultiallelics = F ensure no redundant mutations
 	
 	sim.simulationFinished();

@@ -43,3 +43,27 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     }
   }
 }
+
+
+loopPrediction <- function(pods_reftable, reg_ABC_obj, vector_par, global_reftable){
+  
+  pods_prediction = NULL
+  for (p in pods_reftable$sim){
+    
+    pod_sumstats <- pods_reftable[p, -c(1:217)] 
+    pod_sumstats <- pod_sumstats[!sapply(pod_sumstats, function(x) all(is.na(x)))]
+    
+    pods_posterior <- predict(object    = reg_ABC_obj,
+                              obs       = pod_sumstats,
+                              training  = data.frame(vector_par, global_reftable),
+                              quantiles = c(0.025,0.5,0.975),
+                              paral     = T,
+                              ncores    = 28)
+    
+    pods_prediction <- rbind(pods_prediction, cbind(pods_posterior$expectation, pods_posterior$med, 
+                                                    pods_posterior$quantiles[1], pods_posterior$quantiles[3]))
+  }
+  colnames(pods_prediction) <- c("expectation" ,"median", "q1", "q3")
+  pods_prediction <- as.data.frame(pods_prediction)
+  return(pods_prediction)
+}

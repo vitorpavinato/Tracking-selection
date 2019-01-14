@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 100
+nsim                    <- 20
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"  #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim" #GENOTOUL# /usr/local/bioinfo/src/SLiM/SLiM-3.2/SLiM_build/slim
@@ -50,11 +50,13 @@ arg <- commandArgs(TRUE)
 seed                    <- arg
 #seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
-parallel_sims           <- TRUE
+parallel_sims           <- FALSE
 num_of_threads          <- 18
-remove_files            <- FALSE
+remove_files            <- TRUE
 debug_sim               <- TRUE
 debug_output_folder     <- "results/debug_output/"
+wfabc_input_file        <- FALSE
+wfabc_input_folder      <- "results/wfabc_input/"
 
 ############################################
 ##            SLiM SIMULATION             ##
@@ -62,7 +64,7 @@ debug_output_folder     <- "results/debug_output/"
 ############################################
 
 # MODEL SELECTION
-model_type = 3             # 1 = de novo beneficial mutations ("DN"); 
+model_type = 1             # 1 = de novo beneficial mutations ("DN"); 
                            # 2 = background selection ("BS"); 
                            # 3 = selection on standing variation ("SV");
 
@@ -94,31 +96,32 @@ tau = 10                   # tau => Time between samples;
 ############################################
 
 # MUTATION RATE
-mu_random = FALSE
+mu_random = TRUE
 mu_rate <- 1e-7
-mu_min  = 1e-8 #1e-10
+mu_min  = 1e-10
 mu_max  = 1e-7
 
-# POPULATION SIZE Neq
-# Ne equilibrium phase (aka burn-in)
-neq_random = FALSE
+# POPULATION SIZE EQUILIBRIUM PHASE - Neq
+neq_random = TRUE
 neq_value <- 500
 neq_min = 1
-neq_max = 1000
+neq_max = 2000
 
-# POPULATION SIZE N
-n_random = FALSE
-n_value <- 500
-n_min = 1
-n_max = 1000
+# POPULATION CENSUS SIZE - Ncs
+ncs_random = TRUE
+ncs_value <- 500
+ncs_min = 1
+ncs_max = 2000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
-gammaM_random = FALSE
+# gamma mean
+gammaM_random = TRUE
 gammaM_value <- 0.1
 gammaM_min = 0.001
 gammaM_max = 1              
 
-gammak_random = FALSE
+# gamma shape
+gammak_random = TRUE
 gammak_value <- 0.1         # gamma shape k must be positive;
 gammak_min = 0.001          # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
 gammak_max = 1
@@ -126,15 +129,15 @@ gammak_max = 1
 gammaM_gammak = TRUE        # if TRUE, rate=1, then only gammaM will be sample from prior;
 
 # PROPORTION OF THE GENOME THAT CONTAINS BENEFICIAL MUTATIONS - G2 ELEMENTS
-PrGWSel_random = FALSE
-PrGWSel_value <- 0.1
-PrGWSel_min = 0.00001 
+PrGWSel_random = TRUE
+PrGWSel_value <- 0
+PrGWSel_min = 0 
 PrGWSel_max = 1
 
-# PROPORTION OF GENOME-WIDE BENEFICIAL MUTATION IN G2 ELEMENTS
-prbe_random = FALSE
+# PROPORTION OF BENEFICIAL MUTATION IN G2 ELEMENTS
+prbe_random = TRUE
 prbe_value <- 0.1
-prbe_min = 0.00001 
+prbe_min = 1e-05
 prbe_max = 1
 
 # DOMINANCE FOR GENOME-WIDE MUTATIONS
@@ -150,11 +153,11 @@ domB <- 0.5
 domB_min = 0.5
 domB_max = 1
 
-# GENOME-WIDE RECOMBINATION RATE
-rr_random = FALSE
+# PER BASE RECOMBINATION RATE
+rr_random = TRUE
 rr_rate <- 5 * 1e-7
-rr_min  = 4.2 * 1e-8 #1e-10
-rr_max  = 4.2 * 1e-5 #1e-7
+rr_min  = 5 * 1e-10
+rr_max  = 5 * 1e-7
 
 # SELFING RATE
 selfing_random = FALSE
@@ -164,21 +167,21 @@ selfing_max = 1.00
 
 # TIME OF SELECTION CHANGE
 tc_random = FALSE
-tc_value = 5.0            # from = 1 to = tau     
+tc_value = 0             # from = 0 to = tau     
 
 ###########################################
 ##      EGGLIB SUMMSTAT SETTINGS         ##
 ###########################################
 
-wss_wspan_run = 150
+wss_wspan_run = 300
 sfs_bins_run = 10
 
 add_WSSwspan_SFSbins_1 = TRUE
-add_wss_wspan_1 = 300
+add_wss_wspan_1 = 500
 add_sfs_bins_1 = 15
 
 add_WSSwspan_SFSbins_2 = TRUE
-add_wss_wspan_2 = 500
+add_wss_wspan_2 = 1000
 add_sfs_bins_2 = 20
 
 ###########################################
@@ -208,16 +211,20 @@ if(parallel_sims){
   clusterEvalQ(cl, library(moments))
   raw_reftable <- foreach(sim=seq_len(nsim),.combine=rbind) %dopar% {   library(ROCR)
                                                                         do_sim(sim, nsim, 
-                                                                               path_to_slim_model, slim_model_prefix, model_type, model_title,
+                                                                               path_to_slim_model, slim_model_prefix,
                                                                                path_to_slim, slim_output_folder,
                                                                                path_to_bgzip, path_to_tabix, path_to_bcftools,
                                                                                egglib_input_folder, egglib_output_folder,
-                                                                               path_to_python, path_to_egglib_summstat, 
-                                                                               SS1, SS2, tau, genomeS, fragS, chrN, chrS, chrTAG, chromtagging,  
-                                                                               rr_limits, data_type, radseq_readL, radseq_readN, radseq_cov, missing_data, haplotype,
+                                                                               path_to_python, path_to_egglib_summstat,
+                                                                               remove_files, debug_sim, debug_output_folder,
+                                                                               wfabc_input_file, wfabc_input_folder,
+                                                                               model_type, model_title, genomeS, fragS, chrN, chrS,
+                                                                               chrTAG, chromtagging, data_type, 
+                                                                               radseq_readL, radseq_readN, radseq_cov,
+                                                                               missing_data, haplotype, SS1, SS2, tau,
                                                                                mu_rate, mu_random, mu_min, mu_max, 
                                                                                neq_value, neq_random, neq_min, neq_max,
-                                                                               n_value, n_random, n_min, n_max,  
+                                                                               ncs_value, ncs_random, ncs_min, ncs_max,  
                                                                                gammaM_value, gammak_value, gammaM_gammak, 
                                                                                gammaM_random, gammaM_min, gammaM_max, 
                                                                                gammak_random, gammak_min, gammak_max, 
@@ -225,12 +232,11 @@ if(parallel_sims){
                                                                                prbe_value, prbe_random, prbe_min, prbe_max, 
                                                                                domN, domN_random, domN_min, domN_max, 
                                                                                domB, domB_random, domB_min, domB_max, 
-                                                                               rr_rate, rr_random, rr_min, rr_max,
+                                                                               rr_rate, rr_random, rr_min, rr_max, rr_limits,
                                                                                selfing_rate, selfing_random, selfing_min, selfing_max,
-                                                                               wss_wspan_run, sfs_bins_run,
+                                                                               tc_random, tc_value, wss_wspan_run, sfs_bins_run,
                                                                                add_WSSwspan_SFSbins_1, add_wss_wspan_1, add_sfs_bins_1,
-                                                                               add_WSSwspan_SFSbins_2, add_wss_wspan_2, add_sfs_bins_2,
-                                                                               remove_files, debug_sim, debug_output_folder
+                                                                               add_WSSwspan_SFSbins_2, add_wss_wspan_2, add_sfs_bins_2
                                                                                )
     }
 
@@ -240,16 +246,20 @@ if(parallel_sims){
   raw_reftable <- vector("list", nsim)
   for(sim in 1:nsim){
     raw_reftable[[sim]] <- do_sim(sim, nsim, 
-                                  path_to_slim_model, slim_model_prefix, model_type, model_title,
+                                  path_to_slim_model, slim_model_prefix,
                                   path_to_slim, slim_output_folder,
                                   path_to_bgzip, path_to_tabix, path_to_bcftools,
                                   egglib_input_folder, egglib_output_folder,
-                                  path_to_python, path_to_egglib_summstat, 
-                                  SS1, SS2, tau, genomeS, fragS, chrN, chrS, chrTAG, chromtagging,  
-                                  rr_limits, data_type, radseq_readL, radseq_readN, radseq_cov, missing_data, haplotype,
+                                  path_to_python, path_to_egglib_summstat,
+                                  remove_files, debug_sim, debug_output_folder,
+                                  wfabc_input_file, wfabc_input_folder,
+                                  model_type, model_title, genomeS, fragS, chrN, chrS,
+                                  chrTAG, chromtagging, data_type, 
+                                  radseq_readL, radseq_readN, radseq_cov,
+                                  missing_data, haplotype, SS1, SS2, tau,
                                   mu_rate, mu_random, mu_min, mu_max, 
                                   neq_value, neq_random, neq_min, neq_max,
-                                  n_value, n_random, n_min, n_max,  
+                                  ncs_value, ncs_random, ncs_min, ncs_max,  
                                   gammaM_value, gammak_value, gammaM_gammak, 
                                   gammaM_random, gammaM_min, gammaM_max, 
                                   gammak_random, gammak_min, gammak_max, 
@@ -257,22 +267,18 @@ if(parallel_sims){
                                   prbe_value, prbe_random, prbe_min, prbe_max, 
                                   domN, domN_random, domN_min, domN_max, 
                                   domB, domB_random, domB_min, domB_max, 
-                                  rr_rate, rr_random, rr_min, rr_max,
+                                  rr_rate, rr_random, rr_min, rr_max, rr_limits,
                                   selfing_rate, selfing_random, selfing_min, selfing_max,
-                                  wss_wspan_run, sfs_bins_run,
+                                  tc_random, tc_value, wss_wspan_run, sfs_bins_run,
                                   add_WSSwspan_SFSbins_1, add_wss_wspan_1, add_sfs_bins_1,
-                                  add_WSSwspan_SFSbins_2, add_wss_wspan_2, add_sfs_bins_2,
-                                  remove_files, debug_sim, debug_output_folder
+                                  add_WSSwspan_SFSbins_2, add_wss_wspan_2, add_sfs_bins_2
                                   )
   }
   raw_reftable <- do.call(rbind, raw_reftable)
 }
 
-raw_reftable_header <- c("model","seed","sim","mu","rr","selfing","Neq","N","gammaMean","gammak","tc","PrGWSel","PrMSel","averageGeneticLoad","lastGeneticLoad", "PrPOPMSel", "PrPOPStrongMSel","PrSAMMSel","PrSAMStrongMSel", paste0("PedigreeNe",seq(from=0,to=(tau))),
-                         "PedigreeNetotal",paste0("IBDNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWtotal",paste0("IBDNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"IBDNeGWNtotal",paste0("IBDNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
-                         "IBDNeGWStotal",paste0("IBDNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau)),"IBDNeChrtotal",paste0("VARNeGW",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
-                         "VARNeGWtotal",paste0("VARNeGWN",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),"VARNeGWNtotal",paste0("VARNeGWS",seq(from=0,to=(tau-1)),"_",seq(from=1,to=tau)),
-                         "VARNeGWStotal",paste0("VARNeChr",seq(from=0,to=(tau-1)),"_",seq(from=1, to=tau)),"VARNeChrtotal","FSTfdrNS05","FSTfdrNS10","FSTfdrNS25","FSTprecNS75","FSTprecNS95",
+raw_reftable_header <- c("model","seed","sim","mu","rr","selfing","Neq","Ncs","gammaMean","gammaShape","Tc","PrGWSel","PrMSel","meanNe1","meanNe2",paste0("timesNe2_",seq(from=0,to=(tau))),"averageGeneticLoad","lastGeneticLoad",
+                         "POPPrMSel", "POPSelMean","POPSelSd","POPPrStrongMSel","POPStrongSelMean","POPStrongSelSd","SAMPrMSel","SAMSelMean","SAMSelSd","SAMPrStrongMSel","SAMStrongSelMean","SAMStrongSelSd","FSTfdrNS005","FSTfdrNS01","FSTfdrNS02","FSTfdrNS05","FSTfdrNS10",
                          "ID","MID","MT","S","DOM","GO","SAAF1","SAAF2","LSS_He","LSS_Dj","LSS_WCst","LSSp_He1","LSSp_He2","LSSp_Dj1","LSSp_Dj2",paste0("WSS",wss_wspan_run,"_He"),paste0("WSS",wss_wspan_run,"_Dj"),paste0("WSS",wss_wspan_run,"_WCst"),
                          paste0("WSS",wss_wspan_run,"_S"),paste0("WSS",wss_wspan_run,"_thetaW"),paste0("WSS",wss_wspan_run,"_Pi"),paste0("WSS",wss_wspan_run,"_D"),paste0("WSS",wss_wspan_run,"_Da"),paste0("WSS",wss_wspan_run,"_ZZ"),
                          paste0("WSS",wss_wspan_run,"_ZnS"),paste0("WSSp",wss_wspan_run,"_He1"),paste0("WSSp",wss_wspan_run,"_He2"),paste0("WSSp",wss_wspan_run,"_Dj1"),paste0("WSSp",wss_wspan_run,"_Dj2"),paste0("WSSp",wss_wspan_run,"_S1"),
@@ -479,18 +485,18 @@ add_SFSbins_header_2 <- c(paste0("SFSbin", add_sfs_bins_2, "_", seq(from=1, to=a
 
 if (add_WSSwspan_SFSbins_1 & add_WSSwspan_SFSbins_2){
   
-  raw_reftable_header <- c(raw_reftable_header[1:139],add_WSSwspan_header_1,add_WSSwspan_header_2,
-                           raw_reftable_header[140:length(raw_reftable_header)],add_SFSbins_header_1,add_SFSbins_header_2)
+  raw_reftable_header <- c(raw_reftable_header[1:(15+(tau+1)+60)],add_WSSwspan_header_1,add_WSSwspan_header_2,
+                           raw_reftable_header[((15+(tau+1)+60)+1):length(raw_reftable_header)],add_SFSbins_header_1,add_SFSbins_header_2)
 
 } else if (add_WSSwspan_SFSbins_1){
   
-  raw_reftable_header <- c(raw_reftable_header[1:139],add_WSSwspan_header_1,
-                           raw_reftable_header[140:length(raw_reftable_header)],add_SFSbins_header_1)
+  raw_reftable_header <- c(raw_reftable_header[1:(15+(tau+1)+60)],add_WSSwspan_header_1,
+                           raw_reftable_header[((15+(tau+1)+60)+1):length(raw_reftable_header)],add_SFSbins_header_1)
   
 } else if (add_WSSwspan_SFSbins_2){
   
-  raw_reftable_header <- c(raw_reftable_header[1:139],add_WSSwspan_header_2,
-                           raw_reftable_header[140:length(raw_reftable_header)],add_SFSbins_header_2)
+  raw_reftable_header <- c(raw_reftable_header[1:(15+(tau+1)+60)],add_WSSwspan_header_2,
+                           raw_reftable_header[((15+(tau+1)+60)+1):length(raw_reftable_header)],add_SFSbins_header_2)
 }
 
 colnames(raw_reftable) <- raw_reftable_header

@@ -1,4 +1,9 @@
 bin/summstatsVersions/
+#bin/bcftools
+#bin/bgzip
+bin/pyegglib22/
+bin/slim
+#bin/tabix
 data/*
 results/*
 src/older_pipelines/
@@ -6,11 +11,6 @@ src/stuff/
 src/.Rhistory
 .Rproj.user
 .Rhistory
-#bin/bcftools
-#bin/bgzip
-bin/pyegglib22/
-bin/slim
-#bin/tabix
 batch.*/
 selsim.*
 trackingselsim.*
