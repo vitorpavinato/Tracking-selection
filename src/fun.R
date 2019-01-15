@@ -77,7 +77,6 @@ chromtagging <- function(x, chrs_lowers){
 # function to prepare the lines of one mutation for the wfabc input format
 countgen4wfabc <- function(input, t_points = 2){
   
-  #d = input[-c(1:8)]
   d = input
   g = vector("list", length = t_points)
   n_chrom = NULL
@@ -587,7 +586,7 @@ do_sim <- function(sim, nsim,
                 strong_negative_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] < -1, paste0("S",tc)], na.rm = TRUE)
                 
               } else {
-                strong_negative_prbe    <- as.numeric(NA) # I think it should be 0 here and these simulations should be removed later
+                strong_negative_prbe    <- as.numeric(NA)
                 strong_negative_SelMean <- as.numeric(NA)
                 strong_negative_SelSd   <- as.numeric(NA)
               }
@@ -649,7 +648,7 @@ do_sim <- function(sim, nsim,
                 strong_positive_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, "S"] > 1, "S"], na.rm = TRUE)
                 
               } else {
-                strong_positive_prbe    <- as.numeric(NA) # I think it should be 0 here and these simulations should be removed later
+                strong_positive_prbe    <- as.numeric(NA)
                 strong_positive_SelMean <- as.numeric(NA)
                 strong_positive_SelSd   <- as.numeric(NA)
               }
@@ -660,7 +659,7 @@ do_sim <- function(sim, nsim,
                 strong_negative_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, "S"] < -1, "S"], na.rm = TRUE)
                 
               } else {
-                strong_negative_prbe    <- as.numeric(NA) # I think it should be 0 here and these simulations should be removed later
+                strong_negative_prbe    <- as.numeric(NA)
                 strong_negative_SelMean <- as.numeric(NA)
                 strong_negative_SelSd   <- as.numeric(NA)
               }
@@ -1029,9 +1028,9 @@ do_sim <- function(sim, nsim,
                }
                
               } else {
-                strong_sample_prbe    <- as.numerica(NA)
-                strong_sample_SelMean <- as.numerica(NA)
-                strong_sample_SelSd   <- as.numerica(NA)
+                strong_sample_prbe    <- as.numeric(NA)
+                strong_sample_SelMean <- as.numeric(NA)
+                strong_sample_SelSd   <- as.numeric(NA)
               }
               
               ## GLOBAL SUMMARY STATISTICS
@@ -1264,9 +1263,9 @@ do_sim <- function(sim, nsim,
               actual_sample_SelMean <- as.numeric(NA)
               actual_sample_SelSd   <- as.numeric(NA)
               
-              strong_sample_prbe    <- as.numerica(NA)
-              strong_sample_SelMean <- as.numerica(NA)
-              strong_sample_SelSd   <- as.numerica(NA)
+              strong_sample_prbe    <- as.numeric(NA)
+              strong_sample_SelMean <- as.numeric(NA)
+              strong_sample_SelSd   <- as.numeric(NA)
               
               global_stats <- as.data.frame(t(rep(NA, 20)))
               global_SFS <- as.data.frame(t(rep(NA, sfs_bins_run)))
@@ -1352,9 +1351,9 @@ do_sim <- function(sim, nsim,
             actual_sample_SelMean <- as.numeric(NA)
             actual_sample_SelSd   <- as.numeric(NA)
             
-            strong_sample_prbe    <- as.numerica(NA)
-            strong_sample_SelMean <- as.numerica(NA)
-            strong_sample_SelSd   <- as.numerica(NA)
+            strong_sample_prbe    <- as.numeric(NA)
+            strong_sample_SelMean <- as.numeric(NA)
+            strong_sample_SelSd   <- as.numeric(NA)
             
             global_stats <- as.data.frame(t(rep(NA, 20)))
             global_SFS <- as.data.frame(t(rep(NA, sfs_bins_run)))
@@ -1438,9 +1437,9 @@ do_sim <- function(sim, nsim,
           actual_sample_SelMean <- as.numeric(NA)
           actual_sample_SelSd   <- as.numeric(NA)
           
-          strong_sample_prbe    <- as.numerica(NA)
-          strong_sample_SelMean <- as.numerica(NA)
-          strong_sample_SelSd   <- as.numerica(NA)
+          strong_sample_prbe    <- as.numeric(NA)
+          strong_sample_SelMean <- as.numeric(NA)
+          strong_sample_SelSd   <- as.numeric(NA)
           
           global_stats <- as.data.frame(t(rep(NA, 20)))
           global_SFS <- as.data.frame(t(rep(NA, sfs_bins_run)))
@@ -1502,9 +1501,9 @@ do_sim <- function(sim, nsim,
         actual_sample_SelMean <- as.numeric(NA)
         actual_sample_SelSd   <- as.numeric(NA)
         
-        strong_sample_prbe    <- as.numerica(NA)
-        strong_sample_SelMean <- as.numerica(NA)
-        strong_sample_SelSd   <- as.numerica(NA)
+        strong_sample_prbe    <- as.numeric(NA)
+        strong_sample_SelMean <- as.numeric(NA)
+        strong_sample_SelSd   <- as.numeric(NA)
         
         global_stats <- as.data.frame(t(rep(NA, 20)))
         global_SFS <- as.data.frame(t(rep(NA, sfs_bins_run)))
@@ -1588,9 +1587,9 @@ do_sim <- function(sim, nsim,
       actual_sample_SelMean <- as.numeric(NA)
       actual_sample_SelSd   <- as.numeric(NA)
       
-      strong_sample_prbe    <- as.numerica(NA)
-      strong_sample_SelMean <- as.numerica(NA)
-      strong_sample_SelSd   <- as.numerica(NA)
+      strong_sample_prbe    <- as.numeric(NA)
+      strong_sample_SelMean <- as.numeric(NA)
+      strong_sample_SelSd   <- as.numeric(NA)
       
       global_stats <- as.data.frame(t(rep(NA, 20)))
       global_SFS <- as.data.frame(t(rep(NA, sfs_bins_run)))
@@ -1729,9 +1728,9 @@ do_sim <- function(sim, nsim,
     actual_sample_SelMean <- as.numeric(NA)
     actual_sample_SelSd   <- as.numeric(NA)
     
-    strong_sample_prbe    <- as.numerica(NA)
-    strong_sample_SelMean <- as.numerica(NA)
-    strong_sample_SelSd   <- as.numerica(NA)
+    strong_sample_prbe    <- as.numeric(NA)
+    strong_sample_SelMean <- as.numeric(NA)
+    strong_sample_SelSd   <- as.numeric(NA)
     
     global_stats <- as.data.frame(t(rep(NA, 20)))
     global_SFS <- as.data.frame(t(rep(NA, sfs_bins_run)))
