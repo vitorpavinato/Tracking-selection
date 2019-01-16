@@ -33,47 +33,54 @@ source("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analys
 #### Upload the reference table files
 ```{r load superbatch 1, echo=TRUE, eval=FALSE, include=TRUE}
 # Super-batch 1
-load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.0/results/pooled_reftable_1.RData")
+#load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.0/results/pooled_reftable_1.RData")
+load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/Cluster_data/Tracking-selection-model1.0/results/pooled_reftable_1.RData")
+
 pooled_raw_reftable_1 <- pooled_raw_reftable
 rm(pooled_raw_reftable)
 ```
 
 ```{r load superbatch 2, echo=TRUE, eval=FALSE, include=TRUE}
 # Super-batch 2
-load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.1/results/pooled_reftable_2.RData")
-pooled_raw_reftable_2 <- pooled_raw_reftable
-rm(pooled_raw_reftable)
+#load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.1/results/pooled_reftable_2.RData")
+#pooled_raw_reftable_2 <- pooled_raw_reftable
+#rm(pooled_raw_reftable)
 ```
 
 ```{r load superbatch 3, echo=TRUE, eval=FALSE, include=TRUE}
 # Super-batch 3
-load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.2/results/pooled_reftable_3.RData")
-pooled_raw_reftable_3 <- pooled_raw_reftable
-rm(pooled_raw_reftable)
+#load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.2/results/pooled_reftable_3.RData")
+#pooled_raw_reftable_3 <- pooled_raw_reftable
+#rm(pooled_raw_reftable)
 ```
 
 ```{r load superbatch 4, echo=TRUE, eval=FALSE, include=TRUE}
 # Super-batch 4
-load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.3/results/pooled_reftable_4.RData")
-pooled_raw_reftable_4 <- pooled_raw_reftable
-rm(pooled_raw_reftable)
+#load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.3/results/pooled_reftable_4.RData")
+#pooled_raw_reftable_4 <- pooled_raw_reftable
+#rm(pooled_raw_reftable)
 ```
 
 #### Pool together the reftables from super-batches
 ```{r pooling reftable, echo=TRUE, eval=FALSE, include=TRUE}
-pooled_raw_reftable_model_1 <- rbind(pooled_raw_reftable_1,pooled_raw_reftable_2,pooled_raw_reftable_3,pooled_raw_reftable_4)
+pooled_raw_reftable_model_1 <- rbind(pooled_raw_reftable_1
+                                     #pooled_raw_reftable_2,
+                                     #pooled_raw_reftable_3,
+                                     #pooled_raw_reftable_4
+                                     )
 
 rm(pooled_raw_reftable_1)
-rm(pooled_raw_reftable_2)
-rm(pooled_raw_reftable_3)
-rm(pooled_raw_reftable_4)
+#rm(pooled_raw_reftable_2)
+#rm(pooled_raw_reftable_3)
+#rm(pooled_raw_reftable_4)
 
-save(pooled_raw_reftable_model_1, file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/pooled_raw_reftable_model_1",".RData"))
+#save(pooled_raw_reftable_model_1, file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/pooled_raw_reftable_model_1",".RData"))
 #load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/pooled_raw_reftable_model_1",".RData"))
 ```
 
 #### Prepare the reftable
 ```{r data preparation, echo=TRUE, eval=FALSE, include=TRUE}
+
 # Check missing data
 plot_missing(pooled_raw_reftable_model_1) 
 missing_count <- sapply(pooled_raw_reftable_model_1, function(x) sum(is.na(x)))
@@ -102,10 +109,42 @@ save(random_pods, file=paste0("/home/pavinato/My_repositories/Tracking-selection
 #load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/random_pods",".RData"))
 
 # Prepare the global summary statistics table by removing columns that do not contain summary stats
-global_sumstats <- pooled_reftable_model_1[-random_pods, -c(1:169)]
+global_sumstats <- pooled_reftable_model_1[-random_pods, -c(1:94)]
 
 save(global_sumstats, file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/global_sumstats",".RData"))
 load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/global_sumstats",".RData"))
+```
+
+### ABC-RF Classification: Neutral vs Selection
+```{r classification neutral selection, echo=TRUE, eval=FALSE, include=TRUE}
+
+selection <- ifelse(pooled_reftable_model_1[-random_pods, "averageGeneticLoad"] == 0, "N", "S")
+table(selection)
+
+class_selection <- abcrf(formula = selection~.,
+                         data    = data.frame(selection, global_sumstats),
+                         lda     = FALSE, 
+                         ntree   = 1000,
+                         paral   = T,
+                         ncores  = 28)
+
+(class_selection)
+
+predicton_radnompods_selection <- predict(object     = class_selection,
+                                          obs        = global_sumstats_randompods,
+                                          training   = data.frame(selection, global_sumstats),
+                                          #quantiles  = c(0.025,0.5,0.975),
+                                          paral      = T,
+                                          ncores     = 28
+                                          #rf.weights = T
+                                          )
+(predicton_radnompods_selection)
+
+selection_pods <- ifelse(pooled_reftable_model_1[random_pods, "averageGeneticLoad"] <= 1e-1, "N", "S")
+table(selection_pods)
+
+head(selection_pods)
+
 ```
 
 ### ABC-RF Regression for Selection: Growing Trees
@@ -113,10 +152,10 @@ load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis
 #### Genetic Load
 ```{r regression genetic load, echo=TRUE, eval=FALSE, include=TRUE}
 averageGenLoad <- pooled_reftable_model_1[-random_pods, "averageGeneticLoad"]
-#hist(averageGenLoad, freq = TRUE, xlab = "averaged genetic load", main = "", col = "#bdbdbd")
+hist(averageGenLoad, freq = TRUE, xlab = "averaged genetic load", main = "", col = "#bdbdbd")
 
 logaverageGenload <- -log10(1-averageGenLoad)
-#hist(logaverageGenload, freq = TRUE, xlab = expression(-log[10]("averaged genetic load")), main = "", col = "#bdbdbd")
+hist(logaverageGenload, freq = TRUE, xlab = expression(-log[10]("averaged genetic load")), main = "", col = "#bdbdbd")
 
 # abf-rf regression
 reg_averageGenLoad <- regAbcrf(formula = logaverageGenload~.,
@@ -136,18 +175,18 @@ plot(x = reg_averageGenLoad, n.var = 20)
 reg_averageGenLoad$model.rf$prediction.error
 
 # error rate plot
-#err.regAbcrf(object   = reg_averageGenLoad,
-#             training = data.frame(logaverageGenload, global_sumstats),
-#             paral    = T,
-#             ncores   = 28)
+err.regAbcrf(object   = reg_averageGenLoad,
+             training = data.frame(logaverageGenload, global_sumstats),
+             paral    = T,
+             ncores   = 28)
 
 # oob predictions vs true value
-plot(x    = logaverageGenload,
+plot(x    = averageGenLoad,
      y    = reg_averageGenLoad$model.rf$predictions,
      xlab = "True value",
      ylab = "OOB predictions",
-     xlim = c(0,3),
-     ylim = c(0,3),
+     xlim = c(0,1),
+     ylim = c(0,1),
      cex.axis = 1.2,
      cex.lab  = 1.5)
 abline(a=0, b=1, col = "#cb181d")
@@ -157,11 +196,17 @@ abline(a=0, b=1, col = "#cb181d")
 #### FDR 5% of the FST hypothesis of Ns>1
 ```{r regression fdrFST, echo=TRUE, eval=FALSE, include=TRUE}
 fstfdrNs05 <- pooled_reftable_model_1[-random_pods, "FSTfdrNS05"]
-#hist(fstfdrNs05, freq = TRUE, xlab = "5% FST FDR Ns>1", main = "", col = "#bdbdbd")
+hist(fstfdrNs05, freq = TRUE, xlab = "5% FST FDR Ns>1", main = "", col = "#bdbdbd")
+
+infindex <- which(fstfdrNs05 == Inf)
+fstfdrNs05 <- fstfdrNs05[-infindex]
+
+global_sumstats_fstfdrNs05 <- global_sumstats[-infindex,]
+
 
 # abf-rf regression
 reg_fstfdrNs05 <- regAbcrf(formula = fstfdrNs05~.,
-                           data    = data.frame(fstfdrNs05, global_sumstats),
+                           data    = data.frame(fstfdrNs05, global_sumstats_fstfdrNs05),
                            ntree   = 1000,
                            paral   = T,
                            ncores  = 28)
@@ -171,7 +216,7 @@ save(reg_fstfdrNs05, file = paste0("/home/pavinato/My_repositories/Tracking-sele
 # variable Importance plot
 plot(x = reg_fstfdrNs05, n.var = 20)
 
-#head(sort(reg_fstfdrNs05$model.rf$variable.importance, decreasing = T), n=20)
+head(sort(reg_fstfdrNs05$model.rf$variable.importance, decreasing = T), n=20)
 
 # prediction error
 reg_fstfdrNs05$model.rf$prediction.error
@@ -801,14 +846,17 @@ abline(a=0, b=1, col = "#cb181d")
 
 #### Pedigree Effective Population Size - PedigreeNetotal
 ```{r regression PedigreeNetotal, echo=TRUE, eval=FALSE, include=TRUE}
-pedigreeNetotal <- pooled_reftable_model_1[-random_pods, "PedigreeNetotal"]
+#pedigreeNetotal <- pooled_reftable_model_1[-random_pods, "PedigreeNetotal"]
+meanNe2 <- pooled_reftable_model_1[-random_pods, "meanNe2"]
 
-logpedigreeNetotal <- log10(pedigreeNetotal)
+#logpedigreeNetotal <- log10(pedigreeNetotal)
+logmeanNe2 <- log10(meanNe2)
 
-#hist(logpedigreeNetotal, freq = TRUE, xlab = expression(log[10]("pedigree N"[e])), main = "", col = "#bdbdbd")
 
-reg_logpedigreeNetotal <- regAbcrf(formula = logpedigreeNetotal~.,
-                                   data    = data.frame(logpedigreeNetotal, global_sumstats),
+hist(logmeanNe2, freq = TRUE, xlab = expression(log[10]("pedigree N"[e])), main = "", col = "#bdbdbd")
+
+reg_logmeanNe2 <- regAbcrf(formula = logmeanNe2~.,
+                                   data    = data.frame(logmeanNe2, global_sumstats),
                                    ntree   = 1000,
                                    paral   = T,
                                    ncores  = 28)
@@ -816,12 +864,12 @@ reg_logpedigreeNetotal <- regAbcrf(formula = logpedigreeNetotal~.,
 save(reg_logpedigreeNetotal, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logpedigreeNetotal",".RData"))
 
 # Variable Importance plot
-plot(x = reg_logpedigreeNetotal, n.var = 20)
+plot(x = reg_logmeanNe2, n.var = 20)
 
 #head(sort(reg_logpedigreeNetotal$model.rf$variable.importance, decreasing = T), n=20)
 
 # prediction error
-reg_logpedigreeNetotal$model.rf$prediction.error
+reg_logmeanNe2$model.rf$prediction.error
 
 # error rate plot
 #err.regAbcrf(object   = reg_logpedigreeNetotal,
@@ -829,8 +877,8 @@ reg_logpedigreeNetotal$model.rf$prediction.error
 #             paral    = T,
 #             ncores   = 28)
 
-plot(x    = logpedigreeNetotal,
-     y    = reg_logpedigreeNetotal$model.rf$predictions,
+plot(x    = logmeanNe2,
+     y    = reg_logmeanNe2$model.rf$predictions,
      xlab = "True value",
      ylab = "OOB predictions",
      xlim = c(-2,4),
@@ -843,14 +891,14 @@ abline(a=0, b=1, col = "#cb181d")
 
 #### Population Census Size for the Sampling Phase - N
 ```{r regression N, echo=TRUE, eval=FALSE, include=TRUE}
-n <- pooled_reftable_model_1[-random_pods, "N"]
+ncs <- pooled_reftable_model_1[-random_pods, "Ncs"]
 
-logn <- log10(n)
+logncs <- log10(ncs)
 
-#hist(logn, freq = TRUE, xlab = expression(log[10]("N"[c])), main = "", col = "#bdbdbd")
+hist(logncs, freq = TRUE, xlab = expression(log[10]("N"[cs])), main = "", col = "#bdbdbd")
 
-reg_logn <- regAbcrf(formula = logn~.,
-                        data = data.frame(logn, global_sumstats),
+reg_logncs <- regAbcrf(formula = logncs~.,
+                        data = data.frame(logncs, global_sumstats),
                        ntree = 1000,
                        paral = T,
                       ncores = 28)
@@ -858,12 +906,12 @@ reg_logn <- regAbcrf(formula = logn~.,
 save(reg_logn, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logn",".RData"))
 
 # Variable Importance plot
-plot(x = reg_logn, n.var = 20)
+plot(x = reg_logncs, n.var = 20)
 
 #head(sort(reg_logn$model.rf$variable.importance, decreasing = T), n=20)
 
 # prediction error
-reg_logn$model.rf$prediction.error
+reg_logncs$model.rf$prediction.error
 
 # error rate plot
 #err.regAbcrf(object   = reg_logn,
@@ -871,8 +919,8 @@ reg_logn$model.rf$prediction.error
 #             paral    = T,
 #             ncores   = 28)
 
-plot(x    = logn,
-     y    = reg_logn$model.rf$predictions,
+plot(x    = logncs,
+     y    = reg_logncs$model.rf$predictions,
      xlab = "True value",
      ylab = "OOB predictions",
      xlim = c(0,3),
@@ -886,7 +934,7 @@ abline(a=0, b=1, col = "#cb181d")
 
 #### RANDOM PODS
 ```{r random pods sumstats, echo=TRUE, eval=FALSE, include=TRUE}
-global_sumstats_randompods <- pooled_reftable_model_1[random_pods, -c(1:169)]
+global_sumstats_randompods <- pooled_reftable_model_1[random_pods, -c(1:94)]
 
 save(global_sumstats_randompods, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/global_sumstats_randompods",".RData"))
 ```
@@ -1063,9 +1111,15 @@ text(x = 1:9,
 ## Random PODs
 radnompods_fstfdrNs05 <- pooled_reftable_model_1[random_pods, "FSTfdrNS05"]
 
+infindex_pods <- which(radnompods_fstfdrNs05 == Inf)
+radnompods_fstfdrNs05 <- radnompods_fstfdrNs05[-infindex_pods]
+
+global_sumstats_randompods_fstfdrNs05 <- global_sumstats_randompods[-infindex_pods,]
+
+
 posterior_radnompods_fstfdrNs05 <- predict(object     = reg_fstfdrNs05,
-                                           obs        = global_sumstats_randompods,
-                                           training   = data.frame(fstfdrNs05, global_sumstats),
+                                           obs        = global_sumstats_randompods_fstfdrNs05,
+                                           training   = data.frame(fstfdrNs05, global_sumstats_fstfdrNs05),
                                            quantiles  = c(0.025,0.5,0.975),
                                            paral      = T,
                                            ncores     = 28,
@@ -1719,22 +1773,25 @@ text(x = 1:6,
 ```{r prediction PedigreeNe, echo=TRUE, eval=FALSE, include=TRUE}
 
 ## Random PODs
-log_radnompods_pedigreeNetotal <- log10(pooled_reftable_model_1[random_pods, "PedigreeNetotal"])
+#log_radnompods_pedigreeNetotal <- log10(pooled_reftable_model_1[random_pods, "PedigreeNetotal"])
 
-posterior_radnompods_logpedigreeNetotal <- predict(object     = reg_logpedigreeNetotal,
-                                                   obs        = global_sumstats_randompods,
-                                                   training   = data.frame(logpedigreeNetotal, global_sumstats),
-                                                   quantiles  = c(0.025,0.5,0.975),
-                                                   paral      = T,
-                                                   ncores     = 28,
-                                                   rf.weights = T)
-(posterior_radnompods_logpedigreeNetotal)
+log_radnompods_meanNe2 <- log10(pooled_reftable_model_1[random_pods, "meanNe2"])
+
+
+posterior_radnompods_logmeanNe2 <- predict(object     = reg_logmeanNe2,
+                                           obs        = global_sumstats_randompods,
+                                           training   = data.frame(logmeanNe2, global_sumstats),
+                                           quantiles  = c(0.025,0.5,0.975),
+                                           paral      = T,
+                                           ncores     = 28,
+                                           rf.weights = T)
+(posterior_radnompods_logmeanNe2)
 
 # Expected True vs estimated
-plot(x    = log_radnompods_pedigreeNetotal, 
-     y    = posterior_radnompods_logpedigreeNetotal$expectation,
-     xlim = c(-2,3),
-     ylim = c(-2,3),
+plot(x    = log_radnompods_meanNe2, 
+     y    = posterior_radnompods_logmeanNe2$expectation,
+     xlim = c(0,4),
+     ylim = c(0,4),
      xlab = "True values", 
      ylab = "Estimated values",
      main = "Expected Random PODs",
@@ -1856,22 +1913,22 @@ text(x = 1:9,
 
 #### Population Census Size for the Sampling Phase - N
 ```{r predition N, echo=TRUE, eval=FALSE, include=TRUE}
-log_radnompods_n <- log10(pooled_reftable_model_1[random_pods, "N"])
+log_radnompods_ncs <- log10(pooled_reftable_model_1[random_pods, "Ncs"])
 
-posterior_radnompods_logn <- predict(object     = reg_logn,
+posterior_radnompods_logncs <- predict(object     = reg_logncs,
                                      obs        = global_sumstats_randompods,
-                                     training   = data.frame(logn, global_sumstats),
+                                     training   = data.frame(logncs, global_sumstats),
                                      quantiles  = c(0.025,0.5,0.975),
                                      paral      = T,
                                      ncores     = 28,
                                      rf.weights = T)
-(posterior_radnompods_logn)
+(posterior_radnompods_logncs)
 
 # Expected True vs estimated
-plot(x    = log_radnompods_n, 
-     y    = posterior_radnompods_logn$expectation,
-     xlim = c(0,3),
-     ylim = c(0,3),
+plot(x    = log_radnompods_ncs, 
+     y    = posterior_radnompods_logncs$expectation,
+     xlim = c(0,4),
+     ylim = c(0,4),
      xlab = "True values", 
      ylab = "Estimated values",
      main = "Expected Random PODs",

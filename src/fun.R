@@ -575,9 +575,9 @@ do_sim <- function(sim, nsim,
                 strong_positive_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] > 1, paste0("S",tc)], na.rm = TRUE)
                 
               } else {
-                strong_positive_prbe    <- as.numeric(NA)
-                strong_positive_SelMean <- as.numeric(NA)
-                strong_positive_SelSd   <- as.numeric(NA)
+                strong_positive_prbe    <- as.numeric(0)
+                strong_positive_SelMean <- as.numeric(0)
+                strong_positive_SelSd   <- as.numeric(0)
               }
               
               if (any(meanNe2*all_merged_genome[, paste0("S",tc)] < -1, na.rm = TRUE)){
@@ -586,9 +586,9 @@ do_sim <- function(sim, nsim,
                 strong_negative_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, paste0("S",tc)] < -1, paste0("S",tc)], na.rm = TRUE)
                 
               } else {
-                strong_negative_prbe    <- as.numeric(NA)
-                strong_negative_SelMean <- as.numeric(NA)
-                strong_negative_SelSd   <- as.numeric(NA)
+                strong_negative_prbe    <- as.numeric(0)
+                strong_negative_SelMean <- as.numeric(0)
+                strong_negative_SelSd   <- as.numeric(0)
               }
               
               if(is.na(strong_positive_prbe)  & is.na(strong_negative_prbe)){
@@ -610,13 +610,13 @@ do_sim <- function(sim, nsim,
             }
             
           } else {
-            actual_pop_prbe    <- as.numeric(NA)
-            actual_pop_SelMean <- as.numeric(NA)
-            actual_pop_SelSd   <- as.numeric(NA)
+            actual_pop_prbe    <- as.numeric(0)
+            actual_pop_SelMean <- as.numeric(0)
+            actual_pop_SelSd   <- as.numeric(0)
             
-            strong_pop_prbe    <- as.numeric(NA)
-            strong_pop_SelMean <- as.numeric(NA)
-            strong_pop_SelSd   <- as.numeric(NA)
+            strong_pop_prbe    <- as.numeric(0)
+            strong_pop_SelMean <- as.numeric(0)
+            strong_pop_SelSd   <- as.numeric(0)
           }
           
         } else {
@@ -648,9 +648,9 @@ do_sim <- function(sim, nsim,
                 strong_positive_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, "S"] > 1, "S"], na.rm = TRUE)
                 
               } else {
-                strong_positive_prbe    <- as.numeric(NA)
-                strong_positive_SelMean <- as.numeric(NA)
-                strong_positive_SelSd   <- as.numeric(NA)
+                strong_positive_prbe    <- as.numeric(0)
+                strong_positive_SelMean <- as.numeric(0)
+                strong_positive_SelSd   <- as.numeric(0)
               }
               
               if (any(meanNe2*all_merged_genome[, "S"] < -1, na.rm = TRUE)){
@@ -659,9 +659,9 @@ do_sim <- function(sim, nsim,
                 strong_negative_SelSd   <- sd(all_merged_genome[meanNe2*all_merged_genome[, "S"] < -1, "S"], na.rm = TRUE)
                 
               } else {
-                strong_negative_prbe    <- as.numeric(NA)
-                strong_negative_SelMean <- as.numeric(NA)
-                strong_negative_SelSd   <- as.numeric(NA)
+                strong_negative_prbe    <- as.numeric(0)
+                strong_negative_SelMean <- as.numeric(0)
+                strong_negative_SelSd   <- as.numeric(0)
               }
               
               if(is.na(strong_positive_prbe)  & is.na(strong_negative_prbe)){
@@ -683,13 +683,13 @@ do_sim <- function(sim, nsim,
             }
             
           } else {
-            actual_pop_prbe    <- as.numeric(NA)
-            actual_pop_SelMean <- as.numeric(NA)
-            actual_pop_SelSd   <- as.numeric(NA)
+            actual_pop_prbe    <- as.numeric(0)
+            actual_pop_SelMean <- as.numeric(0)
+            actual_pop_SelSd   <- as.numeric(0)
             
-            strong_pop_prbe    <- as.numeric(NA)
-            strong_pop_SelMean <- as.numeric(NA)
-            strong_pop_SelSd   <- as.numeric(NA)
+            strong_pop_prbe    <- as.numeric(0)
+            strong_pop_SelMean <- as.numeric(0)
+            strong_pop_SelSd   <- as.numeric(0)
           }
           
         } else {
@@ -985,9 +985,9 @@ do_sim <- function(sim, nsim,
                 actual_sample_SelSd   <- sd(slim_to_egglib_snps[slim_to_egglib_snps[, "S"] != 0, "S"], na.rm = TRUE)
                 
               } else {
-                actual_sample_prbe    <- as.numeric(NA)
-                actual_sample_SelMean <- as.numeric(NA)
-                actual_sample_SelSd   <- as.numeric(NA)
+                actual_sample_prbe    <- as.numeric(0)
+                actual_sample_SelMean <- as.numeric(0)
+                actual_sample_SelSd   <- as.numeric(0)
               }
               
              if (!is.na(meanNe2)){
@@ -998,9 +998,9 @@ do_sim <- function(sim, nsim,
                   positive_sample_SelSd   <- sd(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] > 1, "S"], na.rm = TRUE)
                   
                 } else {
-                  positive_sample_prbe    <- as.numeric(NA)
-                  positive_sample_SelMean <- as.numeric(NA)
-                  positive_sample_SelSd   <- as.numeric(NA)
+                  positive_sample_prbe    <- as.numeric(0)
+                  positive_sample_SelMean <- as.numeric(0)
+                  positive_sample_SelSd   <- as.numeric(0)
                 }
                 
                 ## Pr MUTATIONS UNDER STRONG NEGATIVE SELECTION --[Ns > 1]-- IN THE SAMPLE
@@ -1010,9 +1010,9 @@ do_sim <- function(sim, nsim,
                   negative_sample_SelSd   <- sd(slim_to_egglib_snps[meanNe2*slim_to_egglib_snps[, "S"] < -1, "S"], na.rm = TRUE)
                   
                 } else {
-                  negative_sample_prbe    <- as.numeric(NA)
-                  negative_sample_SelMean <- as.numeric(NA)
-                  negative_sample_SelSd   <- as.numeric(NA)
+                  negative_sample_prbe    <- as.numeric(0)
+                  negative_sample_SelMean <- as.numeric(0)
+                  negative_sample_SelSd   <- as.numeric(0)
                 }
                 
                if(is.na(positive_sample_prbe)  & is.na(negative_sample_prbe)){
@@ -1168,11 +1168,47 @@ do_sim <- function(sim, nsim,
                   
                   perf_locusFST_table <- data.frame(locusFST_test_table[1:dim(perf_table)[1], ], perf_table)
                   
-                  FSTfdr <- as.data.frame(cbind(FSTfdrNS005 = min(perf_locusFST_table[which(perf_locusFST_table$fdrNS <= 0.005),"LSS_WCst"]),
-                                                FSTfdrNS01  = min(perf_locusFST_table[which(perf_locusFST_table$fdrNS <= 0.01) ,"LSS_WCst"]),
-                                                FSTfdrNS02  = min(perf_locusFST_table[which(perf_locusFST_table$fdrNS <= 0.02) ,"LSS_WCst"]),
-                                                FSTfdrNS05  = min(perf_locusFST_table[which(perf_locusFST_table$fdrNS <= 0.05) ,"LSS_WCst"]),
-                                                FSTfdrNS10  = min(perf_locusFST_table[which(perf_locusFST_table$fdrNS <= 0.10) ,"LSS_WCst"])))
+                  whichfdrNS005 <- perf_locusFST_table[which(perf_locusFST_table$fdrNS <= 0.005),"LSS_WCst"]
+                  whichfdrNS01 <- perf_locusFST_table[which(perf_locusFST_table$fdrNS <= 0.01),"LSS_WCst"]
+                  whichfdrNS02 <- perf_locusFST_table[which(perf_locusFST_table$fdrNS <= 0.02),"LSS_WCst"]
+                  whichfdrNS05 <- perf_locusFST_table[which(perf_locusFST_table$fdrNS <= 0.05),"LSS_WCst"]
+                  whichfdrNS10 <- perf_locusFST_table[which(perf_locusFST_table$fdrNS <= 0.10),"LSS_WCst"]
+                  
+                  if (length(whichfdrNS005) == 0){
+                    FSTfdrNS005 = max(locusFST_test_table$LSS_WCst)
+                  } else {
+                    FSTfdrNS005 = min(whichfdrNS005)
+                  }
+                  
+                  if (length(whichfdrNS01) == 0){
+                    FSTfdrNS01 = max(locusFST_test_table$LSS_WCst)
+                  } else {
+                    FSTfdrNS01 = min(whichfdrNS01)
+                  }
+                  
+                  if (length(whichfdrNS02) == 0){
+                    FSTfdrNS02 = max(locusFST_test_table$LSS_WCst)
+                  } else {
+                    FSTfdrNS02 = min(whichfdrNS02)
+                  }
+                  
+                  if (length(whichfdrNS05) == 0){
+                    FSTfdrNS05 = max(locusFST_test_table$LSS_WCst)
+                  } else {
+                    FSTfdrNS05 = min(whichfdrNS05)
+                  }
+                  
+                  if (length(whichfdrNS10) == 0){
+                    FSTfdrNS10 = max(locusFST_test_table$LSS_WCst)
+                  } else {
+                    FSTfdrNS10 = min(whichfdrNS10)
+                  }
+                  
+                  FSTfdr <- as.data.frame(cbind(FSTfdrNS005,
+                                                FSTfdrNS01,
+                                                FSTfdrNS02,
+                                                FSTfdrNS05,
+                                                FSTfdrNS10))
                   
                 } else {
                   

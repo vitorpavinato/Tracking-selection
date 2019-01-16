@@ -47,8 +47,8 @@ path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #clust
 path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b22
 reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
-seed                    <- arg
-#seed                    <- 1234
+#seed                    <- arg
+seed                    <- 1234
 set.seed(seed,"Mersenne-Twister")
 parallel_sims           <- FALSE
 num_of_threads          <- 18
@@ -69,7 +69,7 @@ model_type = 1             # 1 = de novo beneficial mutations ("DN");
                            # 3 = selection on standing variation ("SV");
 
 # GENOME SPECIFICATION
-genomeS = 200e+5           # genomeS => Genome Size;
+genomeS = 100e+6           # genomeS => Genome Size;
 fragS   = 5e+4             # fragS   => Fragment size to define g1 or g2 elements;
 chrN    = 1                # chrN    => Chromosome number to define independent genome blocks;
 
@@ -99,7 +99,7 @@ tau = 10                   # tau => Time between samples;
 mu_random = TRUE
 mu_rate <- 1e-7
 mu_min  = 1e-10
-mu_max  = 1e-7
+mu_max  = 1e-6
 
 # POPULATION SIZE EQUILIBRIUM PHASE - Neq
 neq_random = TRUE
