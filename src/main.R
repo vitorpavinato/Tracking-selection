@@ -47,8 +47,8 @@ path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #clust
 path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b22
 reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
-#seed                    <- arg
-seed                    <- 1234
+seed                    <- arg
+#seed                    <- 1234 # this is here only for small tests
 set.seed(seed,"Mersenne-Twister")
 parallel_sims           <- FALSE
 num_of_threads          <- 18
@@ -173,15 +173,15 @@ tc_value = 0             # from = 0 to = tau
 ##      EGGLIB SUMMSTAT SETTINGS         ##
 ###########################################
 
-wss_wspan_run = 300
+wss_wspan_run = 500 #300
 sfs_bins_run = 10
 
 add_WSSwspan_SFSbins_1 = TRUE
-add_wss_wspan_1 = 500
+add_wss_wspan_1 = 5000 #500
 add_sfs_bins_1 = 15
 
 add_WSSwspan_SFSbins_2 = TRUE
-add_wss_wspan_2 = 1000
+add_wss_wspan_2 = 10000 #1000
 add_sfs_bins_2 = 20
 
 ###########################################
