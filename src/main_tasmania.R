@@ -69,8 +69,8 @@ model_type = 1             # 1 = de novo beneficial mutations ("DN");
                            # 3 = selection on standing variation ("SV");
 
 # GENOME SPECIFICATION
-genomeS = 2.12e+9  #300e+7 # genomeS => Genome Size;
-fragS   = 1060000  #1.5e+6 # fragS   => Fragment size to define g1 or g2 elements;
+genomeS = 2e+09            # genomeS => Genome Size;
+fragS   = 1e+06            # fragS   => Fragment size to define g1 or g2 elements;
 chrN    = 1                # chrN    => Chromosome number to define independent genome blocks;
 
 chrTAG = FALSE             # chrTAG  => if TRUE, SNPs are tagged with chromosome ID based on its position;
@@ -78,17 +78,17 @@ chrTAG = FALSE             # chrTAG  => if TRUE, SNPs are tagged with chromosome
 # DATASET SPECIFICATION 
 data_type = 2              # 1 = Whole genome sequencing (WGS);
                            # 2 = RADseq;
-radseq_readL = 100         # radseq_readL => the read length produced by the RAD library (bp);
-radseq_cov = 1.415094e-04 #0.0001        # radseq_cov   => the proportion of the genome covered by the RADseq reads;
+radseq_readL   = 100       # radseq_readL => the read length produced by the RAD library (bp);
+radseq_cov     = 1.5e-4    # radseq_cov   => the proportion of the genome covered by the RADseq reads;
 one_snp_radseq = TRUE      # one_snp_radseq => if true, it allows to take one SNP per RADseq loci;
 
-missing_data = 0.25         # missing_data => specify the proportion of missing genotypes per locus;
+missing_data = 0.25        # missing_data => specify the proportion of missing genotypes per locus;
 
 haplotype = FALSE          # haplotype => define how the homozygotes genotypes in the sample will be processed;
 
-SS1 = 26                  # SS1 => Sample Size for T=1;
-SS2 = 20                  # SS2 => Sample Size for T=2; Total sample size (SS1+SS2) should be at least > 3;
-tau = 7                   # tau => Time between samples;
+SS1 = 26                   # SS1 => Sample Size for T=1;
+SS2 = 20                   # SS2 => Sample Size for T=2; Total sample size (SS1+SS2) should be at least > 3;
+tau = 7                    # tau => Time between samples;
 
 ############################################
 ##            SLiM SIMULATION             ##
@@ -106,13 +106,13 @@ mu_max  = 1e-6
 neq_random = TRUE
 neq_value <- 500
 neq_min = 1
-neq_max = 2000
+neq_max = 200
 
 # POPULATION CENSUS SIZE - Ncs
 ncs_random = TRUE
 ncs_value <- 500
 ncs_min = 1
-ncs_max = 2000
+ncs_max = 200
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
 # gamma mean
@@ -156,9 +156,9 @@ domB_max = 1
 
 # PER BASE RECOMBINATION RATE
 rr_random = TRUE
-rr_rate <- 5 * 1e-7
-rr_min  = 5 * 1e-10
-rr_max  = 5 * 1e-7
+rr_rate <- 1e-7
+rr_min  = 1e-10
+rr_max  = 1e-7
 
 # SELFING RATE
 selfing_random = FALSE
