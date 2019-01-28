@@ -1,33 +1,33 @@
 #!/bin/bash
 
-for i in {1..2};
+for i in {1..1000};
 do
-  echo '#!/bin/bash'                                      > trackingselsim.$i.sh
-  echo "#SBATCH -J selsim.$i"                            >> trackingselsim.$i.sh;
-  echo '#SBATCH -o output.out'                           >> trackingselsim.$i.sh;
-  echo '#SBATCH -e error.out'                            >> trackingselsim.$i.sh;
-  #echo '#SBATCH -t 01:00:00'                             >> trackingselsim.$i.sh;
-  echo '#SBATCH --mem=4G'                                >> trackingselsim.$i.sh;
-  echo '#SBATCH --mail-type=BEGIN,END,FAIL'              >> trackingselsim.$i.sh;
-  echo 'module purge'                                    >> trackingselsim.$i.sh;
-  echo 'module load system/R-3.5.1'                      >> trackingselsim.$i.sh;
-  #echo 'module load bioinfo/SLiM-3.2'                    >> trackingselsim.$i.sh;
-  #echo 'module load bioinfo/tabix-0.2.5'                 >> trackingselsim.$i.sh;
-  #echo 'module load bioinfo/bcftools-1.6'                >> trackingselsim.$i.sh;
-  echo 'mkdir $TMPDIR/bin/'                       	     >> trackingselsim.$i.sh;
-  echo 'mkdir $TMPDIR/src/'                              >> trackingselsim.$i.sh;
-  echo 'mkdir $TMPDIR/src/models/'                       >> trackingselsim.$i.sh;
-  echo 'mkdir $TMPDIR/results/'                   	     >> trackingselsim.$i.sh;
-  echo 'cp -rp bin/* $TMPDIR/bin/'             	  	     >> trackingselsim.$i.sh;
-  echo 'cp -rp src/*.R $TMPDIR/src/'                     >> trackingselsim.$i.sh;
-  echo 'cp -rp src/models/*.slim $TMPDIR/src/models/'    >> trackingselsim.$i.sh;
-  echo "mkdir batch.$i"					                 >> trackingselsim.$i.sh;
-  echo "cd batch.$i"					                 >> trackingselsim.$i.sh;
-  echo 'workingDir=$PWD'                           	     >> trackingselsim.$i.sh;
-  echo 'cd $TMPDIR'                               	     >> trackingselsim.$i.sh;
-  echo 'set -x'                                   	     >> trackingselsim.$i.sh;
-  echo 'Rscript ./src/main.R $RANDOM'             	     >> trackingselsim.$i.sh;
-  echo 'set +x'                                   	     >> trackingselsim.$i.sh;
-  echo 'cp -rp $TMPDIR/results/* $workingDir'   	     >> trackingselsim.$i.sh;
+  echo '#!/bin/bash'                                       > trackingselsim.$i.sh
+  echo "#SBATCH -J selsim.$i"                             >> trackingselsim.$i.sh;
+  echo "#SBATCH -o selsim.$i.o%A"                         >> trackingselsim.$i.sh;
+  echo "#SBATCH -e selsim.$i.e%A"                         >> trackingselsim.$i.sh;
+  echo '#SBATCH -t 96:00:00'                              >> trackingselsim.$i.sh;
+  echo '#SBATCH --mem=8G'                                 >> trackingselsim.$i.sh;
+  echo "mkdir batch.$i"                                   >> trackingselsim.$i.sh;
+  echo "cd batch.$i"                                      >> trackingselsim.$i.sh;
+  echo 'workingDir=$PWD'                                  >> trackingselsim.$i.sh;
+  echo 'mkdir bin/'                                       >> trackingselsim.$i.sh;
+  echo 'mkdir src/'                                       >> trackingselsim.$i.sh;
+  echo 'mkdir src/models/'                                >> trackingselsim.$i.sh;
+  echo 'mkdir results/'                                   >> trackingselsim.$i.sh;
+  echo 'module purge'                                     >> trackingselsim.$i.sh;
+  echo 'module load system/R-3.4.3'                       >> trackingselsim.$i.sh;  
+  echo 'cd $SLURM_SUBMIT_DIR'                             >> trackingselsim.$i.sh;
+  echo 'cp -rp bin/* $workingDir/bin/'                    >> trackingselsim.$i.sh;
+  echo 'cp -rp src/*.R $workingDir/src/'                  >> trackingselsim.$i.sh;
+  echo 'cp -rp src/models/*.slim $workingDir/src/models/' >> trackingselsim.$i.sh;
+  echo 'cd $workingDir'                                   >> trackingselsim.$i.sh;
+  echo 'set -x'                                           >> trackingselsim.$i.sh;
+  echo 'Rscript ./src/main.R $RANDOM'                     >> trackingselsim.$i.sh;
+  echo 'set +x'                                           >> trackingselsim.$i.sh;
+  echo 'cp -rp $workingDir/results/* $workingDir'         >> trackingselsim.$i.sh; 
+  echo 'rm -r $workingDir/bin/'                           >> trackingselsim.$i.sh;
+  echo 'rm -r $workingDir/src/'	                          >> trackingselsim.$i.sh; 
+  echo 'rm -r $workingDir/results/'                       >> trackingselsim.$i.sh;
   sbatch trackingselsim.$i.sh
 done

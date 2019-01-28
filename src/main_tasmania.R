@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 2
+nsim                    <- 10
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"  #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim" #GENOTOUL# /usr/local/bioinfo/src/SLiM/SLiM-3.2/SLiM_build/slim
@@ -47,12 +47,12 @@ path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #clust
 path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b22
 reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
-#seed                    <- arg
-seed                    <- 1234 # this is here only for small tests
+seed                    <- arg
+#seed                    <- 1234 # this is here only for small tests
 set.seed(seed,"Mersenne-Twister")
 parallel_sims           <- FALSE
 num_of_threads          <- 18
-remove_files            <- FALSE
+remove_files            <- TRUE
 debug_sim               <- TRUE
 debug_output_folder     <- "results/debug_output/"
 wfabc_input_file        <- FALSE
@@ -99,20 +99,20 @@ tau = 7                    # tau => Time between samples;
 # MUTATION RATE
 mu_random = TRUE
 mu_rate <- 1e-7
-mu_min  = 1e-10
+mu_min  = 1e-11
 mu_max  = 1e-6
 
 # POPULATION SIZE EQUILIBRIUM PHASE - Neq
 neq_random = TRUE
 neq_value <- 500
 neq_min = 1
-neq_max = 200
+neq_max = 10000
 
 # POPULATION CENSUS SIZE - Ncs
 ncs_random = TRUE
 ncs_value <- 500
 ncs_min = 1
-ncs_max = 200
+ncs_max = 10000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
 # gamma mean
@@ -157,7 +157,7 @@ domB_max = 1
 # PER BASE RECOMBINATION RATE
 rr_random = TRUE
 rr_rate <- 1e-7
-rr_min  = 1e-10
+rr_min  = 1e-11
 rr_max  = 1e-7
 
 # SELFING RATE
