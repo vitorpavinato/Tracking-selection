@@ -105,7 +105,7 @@ mu_max  = 1e-6
 # POPULATION SIZE EQUILIBRIUM PHASE - Neq
 neq_random = TRUE
 neq_value <- 500
-neq_min = 1
+neq_min = 100
 neq_max = 10000
 
 # POPULATION CENSUS SIZE - Ncs
@@ -158,7 +158,7 @@ domB_max = 1
 rr_random = TRUE
 rr_rate <- 1e-7
 rr_min  = 1e-11
-rr_max  = 1e-7
+rr_max  = 1e-6
 
 # SELFING RATE
 selfing_random = FALSE
