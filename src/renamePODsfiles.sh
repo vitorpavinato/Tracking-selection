@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for i in {2..1000}
+for i in {1001..2000}
 
 do
   rename "s/_1/_$i/" batch.$i/slim_output/*.tree

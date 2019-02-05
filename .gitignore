@@ -6,7 +6,7 @@ bin/slim
 #bin/tabix
 data/*
 results/*
-src/older_pipelines/
+src/backups/
 src/stuff/
 src/.Rhistory
 .Rproj.user

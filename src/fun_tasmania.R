@@ -777,7 +777,7 @@ do_sim <- function(sim, nsim,
     slim_output_sample_t1        <- paste0(slim_output_folder,"slim_output_sample_t1_", sim, ".vcf")
     slim_output_sample_t2        <- paste0(slim_output_folder,"slim_output_sample_t2_", sim, ".vcf")
     
-    if(all(file.exists(c(slim_output_sample_t1, slim_output_sample_t1)))){
+    if(all(file.exists(c(slim_output_sample_t1, slim_output_sample_t2)))){
       
       slim_output_sample_t1_sorted <- paste0(slim_output_folder,"slim_output_sample_t1_", sim, "_sorted" , ".vcf")
       slim_output_sample_t2_sorted <- paste0(slim_output_folder,"slim_output_sample_t2_", sim, "_sorted" , ".vcf")
@@ -817,32 +817,6 @@ do_sim <- function(sim, nsim,
                               ">", slim_output_sample_merged) 
       
       system(bcftools_query)
-      
-      if (remove_files){
-        file.remove(paste0(slim_output_sample_t1))
-        file.remove(paste0(slim_output_sample_t2))
-        if (file.exists(paste0(slim_output_sample_t1_sorted, ".gz"))){
-          file.remove(paste0(slim_output_sample_t1_sorted, ".gz"))
-        }
-        if (file.exists(paste0(slim_output_sample_t2_sorted, ".gz"))){
-          file.remove(paste0(slim_output_sample_t2_sorted, ".gz"))
-        }
-        if (genomeS > 2^29){
-          if (file.exists(paste0(slim_output_sample_t1_sorted, ".gz.csi"))){
-            file.remove(paste0(slim_output_sample_t1_sorted, ".gz.csi"))
-          }
-          if (file.exists(paste0(slim_output_sample_t2_sorted, ".gz.csi"))){
-            file.remove(paste0(slim_output_sample_t2_sorted, ".gz.csi"))
-          }
-        } else {
-          if (file.exists(paste0(slim_output_sample_t1_sorted, ".gz.tbi"))){
-            file.remove(paste0(slim_output_sample_t1_sorted, ".gz.tbi"))
-          }
-          if (file.exists(paste0(slim_output_sample_t2_sorted, ".gz.tbi"))){
-            file.remove(paste0(slim_output_sample_t2_sorted, ".gz.tbi"))
-          }
-        }
-      }
       
       if(file.exists(slim_output_sample_merged)){
         
@@ -920,6 +894,7 @@ do_sim <- function(sim, nsim,
           slim_data <- slim_data[!duplicated(slim_data[ ,1:2]), ]
           
           if (nrow(slim_data) != 0){
+            
             # make WFABC input file
             if (wfabc_input_file){
               
@@ -1458,8 +1433,18 @@ do_sim <- function(sim, nsim,
                   }
                   
                   file.copy(from = paste0(slim_output_folder, "slim_coalesced_",model_title,"_", sim, ".tree"), to = debug_output_folder)
-                  file.copy(from = c(slim_output_sample_t1, slim_output_sample_t2), to = debug_output_folder)
-                  file.copy(from = slim_output_sample_merged, to = debug_output_folder)
+                  if(file.exists(slim_output_sample_t1)){
+                    file.copy(from = slim_output_sample_t1, to = debug_output_folder)
+                  }
+                  
+                  if(file.exists(slim_output_sample_t2)){
+                    file.copy(from = slim_output_sample_t2, to = debug_output_folder)
+                  }
+                  
+                  if(file.exists(slim_output_sample_merged)){
+                    file.copy(from = slim_output_sample_merged, to = debug_output_folder)
+                  }
+                  
                   file.copy(from = paste0(egglib_input_folder, egglib_converted_file), to = debug_output_folder)
                   
                   debug_message <- "egglib output file not found"
@@ -1560,8 +1545,17 @@ do_sim <- function(sim, nsim,
                 }
                 
                 file.copy(from = paste0(slim_output_folder, "slim_coalesced_",model_title,"_", sim, ".tree"), to = debug_output_folder)
-                file.copy(from = c(slim_output_sample_t1, slim_output_sample_t2), to = debug_output_folder)
-                file.copy(from = slim_output_sample_merged, to = debug_output_folder)
+                if(file.exists(slim_output_sample_t1)){
+                  file.copy(from = slim_output_sample_t1, to = debug_output_folder)
+                }
+                
+                if(file.exists(slim_output_sample_t2)){
+                  file.copy(from = slim_output_sample_t2, to = debug_output_folder)
+                }
+                
+                if(file.exists(slim_output_sample_merged)){
+                  file.copy(from = slim_output_sample_merged, to = debug_output_folder)
+                }
                 
                 debug_message <- "egglib input file not found"
                 
@@ -1665,7 +1659,14 @@ do_sim <- function(sim, nsim,
               }
               
               file.copy(from = paste0(slim_output_folder, "slim_coalesced_",model_title,"_", sim, ".tree"), to = debug_output_folder)
-              file.copy(from = c(slim_output_sample_t1, slim_output_sample_t2), to = debug_output_folder)
+              
+              if(file.exists(slim_output_sample_t1)){
+                file.copy(from = slim_output_sample_t1, to = debug_output_folder)
+              }
+              
+              if(file.exists(slim_output_sample_t2)){
+                file.copy(from = slim_output_sample_t2, to = debug_output_folder)
+              }
               
               if(file.exists(slim_output_sample_merged)){
                 file.copy(from = slim_output_sample_merged, to = debug_output_folder)
@@ -1768,7 +1769,14 @@ do_sim <- function(sim, nsim,
             }
             
             file.copy(from = paste0(slim_output_folder, "slim_coalesced_",model_title,"_", sim, ".tree"), to = debug_output_folder)
-            file.copy(from = c(slim_output_sample_t1, slim_output_sample_t2), to = debug_output_folder)
+            
+            if(file.exists(slim_output_sample_t1)){
+              file.copy(from = slim_output_sample_t1, to = debug_output_folder)
+            }
+            
+            if(file.exists(slim_output_sample_t2)){
+              file.copy(from = slim_output_sample_t2, to = debug_output_folder)
+            }
             
             if(file.exists(slim_output_sample_merged)){
               file.copy(from = slim_output_sample_merged, to = debug_output_folder)
@@ -1784,10 +1792,6 @@ do_sim <- function(sim, nsim,
             rownames(debug_dump) <- sim
             write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
           }
-        }
-        
-        if (remove_files){
-          file.remove(paste0(slim_output_sample_merged))
         }
         
       } else {
@@ -1875,10 +1879,13 @@ do_sim <- function(sim, nsim,
           }
           
           file.copy(from = paste0(slim_output_folder, "slim_coalesced_",model_title,"_", sim, ".tree"), to = debug_output_folder)
-          file.copy(from = c(slim_output_sample_t1, slim_output_sample_t2), to = debug_output_folder)
           
-          if(file.exists(slim_output_sample_merged)){
-            file.copy(from = slim_output_sample_merged, to = debug_output_folder)
+          if(file.exists(slim_output_sample_t1)){
+            file.copy(from = slim_output_sample_t1, to = debug_output_folder)
+          }
+          
+          if(file.exists(slim_output_sample_t2)){
+            file.copy(from = slim_output_sample_t2, to = debug_output_folder)
           }
           
           debug_message <- "merged vcf files not found"
@@ -1891,7 +1898,33 @@ do_sim <- function(sim, nsim,
           rownames(debug_dump) <- sim
           write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
         }
-        
+      }
+      
+      if (remove_files){
+        file.remove(paste0(slim_output_sample_t1))
+        file.remove(paste0(slim_output_sample_t2))
+        if (file.exists(paste0(slim_output_sample_t1_sorted, ".gz"))){
+          file.remove(paste0(slim_output_sample_t1_sorted, ".gz"))
+        }
+        if (file.exists(paste0(slim_output_sample_t2_sorted, ".gz"))){
+          file.remove(paste0(slim_output_sample_t2_sorted, ".gz"))
+        }
+        if (genomeS > 2^29){
+          if (file.exists(paste0(slim_output_sample_t1_sorted, ".gz.csi"))){
+            file.remove(paste0(slim_output_sample_t1_sorted, ".gz.csi"))
+          }
+          if (file.exists(paste0(slim_output_sample_t2_sorted, ".gz.csi"))){
+            file.remove(paste0(slim_output_sample_t2_sorted, ".gz.csi"))
+          }
+        } else {
+          if (file.exists(paste0(slim_output_sample_t1_sorted, ".gz.tbi"))){
+            file.remove(paste0(slim_output_sample_t1_sorted, ".gz.tbi"))
+          }
+          if (file.exists(paste0(slim_output_sample_t2_sorted, ".gz.tbi"))){
+            file.remove(paste0(slim_output_sample_t2_sorted, ".gz.tbi"))
+          }
+        }
+        file.remove(paste0(slim_output_sample_merged))
       }
       
     } else {
