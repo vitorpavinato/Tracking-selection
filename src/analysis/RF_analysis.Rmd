@@ -31,103 +31,226 @@ library(dplyr)
 library(abcrf)
 library(weights)
 library(grDevices)
+library(foreach)    #
+library(parallel)   # -> fo    r simulating in parallel
+library(doParallel)
 
 source("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_fun.R")
 ```
 
-#### Upload the reference table files
+#### Upload the RF training reference table files
 ```{r load superbatch 1, echo=TRUE, eval=FALSE, include=TRUE}
 # Super-batch 1
-#load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.0/results/pooled_reftable_1.RData")
-load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/Cluster_data/Tracking-selection-model1.0.1g/results/pooled_reftable_1.RData")
-
+load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/Cluster_data/pooled_reftable_1_genotoul/results/pooled_reftable_1.RData")
 pooled_raw_reftable_1 <- pooled_raw_reftable
 rm(pooled_raw_reftable)
 ```
 
 ```{r load superbatch 2, echo=TRUE, eval=FALSE, include=TRUE}
 # Super-batch 2
-#load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.1/results/pooled_reftable_2.RData")
-#pooled_raw_reftable_2 <- pooled_raw_reftable
-#rm(pooled_raw_reftable)
+load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/Cluster_data/pooled_reftable_2_genotoul/results/pooled_reftable_2.RData")
+pooled_raw_reftable_2 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
 ```
 
 ```{r load superbatch 3, echo=TRUE, eval=FALSE, include=TRUE}
 # Super-batch 3
-#load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.2/results/pooled_reftable_3.RData")
-#pooled_raw_reftable_3 <- pooled_raw_reftable
-#rm(pooled_raw_reftable)
+load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/Cluster_data/pooled_reftable_3_genotoul/results/pooled_reftable_3.RData")
+pooled_raw_reftable_3 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
 ```
 
 ```{r load superbatch 4, echo=TRUE, eval=FALSE, include=TRUE}
 # Super-batch 4
-#load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v4_PopGroup_results_backup/Tracking-selection-1.3/results/pooled_reftable_4.RData")
-#pooled_raw_reftable_4 <- pooled_raw_reftable
-#rm(pooled_raw_reftable)
+load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/Cluster_data/pooled_reftable_4_cbgp/results/pooled_reftable_4.RData")
+pooled_raw_reftable_4 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
 ```
 
 #### Pool together the reftables from super-batches
 ```{r pooling reftable, echo=TRUE, eval=FALSE, include=TRUE}
-pooled_raw_reftable_model_1 <- rbind(pooled_raw_reftable_1
-                                     #pooled_raw_reftable_2,
-                                     #pooled_raw_reftable_3,
-                                     #pooled_raw_reftable_4
-                                     )
+pooled_raw_reftable_total <- rbind(pooled_raw_reftable_1,
+                                   pooled_raw_reftable_2,
+                                   pooled_raw_reftable_3,
+                                   pooled_raw_reftable_4)
 
 rm(pooled_raw_reftable_1)
-#rm(pooled_raw_reftable_2)
-#rm(pooled_raw_reftable_3)
-#rm(pooled_raw_reftable_4)
+rm(pooled_raw_reftable_2)
+rm(pooled_raw_reftable_3)
+rm(pooled_raw_reftable_4)
 
-#save(pooled_raw_reftable_model_1, file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/pooled_raw_reftable_model_1",".RData"))
-#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/pooled_raw_reftable_model_1",".RData"))
+#save(pooled_raw_reftable_total, 
+#     file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/pooled_raw_reftable_total",".RData"))
+
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/pooled_raw_reftable_total",".RData"))
 ```
 
-#### Prepare the reftable
-```{r data preparation, echo=TRUE, eval=FALSE, include=TRUE}
+#### RANDOM PODS
+```{r load randompods, echo=TRUE, eval=FALSE, include=TRUE}
+
+# random PODs 1
+load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/Cluster_data/pooled_reftable_pods_1_genotoul/results/pooled_reftable_pods_1.RData")
+pooled_raw_reftable_pods_1 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
+
+pooled_raw_reftable_pods_1[which(is.na(pooled_raw_reftable_pods_1[, "meanNe2"])), "sim"]
+# 38  39 126 165 175 251 281 681 720 735 737 917
+
+# random PODs 2
+load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/Cluster_data/pooled_reftable_pods_2_genotoul/results/pooled_reftable_pods_2.RData")
+pooled_raw_reftable_pods_2 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
+
+pooled_raw_reftable_pods_2[which(is.na(pooled_raw_reftable_pods_2[, "meanNe2"])), "sim"]
+# 1481 1716
+
+pooled_raw_reftable_pods <- rbind(pooled_raw_reftable_pods_1,
+                                  pooled_raw_reftable_pods_2)
+
+rm(pooled_raw_reftable_pods_1)
+rm(pooled_raw_reftable_pods_2)
+
+# check dim before remove rows with NAs
+dim(pooled_raw_reftable_pods)
+# 1999 713
+
+# save pooled_raw_reftable_pods as pooled_raw_reftable_pods
+#save(pooled_raw_reftable_pods, 
+#     file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/pooled_raw_reftable_pods",".RData"))
+
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/pooled_raw_reftable_pods",".RData"))
+```
+
+#### Prepare the training RF reftable
+```{r training data preparation, echo=TRUE, eval=FALSE, include=TRUE}
 
 # Check missing data
-plot_missing(pooled_raw_reftable_model_1) 
-missing_count <- sapply(pooled_raw_reftable_model_1, function(x) sum(is.na(x)))
+plot_missing(pooled_raw_reftable_total) 
+missing_count <- sapply(pooled_raw_reftable_total, function(x) sum(is.na(x)))
 
 # produce a data.frame with only summary statistics that contain missing values higher than a threshold
-pooled_reftable_model_1 <- pooled_raw_reftable_model_1[,missing_count < nrow(pooled_raw_reftable_model_1)/10]
+pooled_reftable_total <- pooled_raw_reftable_total[,missing_count < nrow(pooled_raw_reftable_total)/10]
+
+# remove also POPSelSd and SAMSelSd columns
+pooled_reftable_total <- pooled_reftable_total[,-c(31,37)]
 
 # check it!
-plot_missing(pooled_reftable_model_1) 
+missing_count <- sapply(pooled_reftable_total, function(x) sum(is.na(x)))
+plot_missing(pooled_reftable_total) 
 
 # remove remaining rows with missing data
-pooled_reftable_model_1 <- pooled_reftable_model_1[complete.cases(pooled_reftable_model_1), ]
-save(pooled_reftable_model_1, file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/Cluster_data/Tracking-selection-model1.0.1g/results/pooled_reftable_model_1",".RData"))
-#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/pooled_reftable_model_1",".RData"))
+pooled_reftable_total <- pooled_reftable_total[complete.cases(pooled_reftable_total), ]
 
 # check it again
-plot_missing(pooled_reftable_model_1)
-#missing_count <- sapply(pooled_reftable_model_1, function(x) sum(is.na(x)))
+plot_missing(pooled_reftable_total)
+table(missing_count <- sapply(pooled_reftable_total, function(x) sum(is.na(x))))
 
 # Check != numeric values
-#infinite_count <- sapply(pooled_reftable_model_1, function(x) sum(is.infinite(x)))
+infinite_count <- sapply(pooled_reftable_total, function(x) sum(is.infinite(x)))
 
-# Sample 1000 random simulations to use as PODs
-random_pods <- sample(1:dim(pooled_reftable_model_1)[1], 1000, replace = F)
-save(random_pods, file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/Cluster_data/Tracking-selection-model1.0.1g/results/random_pods",".RData"))
-#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/random_pods",".RData"))
+#save(pooled_reftable_total, 
+#     file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/pooled_reftable_total",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/pooled_reftable_total",".RData"))
 
 # Prepare the global summary statistics table by removing columns that do not contain summary stats
-global_sumstats <- pooled_reftable_model_1[-random_pods, -c(1:105)]
+global_sumstats <- pooled_reftable_total[, -c(1:104)]
 
-#save(global_sumstats, file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/global_sumstats",".RData"))
-#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/global_sumstats",".RData"))
+#save(global_sumstats, 
+#     file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/global_sumstats",".RData"))
+
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/global_sumstats",".RData"))
 ```
 
+#### Prepare the RANDOM PODs reftable
+```{r randompods data preparation, echo=TRUE, eval=FALSE, include=TRUE}
 
-##Things that are working - for the First version of the Manuscript
+pooled_reftable_pods <- pooled_raw_reftable_pods[, names(pooled_raw_reftable_pods) %in% names(pooled_reftable_total), drop=FALSE]
+
+# remove remaining rows with missing data
+pooled_reftable_pods <- pooled_reftable_pods[complete.cases(pooled_reftable_pods), ]
+
+#save(pooled_reftable_pods, 
+#     file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/pooled_reftable_pods",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/pooled_reftable_pods",".RData"))
+
+# Prepare the global summary statistics table by removing columns that do not contain summary stats
+global_sumstats_pods <- pooled_reftable_pods[, -c(1:104)]
+
+#save(global_sumstats_pods, 
+#     file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/global_sumstats_pods",".RData"))
+
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/global_sumstats_pods",".RData"))
+```
+
+#### FIXED PODS
+
+### ABC-RF Classification - Neutral vs Selection: Growing Trees
+```{r classification neutral selection, echo=TRUE, eval=FALSE, include=TRUE}
+
+## Classification 1
+selection_1 <- ifelse(pooled_reftable_total[, "POPPrStrongMSel"] == 0, "qNeutral", "sSel")
+table(selection_1)
+
+class_selection_1 <- abcrf(formula = selection_1~.,
+                           data    = data.frame(selection_1, global_sumstats[,-c(117)]),
+                           lda     = TRUE, 
+                           ntree   = 1000,
+                           paral   = T,
+                           ncores  = 28)
+
+(class_selection_1)
+
+#save(class_selection_1, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/class_selection_1",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/class_selection_1",".RData"))
+
+# error rate plot
+err.abcrf(object   = class_selection_1,
+          training = data.frame(selection_1, global_sumstats[,-c(117)]),
+          paral    = T,
+         ncores   = 28)
+
+plot(class_selection_1, 
+     training = data.frame(selection_1, global_sumstats[,-c(117)]),
+     obs=NULL, 
+     n.var=20)
+
+#Number of simulations: 1
+#Out-of-bag prior error rate: 19.3556%
+#
+#Confusion matrix:
+#         qNeutral  sSel class.error
+#qNeutral    20922  4575   0.1794329
+#sSel         5830 22430   0.2062987
+
+## Classification 2
+#selection_2 <- ifelse(pooled_reftable_total[, "POPPrStrongMSel"] == 0 & pooled_reftable_total[, "averageGeneticLoad"] < 0.3, "qNeutral", "sSel")
+#table(selection_2)
+#
+#class_selection_2 <- abcrf(formula = selection_2~.,
+#                           data    = data.frame(selection_2, global_sumstats[,-c(117)]),
+#                           lda     = TRUE, 
+#                           ntree   = 1000,
+#                           paral   = T,
+#                           ncores  = 28)
+#
+#save(class_selection_2, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/class_selection_2",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/class_selection_2",".RData"))
+#
+#(class_selection_2)
+#
+#plot(class_selection_2, 
+#     training = data.frame(selection_2, global_sumstats[,-c(117)]),
+#     obs=NULL, 
+#     n.var=20)
+```
 
 ### ABC-RF Regression for Selection: Growing Trees
 
 #### Genetic Load
 ```{r regression genetic load, echo=TRUE, eval=FALSE, include=TRUE}
-averageGenLoad <- pooled_reftable_model_1[-random_pods, "averageGeneticLoad"]
+averageGenLoad <- pooled_reftable_total[, "averageGeneticLoad"]
 hist(averageGenLoad, freq = TRUE, xlab = expression(italic(bar(L))), main = "", col = "#bdbdbd")
 
 logaverageGenload <- -log10(1-averageGenLoad)
@@ -140,7 +263,9 @@ reg_averageGenLoad <- regAbcrf(formula = logaverageGenload~.,
                                paral   = T,
                                ncores  = 28)
 
-#save(reg_averageGenLoad, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_averageGenLoad",".RData"))
+#save(reg_averageGenLoad, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_averageGenLoad",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_averageGenLoad",".RData"))
 
 # variable Importance plot
 plot(x = reg_averageGenLoad, n.var = 20)
@@ -149,6 +274,7 @@ plot(x = reg_averageGenLoad, n.var = 20)
 
 # prediction error
 reg_averageGenLoad$model.rf$prediction.error
+# 0.01902606
 
 # error rate plot
 #err.regAbcrf(object   = reg_averageGenLoad,
@@ -163,24 +289,39 @@ plot(x    = logaverageGenload,
      ylab = "OOB predictions",
      xlim = c(0,3),
      ylim = c(0,3),
+     col  = ifelse(selection_1 == "qNeutral", "red", "black"),
      main = expression(-log[10](1 - italic(bar(L)))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+legend("topleft", legend = c("Quasi Neutral", "Strong Selection"), col = c("red", "black"), pch = 1, bty = "n")
+abline(a=0, b=1, col = "green")
+
+#identify(x = logaverageGenload,
+#         y = reg_averageGenLoad$model.rf$predictions)
+# example: simulation row 28263
+# meanNe2 super small because of a lot of selection
+#
+#hist(averageGenLoad[which(pooled_reftable_total[, "POPPrStrongMSel"] == 0)], breaks = 100, 
+#     freq = TRUE, xlab = expression(italic(bar(L))), main = "", col = "#bdbdbd")
+#
+#hist(logaverageGenload[which(pooled_reftable_total[, "POPPrStrongMSel"] == 0)], breaks = 100,
+#     freq = TRUE, xlab = expression(-log[10](1 - italic(bar(L)))), main = "", col = "#bdbdbd")
 ```
+
 #### Proportion of strongly selected regions
 ```{r regression strongly selected, echo=TRUE, eval=FALSE, include=TRUE}
-# correlation between the the calculated PrPOPStrongMSel and PrSAMStrongMSel
-cor(pooled_reftable_model_1$POPPrStrongMSel[-random_pods], pooled_reftable_model_1$SAMPrStrongMSel[-random_pods])
 
-plot(x = pooled_reftable_model_1$POPPrStrongMSel[-random_pods], 
-     y = pooled_reftable_model_1$SAMPrStrongMSel[-random_pods], 
+# correlation between the the calculated PrPOPStrongMSel and PrSAMStrongMSel
+cor(pooled_reftable_total$POPPrStrongMSel, pooled_reftable_total$SAMPrStrongMSel)
+
+plot(x = pooled_reftable_total$POPPrStrongMSel, 
+     y = pooled_reftable_total$SAMPrStrongMSel, 
      xlab = "POPPrStrongMSel",
      ylab = "SAMPrStrongMSel")
-abline(lm(pooled_reftable_model_1$SAMPrStrongMSel[-random_pods] ~ pooled_reftable_model_1$POPPrStrongMSel[-random_pods]), col="#cb181d")
+abline(lm(pooled_reftable_total$SAMPrStrongMSel ~ pooled_reftable_total$POPPrStrongMSel), col="#cb181d")
 
 # PrPOPStrongMSel
-prPOPStrongMSel <- pooled_reftable_model_1[-random_pods, "POPPrStrongMSel"]
+prPOPStrongMSel <- pooled_reftable_total[, "POPPrStrongMSel"]
 hist(prPOPStrongMSel, freq = TRUE, xlab = expression(paste("Pr mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
 
 # abf-rf regression
@@ -190,7 +331,9 @@ reg_prPOPStrongMSel <- regAbcrf(formula = prPOPStrongMSel~.,
                                 paral   = T,
                                 ncores  = 28)
 
-#save(reg_prPOPStrongMSel, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_prPOPStrongMSel",".RData"))
+#save(reg_prPOPStrongMSel, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_prPOPStrongMSel",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_prPOPStrongMSel",".RData"))
 
 # variable Importance plot
 plot(x = reg_prPOPStrongMSel, n.var = 20)
@@ -199,6 +342,7 @@ plot(x = reg_prPOPStrongMSel, n.var = 20)
 
 # prediction error
 reg_prPOPStrongMSel$model.rf$prediction.error
+# 0.001121995
 
 # error rate plot
 #err.regAbcrf(object   = reg_prPOPStrongMSel,
@@ -213,29 +357,77 @@ plot(x    = prPOPStrongMSel,
      ylab = "OOB predictions",
      xlim = c(0,1),
      ylim = c(0,1),
-     main = expression(paste("Pr mutations with"," ", italic(N[s]) , " > 1")),
+     col  = ifelse(selection_1 == "qNeutral", "red", "black"),
+     main = expression(italic(P[strong])),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+legend("topleft", legend = c("Quasi Neutral", "Strong Selection"), col = c("red", "black"), pch = 1, bty = "n")
+abline(a=0, b=1, col = "green")
+
+# removing "quasi-neutral" simulations
+neutralsims <- which(prPOPStrongMSel == 0)
+prPOPStrongMSel_2 <- prPOPStrongMSel[-neutralsims]
+global_sumstats_popstrongmsel <- global_sumstats[-neutralsims,]
+
+hist(prPOPStrongMSel_2, freq = TRUE, xlab = expression(paste("Pr mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_prPOPStrongMSel_2 <- regAbcrf(formula = prPOPStrongMSel_2~.,
+                                  data    = data.frame(prPOPStrongMSel_2, global_sumstats_popstrongmsel),
+                                  ntree   = 1000,
+                                  paral   = T,
+                                  ncores  = 28)
+
+#save(reg_prPOPStrongMSel_2, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_prPOPStrongMSel_2",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_prPOPStrongMSel",".RData"))
+
+# variable Importance plot
+plot(x = reg_prPOPStrongMSel_2, n.var = 20)
+
+#head(sort(reg_prPOPStrongMSel_2$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_prPOPStrongMSel_2$model.rf$prediction.error
+# 0.001584579
+
+# error rate plot
+#err.regAbcrf(object   = reg_prPOPStrongMSel_2,
+#             training = data.frame(prPOPStrongMSel_2, global_sumstats_popstrongmsel),
+#             paral    = T,
+#             ncores   = 28)
+
+# oob predictions vs true values
+plot(x    = prPOPStrongMSel_2,
+     y    = reg_prPOPStrongMSel_2$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,1),
+     ylim = c(0,1),
+     main = expression(italic(P[strong])),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
 
 ## -log10 PrPOPStrongMSel
-logpopstrongmsel <- log10(prPOPStrongMSel)
+logpopstrongmsel <- log10(prPOPStrongMSel_2)
 
 #logpopstrongmsel[which(logpopstrongmsel == -Inf)] <- -6
-infindex <- which(logpopstrongmsel == -Inf)
-logpopstrongmsel <- logpopstrongmsel[-infindex]
-
-global_sumstats_logpopstrongmsel <- global_sumstats[-infindex,]
+#infindex <- which(logpopstrongmsel == -Inf)
+#logpopstrongmsel <- logpopstrongmsel[-infindex]
+#global_sumstats_logpopstrongmsel <- global_sumstats[-infindex,]
 
 hist(logpopstrongmsel, freq = TRUE, xlab = expression(paste("Pr mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
 
 reg_logpopstrongmsel <- regAbcrf(formula = logpopstrongmsel~.,
-                                 data    = data.frame(logpopstrongmsel, global_sumstats_logpopstrongmsel), # try with the full reftable instead of the one  removed 0
+                                 data    = data.frame(logpopstrongmsel, global_sumstats_popstrongmsel),
                                  ntree   = 1000,
                                  paral   = T,
                                  ncores  = 28)
 
-#save(reg_logpopstrongmsel, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logpopstrongmsel",".RData"))
+#save(reg_logpopstrongmsel, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logpopstrongmsel",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logpopstrongmsel",".RData"))
 
 # variable Importance plot
 plot(x = reg_logpopstrongmsel, n.var = 20)
@@ -244,6 +436,7 @@ plot(x = reg_logpopstrongmsel, n.var = 20)
 
 # prediction error
 reg_logpopstrongmsel$model.rf$prediction.error
+# 0.2933011
 
 # error rate plot
 #err.regAbcrf(object   = reg_logpopstrongmsel,
@@ -258,21 +451,111 @@ plot(x    = logpopstrongmsel,
      ylab = "OOB predictions",
      xlim = c(-7,0),
      ylim = c(-7,0),
-     main = expression(paste("Pr mutations with"," ", italic(N[s]) , " > 1")),
+     #col  = ifelse(averageGenLoad[-neutralsims] < 0.3, "red", "black"),
+     main = expression(log[10](italic(P[strong]))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
 abline(a=0, b=1, col = "#cb181d")
+#legend("topleft", legend = c("genetic load < 0.3", "genetic load >= 0.3"), col = c("red", "black"), pch = 1, bty = "n")
+#identify(x = logpopstrongmsel,
+#         y = reg_logpopstrongmsel$model.rf$predictions)
+# example: simulation row 559 (1133)
+# probably when wmax == mean(w)
+```
+
+#### FDR 1% of the FST hypothesis of Ns>1
+```{r regression fdrFST, echo=TRUE, eval=FALSE, include=TRUE}
+fstfdrNs01 <- pooled_reftable_total[, "FSTfdrNS01"]
+hist(fstfdrNs01, freq = TRUE, xlab = "1% FST FDR Ns>1", main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_fstfdrNs01 <- regAbcrf(formula = fstfdrNs01~.,
+                           data    = data.frame(fstfdrNs01, global_sumstats),
+                           ntree   = 1000,
+                           paral   = T,
+                           ncores  = 28)
+
+#save(reg_fstfdrNs01, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_fstfdrNs01",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_fstfdrNs01",".RData"))
+
+# variable Importance plot
+plot(x = reg_fstfdrNs01, n.var = 20)
+
+#head(sort(reg_fstfdrNs01$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_fstfdrNs01$model.rf$prediction.error
+#  0.004060022
+
+# error rate plot
+#err.regAbcrf(object   = reg_fstfdrNs01,
+#             training = data.frame(fstfdrNs01, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+# oob predictions vs true values
+plot(x    = fstfdrNs01,
+     y    = reg_fstfdrNs01$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,1),
+     ylim = c(0,1),
+     col  = ifelse(selection_1 == "qNeutral", "red", "black"),
+     main = expression(paste("FDR 1%"," ", F[ST], " and ", "mutations with", italic(N[s]) , " > 1")),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+legend("bottomright", legend = c("Quasi Neutral", "Strong Selection"), col = c("red", "black"), pch = 1, bty = "n")
+abline(a=0, b=1, col = "#cb181d")
+
+# removing "quasi-neutral" simulations
+#fstfdrNs01_2 <- fstfdrNs01[-neutralsims]
+#hist(fstfdrNs01_2, freq = TRUE, xlab = "1% FST FDR Ns>1", main = "", col = "#bdbdbd")
+
+# abf-rf regression
+#reg_fstfdrNs01_2 <- regAbcrf(formula = fstfdrNs01_2~.,
+#                           data    = data.frame(fstfdrNs01_2, global_sumstats_popstrongmsel),
+#                           ntree   = 1000,
+#                           paral   = T,
+#                           ncores  = 28)
+#
+#save(reg_fstfdrNs01_2, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_fstfdrNs01_2",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_fstfdrNs01_2",".RData"))
+#
+# variable Importance plot
+#plot(x = reg_fstfdrNs01_2, n.var = 20)
+#
+#head(sort(reg_fstfdrNs01_2$model.rf$variable.importance, decreasing = T), n=20)
+#
+# prediction error
+#reg_fstfdrNs01_2$model.rf$prediction.error
+# 0.00575472
+#
+# error rate plot
+#err.regAbcrf(object   = reg_fstfdrNs01_2,
+#             training = data.frame(fstfdrNs01_2, global_sumstats_popstrongmsel),
+#             paral    = T,
+#             ncores   = 28)
+#
+# oob predictions vs true values
+#plot(x    = fstfdrNs01_2,
+#     y    = reg_fstfdrNs01_2$model.rf$predictions,
+#     xlab = "True value",
+#     ylab = "OOB predictions",
+#     xlim = c(0,1),
+#     ylim = c(0,1),
+#     #col  = ifelse(selection_1 == "qNeutral", "red", "black"),
+#     main = expression(paste("FDR 1%"," ", F[ST], " and ", "mutations with", italic(N[s]) , " > 1")),
+#     cex.axis = 1.2,
+#     cex.lab  = 1.5)
+#abline(a=0, b=1, col = "#cb181d")
 ```
 
 #### FDR 5% of the FST hypothesis of Ns>1
 ```{r regression fdrFST, echo=TRUE, eval=FALSE, include=TRUE}
-fstfdrNs05 <- pooled_reftable_model_1[-random_pods, "FSTfdrNS05"]
+fstfdrNs05 <- pooled_reftable_total[, "FSTfdrNS05"]
 hist(fstfdrNs05, freq = TRUE, xlab = "5% FST FDR Ns>1", main = "", col = "#bdbdbd")
-
-#infindex <- which(fstfdrNs05 == Inf)
-#fstfdrNs05 <- fstfdrNs05[-infindex]
-
-#global_sumstats_fstfdrNs05 <- global_sumstats[-infindex,]
 
 # abf-rf regression
 reg_fstfdrNs05 <- regAbcrf(formula = fstfdrNs05~.,
@@ -281,7 +564,9 @@ reg_fstfdrNs05 <- regAbcrf(formula = fstfdrNs05~.,
                            paral   = T,
                            ncores  = 28)
 
-#save(reg_fstfdrNs05, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_fstfdrNs05",".RData"))
+#save(reg_fstfdrNs05, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_fstfdrNs05",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_fstfdrNs05",".RData"))
 
 # variable Importance plot
 plot(x = reg_fstfdrNs05, n.var = 20)
@@ -290,6 +575,7 @@ plot(x = reg_fstfdrNs05, n.var = 20)
 
 # prediction error
 reg_fstfdrNs05$model.rf$prediction.error
+#  0.004149811
 
 # error rate plot
 #err.regAbcrf(object   = reg_fstfdrNs05,
@@ -304,9 +590,11 @@ plot(x    = fstfdrNs05,
      ylab = "OOB predictions",
      xlim = c(0,1),
      ylim = c(0,1),
+     #col  = ifelse(selection_1 == "qNeutral", "red", "black"),
      main = expression(paste("FDR 5%"," ", F[ST], " and ", "mutations with", italic(N[s]) , " > 1")),
      cex.axis = 1.2,
      cex.lab  = 1.5)
+#legend("bottomright", legend = c("Quasi Neutral", "Strong Selection"), col = c("red", "black"), pch = 1, bty = "n")
 abline(a=0, b=1, col = "#cb181d")
 ```
 
@@ -314,11 +602,11 @@ abline(a=0, b=1, col = "#cb181d")
 ```{r regression thetaS, echo=TRUE, eval=FALSE, include=TRUE}
 genomeS = 100e+6
 
-prRSel <- pooled_reftable_model_1[-random_pods, "PrGWSel"] * pooled_reftable_model_1[-random_pods, "PrMSel"]
+prRSel <- pooled_reftable_total[, "PrGWSel"] * pooled_reftable_total[, "PrMSel"]
   
-logthetaS <- log10(4 * pooled_reftable_model_1[-random_pods, "meanNe2"] * (pooled_reftable_model_1[-random_pods, "mu"] * prRSel) * genomeS)
+logthetaS <- log10(4 * pooled_reftable_total[, "meanNe2"] * (pooled_reftable_total[, "mu"] * prRSel) * genomeS)
 
-hist(logthetaS, freq = TRUE, xlab = expression(log[10](theta[S])), main = "", col = "#bdbdbd")
+hist(logthetaS, freq = TRUE, xlab = expression(log[10](italic(theta[S]))), main = "", col = "#bdbdbd")
 
 # abf-rf regression
 reg_logthetaS <- regAbcrf(formula = logthetaS~.,
@@ -327,7 +615,9 @@ reg_logthetaS <- regAbcrf(formula = logthetaS~.,
                           paral   = T,
                           ncores  = 28)
 
-#save(reg_logthetaS, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logthetaS",".RData"))
+#save(reg_logthetaS, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logthetaS",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logthetaS",".RData"))
 
 # variable Importance plot
 plot(x = reg_logthetaS, n.var = 20)
@@ -336,6 +626,7 @@ plot(x = reg_logthetaS, n.var = 20)
 
 # prediction error
 reg_logthetaS$model.rf$prediction.error
+# 1.431425
 
 # error rate plot
 #err.regAbcrf(object   = reg_logthetaS,
@@ -349,19 +640,64 @@ plot(x    = logthetaS,
      ylab = "OOB predictions",
      xlim = c(-7,5),
      ylim = c(-7,5),
+     col  = ifelse(selection_1 == "qNeutral", "red", "black"),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+legend("topleft", legend = c("Quasi Neutral", "Strong Selection"), col = c("red", "black"), pch = 1, bty = "n")
+abline(a=0, b=1, col = "green")
+
+```
+
+#### DFE Gamma mean
+```{r regression gamma mean, echo=TRUE, eval=FALSE, include=TRUE}
+
+loggammamean <- log10(pooled_reftable_total[, "gammaMean"])
+
+hist(loggammamean, freq = TRUE, xlab = expression(log[10](paste("gamma ", kappa, theta))), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_loggammamean <- regAbcrf(formula = loggammamean~.,
+                             data    = data.frame(loggammamean, global_sumstats),
+                             ntree   = 1000,
+                             paral   = T,
+                             ncores  = 28)
+
+#save(reg_loggammamean, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_loggammamean",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_loggammamean",".RData"))
+
+# variable Importance plot
+plot(x = reg_loggammamean, n.var = 20)
+
+#head(sort(reg_loggammamean$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_loggammamean$model.rf$prediction.error
+# 0.6123305
+
+# error rate plot
+#err.regAbcrf(object   = reg_loggammamean,
+#             training = data.frame(loggammamean, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = loggammamean,
+     y    = reg_loggammamean$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-3,0),
+     ylim = c(-3,0),
+     main = expression(log[10](paste("gamma ", kappa, theta))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
 abline(a=0, b=1, col = "#cb181d")
-
 ```
 
 ### ABC-RF Regression for Demography: Growing Trees
 
 #### Effective Population Size of Phase 2 - Sampling phase
 ```{r regression meanNe2, echo=TRUE, eval=FALSE, include=TRUE}
-meanNe2 <- pooled_reftable_model_1[-random_pods, "meanNe2"]
-
-logmeanNe2 <- log10(meanNe2)
+logmeanNe2 <- log10(pooled_reftable_total[, "meanNe2"])
 
 hist(logmeanNe2, freq = TRUE, xlab = expression(log[10](italic(bar(N[e])))), main = "", col = "#bdbdbd")
 
@@ -371,19 +707,22 @@ reg_logmeanNe2 <- regAbcrf(formula = logmeanNe2~.,
                                    paral   = T,
                                    ncores  = 28)
 
-#save(reg_logpedigreeNetotal, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logpedigreeNetotal",".RData"))
+#save(reg_logmeanNe2, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logmeanNe2",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logmeanNe2",".RData"))
 
 # Variable Importance plot
 plot(x = reg_logmeanNe2, n.var = 20)
 
-#head(sort(reg_logpedigreeNetotal$model.rf$variable.importance, decreasing = T), n=20)
+#head(sort(reg_logmeanNe2$model.rf$variable.importance, decreasing = T), n=20)
 
 # prediction error
 reg_logmeanNe2$model.rf$prediction.error
+# 0.02328446
 
 # error rate plot
-#err.regAbcrf(object   = reg_logpedigreeNetotal,
-#             training = data.frame(logpedigreeNetotal, global_sumstats),
+#err.regAbcrf(object   = reg_logmeanNe2,
+#             training = data.frame(logmeanNe2, global_sumstats),
 #             paral    = T,
 #             ncores   = 28)
 
@@ -398,14 +737,11 @@ plot(x    = logmeanNe2,
      cex.axis = 1.2,
      cex.lab  = 1.5)
 abline(a=0, b=1, col = "#cb181d")
-
 ```
 
 #### Population Census Size for the Sampling Phase - Ncs
 ```{r regression Ncs, echo=TRUE, eval=FALSE, include=TRUE}
-ncs <- pooled_reftable_model_1[-random_pods, "Ncs"]
-
-logncs <- log10(ncs)
+logncs <- log10(pooled_reftable_total[, "Ncs"])
 
 hist(logncs, freq = TRUE, xlab = expression(log[10](italic(N[cs]))), main = "", col = "#bdbdbd")
 
@@ -415,7 +751,9 @@ reg_logncs <- regAbcrf(formula = logncs~.,
                        paral = T,
                       ncores = 28)
 
-#save(reg_logn, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logn",".RData"))
+#save(reg_logncs, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logncs",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logncs",".RData"))
 
 # Variable Importance plot
 plot(x = reg_logncs, n.var = 20)
@@ -424,10 +762,11 @@ plot(x = reg_logncs, n.var = 20)
 
 # prediction error
 reg_logncs$model.rf$prediction.error
+# 0.03197194
 
 # error rate plot
-#err.regAbcrf(object   = reg_logn,
-#             training = data.frame(logn, global_sumstats),
+#err.regAbcrf(object   = reg_logncs,
+#             training = data.frame(logncs, global_sumstats),
 #             paral    = T,
 #             ncores   = 28)
 
@@ -438,16 +777,61 @@ plot(x    = logncs,
      ylab = "OOB predictions",
      xlim = c(0,4),
      ylim = c(0,4),
+     #col  = ifelse(selection_1 == "qNeutral", "red", "black"),
      main = expression(log[10](italic(N[cs]))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
 abline(a=0, b=1, col = "#cb181d")
 ```
+
+#### Theta1 - equilibrium phase
+```{r regression theta, echo=TRUE, eval=FALSE, include=TRUE}
+logtheta1 <- log10(4 * pooled_reftable_total[, "meanNe1"] * (pooled_reftable_total[, "mu"]) * genomeS)
+
+hist(logtheta1, freq = TRUE, xlab = expression(log[10](italic(theta[1]))), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_logtheta1 <- regAbcrf(formula = logtheta1~.,
+                          data    = data.frame(logtheta1, global_sumstats),
+                          ntree   = 1000,
+                          paral   = T,
+                          ncores  = 28)
+
+#save(reg_logtheta1, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logtheta1",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logtheta1",".RData"))
+
+# variable Importance plot
+plot(x = reg_logtheta1, n.var = 20)
+
+#head(sort(reg_logtheta1$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logtheta1$model.rf$prediction.error
+# 0.02243393
+
+# error rate plot
+#err.regAbcrf(object   = reg_logtheta1,
+#             training = data.frame(logtheta1, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logtheta1,
+     y    = reg_logtheta1$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-1,6),
+     ylim = c(-1,6),
+     main = expression(log[10](italic(theta[1]))),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+```
+
 #### Ratio Effective Size / Census Size for the Sampling Phase - MeanNe2/Ncs
 ```{r regression MeanNe2Ncs, echo=TRUE, eval=FALSE, include=TRUE}
 
-meanNe2ncs <- meanNe2/ncs
-logmeanNe2ncs <- log10(meanNe2ncs)
+logmeanNe2ncs <- log10(pooled_reftable_total[, "meanNe2"]/pooled_reftable_total[, "Ncs"])
 
 hist(logmeanNe2ncs, freq = TRUE, xlab = expression(log[10](italic(bar(N[e]))/italic(N[cs]))), main = "", col = "#bdbdbd")
 
@@ -457,19 +841,22 @@ reg_logmeanNe2ncs <- regAbcrf(formula = logmeanNe2ncs~.,
                                 paral = T,
                                ncores = 28)
 
-#save(reg_logn, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logn",".RData"))
+#save(reg_logmeanNe2ncs, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logmeanNe2ncs",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logmeanNe2ncs",".RData"))
 
 # Variable Importance plot
 plot(x = reg_logmeanNe2ncs, n.var = 20)
 
-#head(sort(reg_logn$model.rf$variable.importance, decreasing = T), n=20)
+#head(sort(reg_logmeanNe2ncs$model.rf$variable.importance, decreasing = T), n=20)
 
 # prediction error
 reg_logmeanNe2ncs$model.rf$prediction.error
+# 0.02523953
 
 # error rate plot
-#err.regAbcrf(object   = reg_logn,
-#             training = data.frame(logn, global_sumstats),
+#err.regAbcrf(object   = reg_logmeanNe2ncs,
+#             training = data.frame(logmeanNe2ncs, global_sumstats),
 #             paral    = T,
 #             ncores   = 28)
 
@@ -485,10 +872,11 @@ plot(x    = logmeanNe2ncs,
      cex.lab  = 1.5)
 abline(a=0, b=1, col = "#cb181d")
 ```
+
 #### Per site mutation rate mu
 ```{r regression site mutation rate, echo=TRUE, eval=FALSE, include=TRUE}
 
-logmu <- log10(pooled_reftable_model_1[-random_pods, "mu"])
+logmu <- log10(pooled_reftable_total[, "mu"])
 
 hist(logmu, freq = TRUE, xlab = expression(log[10](italic(mu))), main = "", col = "#bdbdbd")
 
@@ -499,7 +887,9 @@ reg_logmu <- regAbcrf(formula = logmu~.,
                       paral   = T,
                       ncores  = 28)
 
-#save(reg_logmu, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logmu",".RData"))
+#save(reg_logmu, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logmu",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logmu",".RData"))
 
 # variable Importance plot
 plot(x = reg_logmu, n.var = 20)
@@ -508,6 +898,7 @@ plot(x = reg_logmu, n.var = 20)
 
 # prediction error
 reg_logmu$model.rf$prediction.error
+# 0.007331174
 
 # error rate plot
 #err.regAbcrf(object   = reg_logmu,
@@ -519,12 +910,56 @@ plot(x    = logmu,
      y    = reg_logmu$model.rf$predictions,
      xlab = "True value",
      ylab = "OOB predictions",
-     xlim = c(-10,-5),
-     ylim = c(-10,-5),
+     xlim = c(-10,-6),
+     ylim = c(-10,-6),
+     main = expression(log[10](italic(mu))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
 abline(a=0, b=1, col = "#cb181d")
+```
 
+#### Rho = Nr
+```{r regression rho, echo=TRUE, eval=FALSE, include=TRUE}
+logrho <- log10(pooled_reftable_total[, "meanNe2"] * pooled_reftable_total[, "rr"])
+
+hist(logrho, freq = TRUE, xlab = expression(log[10](italic(rho))), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_logrho <- regAbcrf(formula = logrho~.,
+                       data    = data.frame(logrho, global_sumstats),
+                       ntree   = 1000,
+                       paral   = T,
+                       ncores  = 28)
+
+#save(reg_logrho, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logrho",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logrho",".RData"))
+
+# variable Importance plot
+plot(x = reg_logrho, n.var = 20)
+
+#head(sort(reg_logrho$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logrho$model.rf$prediction.error
+#  0.399973
+
+# error rate plot
+#err.regAbcrf(object   = reg_logrho,
+#             training = data.frame(logrho, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logrho,
+     y    = reg_logrho$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-10,-2),
+     ylim = c(-10,-2),
+     main = expression(log[10](italic(rho))),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
 ```
 
 #### Combined plot
@@ -638,23 +1073,38 @@ plot(x    = logmu,
 abline(a=0, b=1, col = "#cb181d")
 ```
 
-### ABC-RF Regression for Selection: Prediction
+### ABC-RF Classification - Neutral vs Selection: Growing Trees
+```{r classification neutral selection, echo=TRUE, eval=FALSE, include=TRUE}
 
-#### RANDOM PODS
-```{r random pods sumstats, echo=TRUE, eval=FALSE, include=TRUE}
-global_sumstats_randompods <- pooled_reftable_model_1[random_pods, -c(1:105)]
+## Classification 1
+selection_1_pods <- ifelse(pooled_reftable_pods[, "POPPrStrongMSel"] == 0, "qNeutral", "sSel")
+table(selection_1_pods)
 
-#save(global_sumstats_randompods, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/global_sumstats_randompods",".RData"))
+posterior_class_selection_1 <- predict(object     = class_selection_1,
+                                       obs        = global_sumstats_pods[,-c(117)],
+                                       training   = data.frame(selection_1, global_sumstats[,-c(117)]),
+                                       ntree      = 1000,
+                                       paral      = TRUE,
+                                       paral.predict = TRUE,
+                                       ncores     = 28)
+
+(posterior_class_selection_1)
+
+#save(posterior_radnompods_averageGenLoad, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_class_selection_1",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_class_selection_1",".RData"))
 ```
+
+### ABC-RF Regression for Selection: Prediction
 
 #### Genetic Load
 ```{r prediction genetic load, echo=TRUE, eval=FALSE, include=TRUE}
 
 ## Random PODs
-log_radnompods_averageGenLoad <- -log10(1-pooled_reftable_model_1[random_pods, "averageGeneticLoad"])
+log_radnompods_averageGenLoad <- -log10(1-pooled_reftable_pods[, "averageGeneticLoad"])
 
 posterior_radnompods_averageGenLoad <- predict(object     = reg_averageGenLoad,
-                                               obs        = global_sumstats_randompods,
+                                               obs        = global_sumstats_pods,
                                                training   = data.frame(logaverageGenload, global_sumstats),
                                                quantiles  = c(0.025,0.5,0.975),
                                                paral      = T,
@@ -662,30 +1112,38 @@ posterior_radnompods_averageGenLoad <- predict(object     = reg_averageGenLoad,
                                                rf.weights = T)
 #(posterior_radnompods_averageGenLoad)
 
+#save(posterior_radnompods_averageGenLoad, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_averageGenLoad",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_averageGenLoad",".RData"))
+
 # Expected True vs estimated
 plot(x    = log_radnompods_averageGenLoad, 
      y    = posterior_radnompods_averageGenLoad$expectation,
      xlim = c(0,3),
      ylim = c(0,3),
-     xlab = expression(psi[1]), 
-     ylab = expression(tilde(psi[1])),
-     main = "Expected",
-     pch  = 1,
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
+     xlab = expression(eta[1]), 
+     ylab = expression(tilde(eta[1])),
+     main = expression(-log[10](1 - italic(bar(L)))),
+     pch  = 1
+     #,
+     #cex.axis = 1.2,
+     #cex.lab  = 1.5
+     )
 abline(a=0, b=1, col = "#cb181d")
 
 # Median True vs estimated
-plot(x = log_radnompods_averageGenLoad, 
-     y = posterior_radnompods_averageGenLoad$med,
+plot(x    = log_radnompods_averageGenLoad, 
+     y    = posterior_radnompods_averageGenLoad$med,
      xlim = c(0,3),
      ylim = c(0,3),
-     xlab = expression(psi[1]), 
-     ylab = expression(tilde(psi[1])),
-     main = "Median",
-     pch  = 1,
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
+     xlab = expression(eta[1]), 
+     ylab = expression(tilde(eta[1])),
+     main = expression(-log[10](1 - italic(bar(L)))),
+     pch  = 1
+     #,
+     #cex.axis = 1.2,
+     #cex.lab  = 1.5
+     )
 abline(a=0, b=1, col = "#cb181d")
 
 ## Fixed PODs 
@@ -791,7 +1249,7 @@ abline(a=0, b=1, col = "#cb181d")
 ```{r prediction strongly selected, echo=TRUE, eval=FALSE, include=TRUE}
 
 ## Random PODs
-log_radnompods_popstrongmsel <- log10(pooled_reftable_model_1[random_pods, "POPPrStrongMSel"])
+log_radnompods_popstrongmsel <- log10(pooled_reftable_pds[, "POPPrStrongMSel"])
 
 infindex_randompods <- which(log_radnompods_popstrongmsel == -Inf)
 log_radnompods_popstrongmsel <- log_radnompods_popstrongmsel[-infindex_randompods]
@@ -922,48 +1380,70 @@ abline(a=0, b=1, col = "#cb181d")
 ```{r prediction fdrFST, echo=TRUE, eval=FALSE, include=TRUE}
 
 ## Random PODs
-radnompods_fstfdrNs05 <- pooled_reftable_model_1[random_pods, "FSTfdrNS05"]
-
-#infindex_pods <- which(radnompods_fstfdrNs05 == Inf)
-#radnompods_fstfdrNs05 <- radnompods_fstfdrNs05[-infindex_pods]
-
-#global_sumstats_randompods_fstfdrNs05 <- global_sumstats_randompods[-infindex_pods,]
-
+radnompods_fstfdrNs05 <- pooled_reftable_pods[, "FSTfdrNS05"]
 
 posterior_radnompods_fstfdrNs05 <- predict(object     = reg_fstfdrNs05,
-                                           obs        = global_sumstats_randompods,
+                                           obs        = global_sumstats_pods,
                                            training   = data.frame(fstfdrNs05, global_sumstats),
                                            quantiles  = c(0.025,0.5,0.975),
                                            paral      = T,
                                            ncores     = 28,
                                            rf.weights = T)
-(posterior_radnompods_fstfdrNs05)
+#(posterior_radnompods_fstfdrNs05)
+
+#save(posterior_radnompods_fstfdrNs05, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_fstfdrNs05",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_fstfdrNs05",".RData"))
 
 # Expected True vs estimated
 plot(x    = radnompods_fstfdrNs05, 
      y    = posterior_radnompods_fstfdrNs05$expectation,
      xlim = c(0,1),
      ylim = c(0,1),
-     xlab = "True values", 
-     ylab = "Estimated values",
-     main = "Expected",
-     pch  = 1,
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
+     xlab = expression(eta[3]), 
+     ylab = expression(tilde(eta[3])),
+     main = expression(paste("FDR 5%"," ", F[ST], " and ", "mutations with", italic(N[s]) , " > 1")),
+     pch  = 1
+     #,
+     #cex.axis = 1.2,
+     #cex.lab  = 1.5
+     )
 abline(a=0, b=1, col = "#cb181d")
 
 # Median True vs estimated
-plot(x = radnompods_fstfdrNs05, 
-     y = posterior_radnompods_fstfdrNs05$med,
+plot(x    = radnompods_fstfdrNs05, 
+     y    = posterior_radnompods_fstfdrNs05$med,
      xlim = c(0,1),
      ylim = c(0,1),
-     xlab="True values", 
-     ylab="Estimated values",
-     main="Median",
-     pch=1,
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
+     xlab = expression(eta[3]), 
+     ylab = expression(tilde(eta[3])),
+     main = expression(paste("FDR 5%"," ", F[ST], " and ", "mutations with", italic(N[s]) , " > 1")),
+     pch  = 1
+     #,
+     #cex.axis = 1.2,
+     #cex.lab  = 1.5
+     )
 abline(a=0, b=1, col = "#cb181d")
+
+# Apply the threshold
+fstfdrNs05_applic_data = data.frame(sim=pooled_reftable_pods[,"sim"], meanNe2=pooled_reftable_pods[,"meanNe2"], 
+                                    FSTfdrNS05=pooled_reftable_pods[,"FSTfdrNS05"], threshold = posterior_radnompods_fstfdrNs05$expectation)
+#fstfdrNs05_calc = NULL
+#for (i in 1:length(fstfdrNs05_applic_data$sim)){
+#  t <- fdrthreshold(x = fstfdrNs05_applic_data[i,], tau = 10)
+#  fstfdrNs05_calc = rbind(fstfdrNs05_calc, t)
+#}
+
+cl <- makeCluster(18)
+registerDoParallel(cl)
+#clusterEvalQ(cl)
+  
+## PARALLEL PROCESSING
+#------------------------------------------
+fstfdrNs05_calc <- foreach(i=1:length(fstfdrNs05_applic_data$sim),.combine=rbind, 
+                                                                  .errorhandling="pass", .verbose = TRUE) %dopar% {
+                                                                                                                   fdrthreshold(x = fstfdrNs05_applic_data[i,], tau = 10)}
+stopCluster(cl)
 
 ## Fixed PODs 
 #
@@ -1192,6 +1672,7 @@ abline(a=0, b=1, col = "#cb181d")
 #    labels = paste(rep(c("Expected", "Median", "True"),3)),
 #     cex = 1.2)
 ```
+
 
 ### ABC-RF Regression for Demography: Prediction
 
@@ -1873,39 +2354,6 @@ plot(x    = log_radnompods_mu,
 abline(a=0, b=1, col = "#cb181d")
 ```
 
-### ABC-RF Classification: Neutral vs Selection
-```{r classification neutral selection, echo=TRUE, eval=FALSE, include=TRUE}
-
-selection <- ifelse(pooled_reftable_model_1[-random_pods, "POPPrStrongMSel"] == 0, "N", "S")
-table(selection)
-
-class_selection <- abcrf(formula = selection~.,
-                         data    = data.frame(selection, global_sumstats),
-                         lda     = FALSE, 
-                         ntree   = 1000,
-                         paral   = T,
-                         ncores  = 28)
-
-#(class_selection)
-
-# prediction error
-class_selection$model.rf$prediction.error
-
-predicton_radnompods_selection <- predict(object     = class_selection,
-                                          obs        = global_sumstats_randompods,
-                                          training   = data.frame(selection, global_sumstats),
-                                          #quantiles  = c(0.025,0.5,0.975),
-                                          paral      = T,
-                                          ncores     = 28
-                                          #rf.weights = T
-                                          )
-(predicton_radnompods_selection)
-
-selection_pods <- ifelse(pooled_reftable_model_1[random_pods, "POPPrStrongMSel"] == 0, "N", "S")
-table(selection_pods)
-```
-
-
 ##Things that has the potential to work - for the First version of the Manuscript
 
 ### ABC-RF Regression for Selection: Growing Trees
@@ -2093,86 +2541,6 @@ abline(a=0, b=1, col = "#cb181d")
 
 ```
 
-#### DFE Gamma mean
-```{r regression gamma mean, echo=TRUE, eval=FALSE, include=TRUE}
-gammamean <- pooled_reftable_model_1[-random_pods, "gammaMean"]
-
-#hist(gammamean, freq = TRUE, xlab = expression(paste("gamma ", kappa, theta)), main = "", col = "#bdbdbd")
-
-# abf-rf regression
-reg_gammamean <- regAbcrf(formula = gammamean~.,
-                          data    = data.frame(gammamean, global_sumstats),
-                          ntree   = 1000,
-                          paral   = T,
-                          ncores  = 28)
-
-save(reg_gammamean, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_gammamean",".RData"))
-
-# variable Importance plot
-plot(x = reg_gammamean, n.var = 20)
-
-#head(sort(reg_gammamean$model.rf$variable.importance, decreasing = T), n=20)
-
-# prediction error
-reg_gammamean$model.rf$prediction.error
-
-# error rate plot
-#err.regAbcrf(object   = reg_gammamean,
-#             training = data.frame(gammamean, global_sumstats),
-#            paral    = T,
-#             ncores   = 28)
-
-plot(x    = gammamean,
-     y    = reg_gammamean$model.rf$predictions, 
-     xlab = "True value",
-     ylab = "OOB predictions",
-     xlim = c(0,1),
-     ylim = c(0,1),
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
-
-
-## log gammamean
-loggammamean <- log10(gammamean)
-
-#hist(loggammamean, freq = TRUE, xlab = expression(log[10](paste("gamma ", kappa, theta))), main = "", col = "#bdbdbd")
-
-# abf-rf regression
-reg_loggammamean <- regAbcrf(formula = loggammamean~.,
-                             data    = data.frame(loggammamean, global_sumstats),
-                             ntree   = 1000,
-                             paral   = T,
-                             ncores  = 28)
-
-save(reg_loggammamean, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_loggammamean",".RData"))
-
-# variable Importance plot
-plot(x = reg_loggammamean, n.var = 20)
-
-#head(sort(reg_loggammamean$model.rf$variable.importance, decreasing = T), n=20)
-
-# prediction error
-reg_loggammamean$model.rf$prediction.error
-
-# error rate plot
-#err.regAbcrf(object   = reg_loggammamean,
-#             training = data.frame(loggammamean, global_sumstats),
-#             paral    = T,
-#             ncores   = 28)
-
-plot(x    = loggammamean,
-     y    = reg_loggammamean$model.rf$predictions, 
-     xlab = "True value",
-     ylab = "OOB predictions",
-     xlim = c(-3,0),
-     ylim = c(-3,0),
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
-
-```
-
 #### Ns
 ```{r regression Ns, echo=TRUE, eval=FALSE, include=TRUE}
 logNs <- log10(pooled_reftable_model_1$PedigreeNetotal[-random_pods] * pooled_reftable_model_1[-random_pods, "gammaMean"])
@@ -2217,49 +2585,6 @@ abline(a=0, b=1, col = "#cb181d")
 
 ### ABC-RF Regression for Demography: Growing Trees
 
-
-
-#### Theta 
-```{r regression theta, echo=TRUE, eval=FALSE, include=TRUE}
-logtheta <- log10(4 * pooled_reftable_model_1$PedigreeNetotal[-random_pods] * (pooled_reftable_model_1$mu[-random_pods]) * genomeS)
-
-#hist(logtheta, freq = TRUE, xlab = expression(log[10](theta)), main = "", col = "#bdbdbd")
-
-# abf-rf regression
-reg_logtheta <- regAbcrf(formula = logtheta~.,
-                         data    = data.frame(logtheta, global_sumstats),
-                         ntree   = 1000,
-                         paral   = T,
-                         ncores  = 28)
-
-save(reg_logtheta, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logtheta",".RData"))
-
-# variable Importance plot
-plot(x = reg_logtheta, n.var = 20)
-
-#head(sort(reg_logtheta$model.rf$variable.importance, decreasing = T), n=20)
-
-# prediction error
-reg_logtheta$model.rf$prediction.error
-
-# error rate plot
-#err.regAbcrf(object   = reg_logtheta,
-#             training = data.frame(logtheta, global_sumstats),
-#             paral    = T,
-#             ncores   = 28)
-
-plot(x    = logtheta,
-     y    = reg_logtheta$model.rf$predictions, 
-     xlab = "True value",
-     ylab = "OOB predictions",
-     xlim = c(-1,6),
-     ylim = c(-1,6),
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
-
-```
-
 #### Per site recombination rate
 ```{r regression site recombination rate, echo=TRUE, eval=FALSE, include=TRUE}
 
@@ -2302,45 +2627,7 @@ abline(a=0, b=1, col = "#cb181d")
 
 ```
 
-#### Rho = Nr
-```{r regression rho, echo=TRUE, eval=FALSE, include=TRUE}
-logrho <- log10(pooled_reftable_model_1$rr[-random_pods] * pooled_reftable_model_1$PedigreeNetotal[-random_pods])
 
-#hist(logrho, freq = TRUE, xlab = expression(log[10](rho)), main = "", col = "#bdbdbd")
-
-# abf-rf regression
-reg_logrho <- regAbcrf(formula = logrho~.,
-                       data    = data.frame(logrho, global_sumstats),
-                       ntree   = 1000,
-                       paral   = T,
-                       ncores  = 28)
-
-save(reg_logrho, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logrho",".RData"))
-
-# variable Importance plot
-plot(x = reg_logrho, n.var = 20)
-
-#head(sort(reg_logrho$model.rf$variable.importance, decreasing = T), n=20)
-
-# prediction error
-reg_logrho$model.rf$prediction.error
-
-# error rate plot
-#err.regAbcrf(object   = reg_logrho,
-#             training = data.frame(logrho, global_sumstats),
-#             paral    = T,
-#             ncores   = 28)
-
-plot(x    = logrho,
-     y    = reg_logrho$model.rf$predictions, 
-     xlab = "True value",
-     ylab = "OOB predictions",
-     xlim = c(-9,1),
-     ylim = c(-9,1),
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
-```
 
 ### ABC-RF Regression for Selection: Prediction
 
