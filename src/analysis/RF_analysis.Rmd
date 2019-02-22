@@ -369,7 +369,7 @@ averageGenLoad_2 <- averageGenLoad[-load_zero]
 global_sumstats_averageGenLoad <- global_sumstats[-load_zero,]
 
 logitaverageGenload <- log(averageGenLoad_2/(1-averageGenLoad_2))
-hist(logitaverageGenload, freq = TRUE, xlab = expression(-log[10](1 - italic(bar(L)))), main = "", col = "#bdbdbd")
+hist(logitaverageGenload, freq = TRUE, xlab = expression(logit(italic(bar(L)))), main = "", col = "#bdbdbd")
 
 # abf-rf regression
 reg_averageGenLoad_2 <- regAbcrf(formula = logitaverageGenload~.,
@@ -378,37 +378,35 @@ reg_averageGenLoad_2 <- regAbcrf(formula = logitaverageGenload~.,
                                  paral   = T,
                                  ncores  = 28)
 
-#save(reg_logitaverageGenLoad, 
-#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logitaverageGenLoad",".RData"))
-#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logitaverageGenLoad",".RData"))
+#save(reg_averageGenLoad_2, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_averageGenLoad_2",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_averageGenLoad_2",".RData"))
 
 # variable Importance plot
-plot(x = reg_averageGenLoad, n.var = 20)
+plot(x = reg_averageGenLoad_2, n.var = 20)
 
-#head(sort(reg_averageGenLoad$model.rf$variable.importance, decreasing = T), n=20)
+#head(sort(reg_averageGenLoad_2$model.rf$variable.importance, decreasing = T), n=20)
 
 # prediction error
-reg_averageGenLoad$model.rf$prediction.error
-# 0.01902606
+reg_averageGenLoad_2$model.rf$prediction.error
+# 2.474618
 
 # error rate plot
-#err.regAbcrf(object   = reg_averageGenLoad,
-#             training = data.frame(logaverageGenload, global_sumstats),
-#             paral    = T,
-#             ncores   = 28)
+err.regAbcrf(object   = reg_averageGenLoad_2,
+             training = data.frame(logitaverageGenload, global_sumstats_averageGenLoad),
+             paral    = T,
+             ncores   = 28)
 
 # oob predictions vs true values
-plot(x    = logaverageGenload,
-     y    = reg_averageGenLoad$model.rf$predictions,
+plot(x    = logitaverageGenload,
+     y    = reg_averageGenLoad_2$model.rf$predictions,
      xlab = "True value",
      ylab = "OOB predictions",
-     xlim = c(0,3),
-     ylim = c(0,3),
-     col  = ifelse(selection_1 == "qNeutral", "red", "black"),
-     main = expression(-log[10](1 - italic(bar(L)))),
+     xlim = c(-20,7),
+     ylim = c(-20,7),
+     main = expression(logit(italic(bar(L)))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-legend("topleft", legend = c("Quasi Neutral", "Strong Selection"), col = c("red", "black"), pch = 1, bty = "n")
 abline(a=0, b=1, col = "green")
 ```
 
@@ -1597,7 +1595,7 @@ plot(x    = log_fixedpods_averageGenLoad,
      )
 legend("topleft", legend = c("neutral","mutation limited", "mutation unlimited"),
        col = c("#1f78b4","#ff7f00","#e31a1c"), pch = 1, bty = "n")
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "black")
 ```
 
 #### Proportion of strongly selected mutations
@@ -1690,6 +1688,9 @@ popstrongmsel_calc <- foreach(i=1:length(popstrongmsel_applic_data$sim),
                                                                                 selstrongthreshold(x = popstrongmsel_applic_data[i,], tau = 10)}
 stopCluster(cl)
 
+#save(popstrongmsel_calc, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/popstrongmsel_calc",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/popstrongmsel_calc",".RData"))
 
 
 ## Fixed PODs 
@@ -1848,6 +1849,10 @@ fstfdrNs05_calc <- foreach(i=1:length(fstfdrNs05_applic_data$sim),.combine=rbind
                                                                   .errorhandling="pass", .verbose = TRUE) %dopar% {
                                                                                                                    fdrthreshold(x = fstfdrNs05_applic_data[i,], tau = 10)}
 stopCluster(cl)
+
+#save(fstfdrNs05_calc, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/fstfdrNs05_calc",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/fstfdrNs05_calc",".RData"))
 
 ## Fixed PODs 
 #
