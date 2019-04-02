@@ -1,5 +1,5 @@
-# Multiple plot function
-#
+## Multiple plot function
+##-----------------------------------------------------------------------------------
 # ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
 # - cols:   Number of columns in layout
 # - layout: A matrix specifying the layout. If present, 'cols' is ignored.
@@ -44,6 +44,8 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
+## Function to apply the FST FDR threshold and calculate the actual FDR
+##-----------------------------------------------------------------------------------
 fdrthreshold <- function(x, tau, output_snps = TRUE){
   
   sim = x["sim"]
@@ -110,6 +112,9 @@ fdrthreshold <- function(x, tau, output_snps = TRUE){
   return(results)
 }
 
+## Function to apply the inferred proportion of strong selected mutations and 
+## calculate the actual FDR using this threshold
+##-----------------------------------------------------------------------------------
 selstrongthreshold <- function(x, tau){
   
   #x=popstrongmsel_applic_data[1,]
@@ -203,6 +208,15 @@ selstrongthreshold <- function(x, tau){
                        auc = auc)
   
   return(results)
+}
+
+## Function to calculate the FST-based temporal Ne
+##-----------------------------------------------------------------------------------
+fstNe <- function(egglib_input, tau){
+  d  <- read.csv(file=egglib_input, header = T, sep = "\t", check.names = F)
+  f  <- mean(d[, "LSS:WCst"]) 
+  ne <- (8*(1-f))/(4*f)
+  return(ne)
 }
 
 #loopPrediction <- function(pods_reftable, reg_ABC_obj, vector_par, global_reftable){
