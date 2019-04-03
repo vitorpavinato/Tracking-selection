@@ -1347,6 +1347,46 @@ plot(x    = loggammamean,
 abline(a=0, b=1, col = "#cb181d")
 ```
 
+#### Ns
+```{r regression Ns, echo=TRUE, eval=FALSE, include=TRUE}
+logNs <- log10(pooled_reftable_model_1$PedigreeNetotal[-random_pods] * pooled_reftable_model_1[-random_pods, "gammaMean"])
+
+#hist(logNs, freq = TRUE, xlab = expression(log[10](N[s])), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_logNs <- regAbcrf(formula = logNs~.,
+                      data    = data.frame(logNs, global_sumstats),
+                      ntree   = 1000,
+                      paral   = T,
+                      ncores  = 28)
+
+save(reg_logNs, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logNs",".RData"))
+
+# variable Importance plot
+plot(x = reg_logNs, n.var = 20)
+
+#head(sort(reg_logNs$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logNs$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_logNs,
+#             training = data.frame(logNs, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logNs,
+     y    = reg_logNs$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-3,3),
+     ylim = c(-3,3),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+```
+
 #### Per site mutation rate mu
 ```{r regression site mutation rate, echo=TRUE, eval=FALSE, include=TRUE}
 
@@ -3162,67 +3202,6 @@ plot(x    = log_fixedpods_meanNe2ncs,
 abline(a=0, b=1, col = "#cb181d")
 ```
 
-#### Rho = Nr
-```{r prediction Rho, echo=TRUE, eval=FALSE, include=TRUE}
-
-## RANDOM PODs
-posterior_randompods_logrho <- predict(object     = reg_logrho,
-                                       obs        = global_sumstats_pods,
-                                       training   = data.frame(logrho, global_sumstats),
-                                       quantiles  = c(0.025,0.5,0.975),
-                                       paral      = T,
-                                       ncores     = 28,
-                                       rf.weights = T)
-#(posterior_randompods_logrho)
-
-#save(posterior_randompods_logrho, 
-#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_randompods_logrho",".RData"))
-#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_randompods_logrho",".RData"))
-
-log_randompods_rho <- log10(pooled_reftable_pods[, "meanNe2"] * pooled_reftable_pods[, "rr"])
-
-hist(log_randompods_rho, freq = TRUE, xlab = expression(log[10](italic(rho[(2)]))), main = "", col = "#bdbdbd")
-
-# Expected True vs estimated
-plot(x    = log_randompods_rho, 
-     y    = posterior_randompods_logrho$expectation,
-     xlim = c(-9,-3),
-     ylim = c(-9,-3),
-     xlab = expression(log[10](italic(rho))), 
-     ylab = expression(hat(log[10](italic(rho)))),
-     pch  = 1
-     )
-abline(a=0, b=1, col = "#cb181d")
-
-## FIXED PODs
-posterior_fixedpods_logrho <- predict(object     = reg_logrho,
-                                      obs        = global_sumstats_fixedpods,
-                                      training   = data.frame(logrho, global_sumstats),
-                                      quantiles  = c(0.025,0.5,0.975),
-                                      paral      = T,
-                                      ncores     = 28,
-                                      rf.weights = T)
-#(posterior_fixedpods_logrho)
-
-#save(posterior_fixedpods_logrho, 
-#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logrho",".RData"))
-#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logrho",".RData"))
-
-log_fixedpods_rho <- log10(pooled_reftable_fixedpods[, "meanNe2"] * pooled_reftable_fixedpods[, "rr"])
-
-# Expected True vs estimated
-plot(x    = log_fixedpods_rho, 
-     y    = posterior_fixedpods_logrho$expectation,
-     xlim = c(-9,-3),
-     ylim = c(-9,-3),
-     xlab = expression(log[10](italic(rho))), 
-     ylab = expression(hat(log[10](italic(rho)))),
-     pch  = 1,
-     col  = c(rep("#1f78b4",100), rep("#ff7f00",100), rep("#e31a1c",100))
-     )
-abline(a=0, b=1, col = "#cb181d")
-```
-
 ## Equilibrium period inference
 
 #### Theta of period 1
@@ -3346,6 +3325,67 @@ plot(x    = log_fixedpods_mu,
      ylim = c(-10,-5),
      xlab = expression(log[10](italic(mu))), 
      ylab = expression(hat(log[10](italic(mu)))),
+     pch  = 1,
+     col  = c(rep("#1f78b4",100), rep("#ff7f00",100), rep("#e31a1c",100))
+     )
+abline(a=0, b=1, col = "#cb181d")
+```
+
+#### Rho = Nr
+```{r prediction Rho, echo=TRUE, eval=FALSE, include=TRUE}
+
+## RANDOM PODs
+posterior_randompods_logrho <- predict(object     = reg_logrho,
+                                       obs        = global_sumstats_pods,
+                                       training   = data.frame(logrho, global_sumstats),
+                                       quantiles  = c(0.025,0.5,0.975),
+                                       paral      = T,
+                                       ncores     = 28,
+                                       rf.weights = T)
+#(posterior_randompods_logrho)
+
+#save(posterior_randompods_logrho, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_randompods_logrho",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_randompods_logrho",".RData"))
+
+log_randompods_rho <- log10(pooled_reftable_pods[, "meanNe2"] * pooled_reftable_pods[, "rr"])
+
+hist(log_randompods_rho, freq = TRUE, xlab = expression(log[10](italic(rho[(2)]))), main = "", col = "#bdbdbd")
+
+# Expected True vs estimated
+plot(x    = log_randompods_rho, 
+     y    = posterior_randompods_logrho$expectation,
+     xlim = c(-9,-3),
+     ylim = c(-9,-3),
+     xlab = expression(log[10](italic(rho))), 
+     ylab = expression(hat(log[10](italic(rho)))),
+     pch  = 1
+     )
+abline(a=0, b=1, col = "#cb181d")
+
+## FIXED PODs
+posterior_fixedpods_logrho <- predict(object     = reg_logrho,
+                                      obs        = global_sumstats_fixedpods,
+                                      training   = data.frame(logrho, global_sumstats),
+                                      quantiles  = c(0.025,0.5,0.975),
+                                      paral      = T,
+                                      ncores     = 28,
+                                      rf.weights = T)
+#(posterior_fixedpods_logrho)
+
+#save(posterior_fixedpods_logrho, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logrho",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logrho",".RData"))
+
+log_fixedpods_rho <- log10(pooled_reftable_fixedpods[, "meanNe2"] * pooled_reftable_fixedpods[, "rr"])
+
+# Expected True vs estimated
+plot(x    = log_fixedpods_rho, 
+     y    = posterior_fixedpods_logrho$expectation,
+     xlim = c(-9,-3),
+     ylim = c(-9,-3),
+     xlab = expression(log[10](italic(rho))), 
+     ylab = expression(hat(log[10](italic(rho)))),
      pch  = 1,
      col  = c(rep("#1f78b4",100), rep("#ff7f00",100), rep("#e31a1c",100))
      )
@@ -3654,46 +3694,6 @@ plot(x    = logpopmsel,
      cex.lab  = 1.5)
 abline(a=0, b=1, col = "#cb181d")
 
-```
-
-#### Ns
-```{r regression Ns, echo=TRUE, eval=FALSE, include=TRUE}
-logNs <- log10(pooled_reftable_model_1$PedigreeNetotal[-random_pods] * pooled_reftable_model_1[-random_pods, "gammaMean"])
-
-#hist(logNs, freq = TRUE, xlab = expression(log[10](N[s])), main = "", col = "#bdbdbd")
-
-# abf-rf regression
-reg_logNs <- regAbcrf(formula = logNs~.,
-                      data    = data.frame(logNs, global_sumstats),
-                      ntree   = 1000,
-                      paral   = T,
-                      ncores  = 28)
-
-save(reg_logNs, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logNs",".RData"))
-
-# variable Importance plot
-plot(x = reg_logNs, n.var = 20)
-
-#head(sort(reg_logNs$model.rf$variable.importance, decreasing = T), n=20)
-
-# prediction error
-reg_logNs$model.rf$prediction.error
-
-# error rate plot
-#err.regAbcrf(object   = reg_logNs,
-#             training = data.frame(logNs, global_sumstats),
-#             paral    = T,
-#             ncores   = 28)
-
-plot(x    = logNs,
-     y    = reg_logNs$model.rf$predictions, 
-     xlab = "True value",
-     ylab = "OOB predictions",
-     xlim = c(-3,3),
-     ylim = c(-3,3),
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
 ```
 
 ### ABC-RF Regression for Demography: Growing Trees
