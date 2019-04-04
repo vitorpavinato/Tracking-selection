@@ -60,35 +60,34 @@ initialize() {
 
 1: late() {
 	
-	    // PEDIGREE EFFECTIVE SIZE
-	    //...................
+	// PEDIGREE EFFECTIVE SIZE
+	//...................
 	
-	    uniqParents = unique(sim.subpopulations.individuals.pedigreeParentIDs);
+	uniqParents = unique(sim.subpopulations.individuals.pedigreeParentIDs);
 	
-	    gametes = sapply(uniqParents, "countGametes(applyValue);"); // k => Gamete contribution of each parente (g-1 individuals);
+	gametes = sapply(uniqParents, "countGametes(applyValue);"); // k => Gamete contribution of each parente (g-1 individuals);
 
-	    if (size(gametes) > 1)
-	    {
-		      ne = (4*p1.individualCount)/(2+var(gametes));
-	    } else {
-		      ne = (4*p1.individualCount)/(2+0);
-	    }
-	
-	    // Save the generation and the number of unique parentes IDs
-	    timene = paste(sim.generation + "\t" + ne);
-	
-	    // Output as a TXT file
-	    writeFile(filePath=paste0(outputpath + "slim_output_ne1_" + simID + ".txt"), contents=timene , append=T);
-
-	
-	if (sim.treeSeqCoalesced())
+	if (size(gametes) > 1)
 	{
-			catn(sim.generation + ": COALESCED");
+		ne = (4*p1.individualCount)/(2+var(gametes));
+	} else {
+		ne = (4*p1.individualCount)/(2+0);
+	}
+	
+	// Save the number of unique parentes IDs
+	timene = paste(sim.generation + "\t" + ne);
+	
+	// Output as a TXT file
+	writeFile(filePath=paste0(outputpath + "slim_output_ne1_" + simID + ".txt"), contents=timene , append=T);
+	    
+	if (sim.treeSeqCoalesced())
+   {
+		 catn(sim.generation + ": COALESCED");
 		
-			// Output a tree file
-			sim.treeSeqOutput(path=paste0(outputpath + "slim_coalesced_DN_" + simID + ".tree"), simplify=F);
+		 // Output a tree file
+		 sim.treeSeqOutput(path=paste0(outputpath + "slim_coalesced_DN_" + simID + ".tree"), simplify=F);
 			
-			sim.simulationFinished();
+		 sim.simulationFinished();
 	}		
 }
 

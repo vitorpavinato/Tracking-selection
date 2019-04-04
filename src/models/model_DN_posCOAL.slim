@@ -106,9 +106,9 @@ s1 2 early() {
 
 s2 late() {
 	
-	//////////
-	// TS=1 //
-	//////////
+	/////////
+	// TS1 //
+	/////////
 
 	// Tag all individuals
 	sim.subpopulations.individuals.tag = 1;
@@ -117,11 +117,11 @@ s2 late() {
 	sam_inds = sample(sim.subpopulations.individuals, size = SS1, replace = F);
 	sam_inds.tag = 0;
 	
-	////////////////////////////////////////////
-	// OUTPUT TS=1 - SAMPLED INDIVIDUALS      //
-	////////////////////////////////////////////
+	///////////////////////////////////////////
+	// OUTPUT TS1 - SAMPLED INDIVIDUALS      //
+	///////////////////////////////////////////
 	
-	cat("#OUT: " + " " + paste(SS1 + " " +"individuals at:") + " " +"T1 =" + " " + paste(sim.generation) + "\n");
+	cat("#OUT: " + " " + paste(SS1 + " " +"individuals at:") + " " +"TS1 =" + " " + paste(sim.generation) + "\n");
 	cat(paste0(outputpath + "slim_output_sample_t1_" + simID + ".vcf" + "\n"));
 	
 	// Output as a VCF file - SS1
@@ -207,25 +207,25 @@ s6 2 early() {
 
 s7 2 late() {
 
-	////////////////////////////////////////////////////////////////////////////////
-	// OUTPUT TS1:TS2 - POPULATION ALLELE FREQUENCIES - GENOME & EXTRA CHROMOSOME //
-   ////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////
+	// OUTPUT TS1:TS2 - POPULATION MUTATIONS AND PEDIGREE NE // 
+   ///////////////////////////////////////////////////////////
 
 	// GENOME
 	//................
 	
-	// Take all the mutation EXCEPT m4's in the population
+	// Take all the mutation in the population
 	pop_genome = sortBy(unique(sim.mutations), "position");
 		
-	// Save the population allele frequence of the alternative allele - PAAF
+	// Take all the mutation information needed
 	pmuts_lines = sapply(pop_genome, "paste(c((applyValue.position+1), applyValue.id, applyValue.mutationType.id, applyValue.originGeneration, applyValue.selectionCoeff,'\\n'), '\\t');");
 	
-	// prepare the output table
+	// Prepare the output table
 	pmuts_file = paste(pmuts_lines, "");
 	pmuts_file = paste("POS"+"\t"+"MID"+"\t"+"MT"+"\t"+"GO"+"\t"+"S"+"\n")+pmuts_file;
 	
 	// output as a TXT file - CS1
-	writeFile(filePath=paste0(outputpath + "slim_output_pmuts_t" + (sim.generation - T0) + "_" + simID + ".txt"), contents=pmuts_file, append=F); // CS1 freq
+	writeFile(filePath=paste0(outputpath + "slim_output_pmuts_t" + (sim.generation - T0) + "_" + simID + ".txt"), contents=pmuts_file, append=F);
 
 	// PEDIGREE EFFECTIVE SIZE
 	//...................
@@ -257,9 +257,9 @@ s8 late() {
 
 s9 late() {
 	
-	//////////
-	// TS=2 //
-	//////////
+	/////////
+	// TS2 //
+	/////////
 
 	// Tag all individuals
 	sim.subpopulations.individuals.tag = 1;
@@ -268,11 +268,11 @@ s9 late() {
 	sam_inds = sample(sim.subpopulations.individuals, size = SS2, replace = F);
 	sam_inds.tag = 0;
 	
-	////////////////////////////////////////////
-	// OUTPUT TS=2 - SAMPLED INDIVIDUALS      //
-	////////////////////////////////////////////
+	///////////////////////////////////////////
+	// OUTPUT TS2 - SAMPLED INDIVIDUALS      //
+	///////////////////////////////////////////
 	
-	cat("#OUT: " + " " + paste(SS2 + " " +"individuals at:") + " " +"T2 =" + " " + paste(sim.generation) + "\n");
+	cat("#OUT: " + " " + paste(SS2 + " " +"individuals at:") + " " +"TS2 =" + " " + paste(sim.generation) + "\n");
 	cat(paste0(outputpath + "slim_output_sample_t2_" + simID + ".vcf" + "\n"));
 	
 	// output as a VCF file - SS2
