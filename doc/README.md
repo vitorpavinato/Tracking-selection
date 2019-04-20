@@ -3,7 +3,7 @@
 ##### Original pipeline - for the method evaluation in PODs
 
 ###### Pipeline:
-1. Incorporate the last pipeline bug fixtures implemented - for this use the T.Devil or bees pipeline as "backbone";
+1. Incorporate the last pipeline bug fix implemented - for this use the T.Devil or bees pipeline as "backbone";
 
 ###### SLiM script:
 1. Change the event for the upload of the .tree file in period 2 - from early() to late(),

@@ -29,7 +29,6 @@ initialize() {
 	initializeGenomicElementType("g1", m1, 1);
 	initializeGenomicElementType("g2", c(m2,m3), c((1 - prbe), prbe));
 	
-	
 	// GENOME's GenomicElementTypes
 	
 	// Assign each GenomicElementType:
@@ -238,7 +237,7 @@ s7 2 late() {
 	{
 		ne = (4*p1.individualCount)/(2+var(gametes));
 	} else {
-		ne = (4*p1.individualCount)/(2+0);
+		ne = (4*p1.individualCount)/(2+0); //Ne = 2N;
 	}
 	
 	// Save the generation and the number of unique parentes IDs
