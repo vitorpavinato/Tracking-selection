@@ -1997,9 +1997,9 @@ do_sim <- function(sim, nsim,
                                           slim_data_[, (length(header_1)+1):ncol(slim_data_)])
             
             # expor the complete data of mutations present in egglib input file
+            egglib_selcoeff_file_Ava <- paste0("egglib_input_sample_selcoeff_Ava", "_", sim, ".txt")
+            
             if (egglib_input_selcoeff){
-              
-              egglib_selcoeff_file_Ava <- paste0("egglib_input_sample_selcoeff_Ava", "_", sim, ".txt")
               write.table(slim_to_egglib_snps_, file = paste0(egglib_input_folder,egglib_selcoeff_file_Ava), quote=FALSE, sep="\t", row.names = FALSE)
             }
             
@@ -2880,9 +2880,9 @@ do_sim <- function(sim, nsim,
                                           slim_data_[, (length(header_1)+1):ncol(slim_data_)])
             
             # expor the complete data of mutations present in egglib input file
+            egglib_selcoeff_file_Hum <- paste0("egglib_input_sample_selcoeff_Hum", "_", sim, ".txt")
+            
             if (egglib_input_selcoeff){
-              
-              egglib_selcoeff_file_Hum <- paste0("egglib_input_sample_selcoeff_Hum", "_", sim, ".txt")
               write.table(slim_to_egglib_snps_, file = paste0(egglib_input_folder,egglib_selcoeff_file_Hum), quote=FALSE, sep="\t", row.names = FALSE)
             }
             
@@ -3762,9 +3762,9 @@ do_sim <- function(sim, nsim,
                                           slim_data_[, (length(header_1)+1):ncol(slim_data_)])
             
             # expor the complete data of mutations present in egglib input file
+            egglib_selcoeff_file_Dav <- paste0("egglib_input_sample_selcoeff_Dav", "_", sim, ".txt")
+            
             if (egglib_input_selcoeff){
-              
-              egglib_selcoeff_file_Dav <- paste0("egglib_input_sample_selcoeff_Dav", "_", sim, ".txt")
               write.table(slim_to_egglib_snps_, file = paste0(egglib_input_folder,egglib_selcoeff_file_Dav), quote=FALSE, sep="\t", row.names = FALSE)
             }
             
@@ -4644,9 +4644,9 @@ do_sim <- function(sim, nsim,
                                           slim_data_[, (length(header_1)+1):ncol(slim_data_)])
             
             # expor the complete data of mutations present in egglib input file
+            egglib_selcoeff_file_Sta <- paste0("egglib_input_sample_selcoeff_Sta", "_", sim, ".txt")
+            
             if (egglib_input_selcoeff){
-              
-              egglib_selcoeff_file_Sta <- paste0("egglib_input_sample_selcoeff_Sta", "_", sim, ".txt")
               write.table(slim_to_egglib_snps_, file = paste0(egglib_input_folder,egglib_selcoeff_file_Sta), quote=FALSE, sep="\t", row.names = FALSE)
             }
             
@@ -5529,9 +5529,9 @@ do_sim <- function(sim, nsim,
                                           slim_data_[, (length(header_1)+1):ncol(slim_data_)])
             
             # expor the complete data of mutations present in egglib input file
+            egglib_selcoeff_file_Ste <- paste0("egglib_input_sample_selcoeff_Ste", "_", sim, ".txt")
+            
             if (egglib_input_selcoeff){
-              
-              egglib_selcoeff_file_Ste <- paste0("egglib_input_sample_selcoeff_Ste", "_", sim, ".txt")
               write.table(slim_to_egglib_snps_, file = paste0(egglib_input_folder,egglib_selcoeff_file_Ste), quote=FALSE, sep="\t", row.names = FALSE)
             }
             
@@ -6414,9 +6414,9 @@ do_sim <- function(sim, nsim,
                                           slim_data_[, (length(header_1)+1):ncol(slim_data_)])
             
             # expor the complete data of mutations present in egglib input file
+            egglib_selcoeff_file_Riv <- paste0("egglib_input_sample_selcoeff_Riv", "_", sim, ".txt")
+            
             if (egglib_input_selcoeff){
-              
-              egglib_selcoeff_file_Ste <- paste0("egglib_input_sample_selcoeff_Riv", "_", sim, ".txt")
               write.table(slim_to_egglib_snps_, file = paste0(egglib_input_folder,egglib_selcoeff_file_Riv), quote=FALSE, sep="\t", row.names = FALSE)
             }
             
@@ -7267,9 +7267,9 @@ do_sim <- function(sim, nsim,
             
             # save only the information of the snps
             if (model_type == 3){
-              selcoeff_snps_ <- all_merged_genome_Pla[all_merged_genome_Pla$MID %in% slim_data_$MID, paste0("S",tc)]
+              selcoeff_snps_ <- all_merged_genome_Riv[all_merged_genome_Riv$MID %in% slim_data_$MID, paste0("S",tc)]
             } else {
-              selcoeff_snps_ <- all_merged_genome_Pla[all_merged_genome_Pla$MID %in% slim_data_$MID, "S"]
+              selcoeff_snps_ <- all_merged_genome_Riv[all_merged_genome_Riv$MID %in% slim_data_$MID, "S"]
             }
             
             slim_to_egglib_snps_ <- cbind(ID  = paste0(slim_data_$chrom, ":", slim_data_$position), 
@@ -7281,9 +7281,9 @@ do_sim <- function(sim, nsim,
                                           slim_data_[, (length(header_1)+1):ncol(slim_data_)])
             
             # expor the complete data of mutations present in egglib input file
+            egglib_selcoeff_file_Pla <- paste0("egglib_input_sample_selcoeff_Pla", "_", sim, ".txt")
+            
             if (egglib_input_selcoeff){
-              
-              egglib_selcoeff_file_Ste <- paste0("egglib_input_sample_selcoeff_Pla", "_", sim, ".txt")
               write.table(slim_to_egglib_snps_, file = paste0(egglib_input_folder,egglib_selcoeff_file_Pla), quote=FALSE, sep="\t", row.names = FALSE)
             }
             
