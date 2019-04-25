@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 2
+nsim                    <- 5
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/usr/local/bin/slim"   #cbbp-desktop# "/home/pavinato/Softwares/slim3.1/slim" #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim" #GENOTOUL# /usr/local/bioinfo/src/SLiM/SLiM-3.2/SLiM_build/slim
@@ -50,14 +50,14 @@ arg <- commandArgs(TRUE)
 seed                    <- arg
 #seed                    <- 1234 # this is here only for small tests
 set.seed(seed,"Mersenne-Twister")
-parallel_sims           <- TRUE
+parallel_sims           <- FALSE
 num_of_threads          <- 4
-remove_files            <- TRUE
+remove_files            <- FALSE
 debug_sim               <- TRUE
 debug_output_folder     <- "results/debug_output/"
 wfabc_input_file        <- FALSE
 wfabc_input_folder      <- "results/wfabc_input/"
-egglib_input_selcoeff   <- FALSE 
+egglib_input_selcoeff   <- TRUE 
 
 ############################################
 ##            SLiM SIMULATION             ##
@@ -97,32 +97,32 @@ tau = c(55,57,66,86,89,104) # tau => a string with the Time between samples;
 ############################################
 
 # MUTATION RATE
-mu_random = FALSE
+mu_random = TRUE
 mu_rate <- 1e-7
 mu_min  = 1e-11
 mu_max  = 1e-6
 
 # POPULATION SIZE EQUILIBRIUM PHASE - Neq
-neq_random = FALSE
+neq_random = TRUE
 neq_value <- 50
 neq_min = 100
 neq_max = 10000
 
 # POPULATION CENSUS SIZE - Ncs
-ncs_random = FALSE
+ncs_random = TRUE
 ncs_value <- 50
 ncs_min = 1
 ncs_max = 10000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
 # gamma mean
-gammaM_random = FALSE
+gammaM_random = TRUE
 gammaM_value <- 0.1
 gammaM_min = 0.001
 gammaM_max = 1              
 
 # gamma shape
-gammak_random = FALSE
+gammak_random = TRUE
 gammak_value <- 0.1         # gamma shape k must be positive;
 gammak_min = 0.001          # this defines a lower and an upper limits of a uniform distribution where gamma MEAN and SHAPE (K) values;
 gammak_max = 1
@@ -130,13 +130,13 @@ gammak_max = 1
 gammaM_gammak = TRUE        # if TRUE, rate=1, then only gammaM will be sample from prior;
 
 # PROPORTION OF THE GENOME THAT CONTAINS BENEFICIAL MUTATIONS - G2 ELEMENTS
-PrGWSel_random = FALSE
+PrGWSel_random = TRUE
 PrGWSel_value <- 0.25
 PrGWSel_min = 0 
 PrGWSel_max = 1
 
 # PROPORTION OF BENEFICIAL MUTATION IN G2 ELEMENTS
-prbe_random = FALSE
+prbe_random = TRUE
 prbe_value <- 0.25
 prbe_min = 1e-05
 prbe_max = 1
@@ -155,7 +155,7 @@ domB_min = 0.5
 domB_max = 1
 
 # PER BASE RECOMBINATION RATE
-rr_random = FALSE
+rr_random = TRUE
 rr_rate <- 1e-7
 rr_min  = 1e-11
 rr_max  = 1e-6
