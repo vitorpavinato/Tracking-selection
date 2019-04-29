@@ -352,6 +352,8 @@ colnames(raw_reftable) <- c(raw_reftable_header_1, raw_reftable_header_2)
 
 save(raw_reftable,file=paste0(reftable_file,".RData"))
 
+warnings()
+
 gc()
 
 cat("\n Simulations finished\n\n")

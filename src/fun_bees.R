@@ -2000,7 +2000,7 @@ do_sim <- function(sim, nsim,
             egglib_selcoeff_file_Ava <- paste0("egglib_input_sample_selcoeff_Ava", "_", sim, ".txt")
             
             if (egglib_input_selcoeff){
-              write.table(slim_to_egglib_snps_, file = paste0(egglib_input_folder,egglib_selcoeff_file_Ava), quote=FALSE, sep="\t", row.names = FALSE)
+              write.table(slim_to_egglib_snps_, file = paste0(egglib_input_folder, egglib_selcoeff_file_Ava), quote=FALSE, sep="\t", row.names = FALSE)
             }
             
             # remove snp datasets after use it
@@ -2207,6 +2207,17 @@ do_sim <- function(sim, nsim,
                                                       FSTfdrNS05_Ava,
                                                       FSTfdrNS10_Ava))
                     
+                    # remove files
+                    rm(pred_locusFSTNS_)
+                    rm(perf_locusFSTNS_)
+                    rm(perf_table_)
+                    rm(perf_locusFST_table_)
+                    rm(whichfdrNS005_)
+                    rm(whichfdrNS01_) 
+                    rm(whichfdrNS02_) 
+                    rm(whichfdrNS05_) 
+                    rm(whichfdrNS10_)
+                    
                   } else {
                     
                     # all strongly selected mutations
@@ -2229,15 +2240,6 @@ do_sim <- function(sim, nsim,
                 }
                 
                 rm(locusFST_test_table_)
-                rm(pred_locusFSTNS_)
-                rm(perf_locusFSTNS_)
-                rm(perf_table_)
-                rm(perf_locusFST_table_)
-                rm(whichfdrNS005_)
-                rm(whichfdrNS01_) 
-                rm(whichfdrNS02_) 
-                rm(whichfdrNS05_) 
-                rm(whichfdrNS10_) 
                 
                 ## LOCUS-SPECIFIC SUMMARY STATISTICS
                 ##----------------------------------
@@ -3090,6 +3092,17 @@ do_sim <- function(sim, nsim,
                                                       FSTfdrNS05_Hum,
                                                       FSTfdrNS10_Hum))
                     
+                    # remove files
+                    rm(pred_locusFSTNS_)
+                    rm(perf_locusFSTNS_)
+                    rm(perf_table_)
+                    rm(perf_locusFST_table_)
+                    rm(whichfdrNS005_)
+                    rm(whichfdrNS01_) 
+                    rm(whichfdrNS02_) 
+                    rm(whichfdrNS05_) 
+                    rm(whichfdrNS10_)
+                    
                   } else {
                     
                     # all strongly selected mutations
@@ -3112,15 +3125,6 @@ do_sim <- function(sim, nsim,
                 }
                 
                 rm(locusFST_test_table_)
-                rm(pred_locusFSTNS_)
-                rm(perf_locusFSTNS_)
-                rm(perf_table_)
-                rm(perf_locusFST_table_)
-                rm(whichfdrNS005_)
-                rm(whichfdrNS01_) 
-                rm(whichfdrNS02_) 
-                rm(whichfdrNS05_) 
-                rm(whichfdrNS10_) 
                 
                 ## LOCUS-SPECIFIC SUMMARY STATISTICS
                 ##----------------------------------
@@ -3972,6 +3976,17 @@ do_sim <- function(sim, nsim,
                                                       FSTfdrNS05_Dav,
                                                       FSTfdrNS10_Dav))
                     
+                    # remove files
+                    rm(pred_locusFSTNS_)
+                    rm(perf_locusFSTNS_)
+                    rm(perf_table_)
+                    rm(perf_locusFST_table_)
+                    rm(whichfdrNS005_)
+                    rm(whichfdrNS01_) 
+                    rm(whichfdrNS02_) 
+                    rm(whichfdrNS05_) 
+                    rm(whichfdrNS10_)
+                    
                   } else {
                     
                     # all strongly selected mutations
@@ -3994,15 +4009,6 @@ do_sim <- function(sim, nsim,
                 }
                 
                 rm(locusFST_test_table_)
-                rm(pred_locusFSTNS_)
-                rm(perf_locusFSTNS_)
-                rm(perf_table_)
-                rm(perf_locusFST_table_)
-                rm(whichfdrNS005_)
-                rm(whichfdrNS01_) 
-                rm(whichfdrNS02_) 
-                rm(whichfdrNS05_) 
-                rm(whichfdrNS10_) 
                 
                 ## LOCUS-SPECIFIC SUMMARY STATISTICS
                 ##----------------------------------
@@ -4854,6 +4860,17 @@ do_sim <- function(sim, nsim,
                                                       FSTfdrNS05_Sta,
                                                       FSTfdrNS10_Sta))
                     
+                    # remove files
+                    rm(pred_locusFSTNS_)
+                    rm(perf_locusFSTNS_)
+                    rm(perf_table_)
+                    rm(perf_locusFST_table_)
+                    rm(whichfdrNS005_)
+                    rm(whichfdrNS01_) 
+                    rm(whichfdrNS02_) 
+                    rm(whichfdrNS05_) 
+                    rm(whichfdrNS10_)
+                    
                   } else {
                     
                     # all strongly selected mutations
@@ -4876,15 +4893,6 @@ do_sim <- function(sim, nsim,
                 }
                 
                 rm(locusFST_test_table_)
-                rm(pred_locusFSTNS_)
-                rm(perf_locusFSTNS_)
-                rm(perf_table_)
-                rm(perf_locusFST_table_)
-                rm(whichfdrNS005_)
-                rm(whichfdrNS01_) 
-                rm(whichfdrNS02_) 
-                rm(whichfdrNS05_) 
-                rm(whichfdrNS10_) 
                 
                 ## LOCUS-SPECIFIC SUMMARY STATISTICS
                 ##----------------------------------
@@ -5502,7 +5510,7 @@ do_sim <- function(sim, nsim,
             # assembly final egglib input
             slim_to_egglib_data_ <- cbind(slim_to_egglib_data_, slim_data_[, (length(header_1)+1):ncol(slim_data_)])
             
-            # re-code the Stetus column
+            # re-code the status column
             slim_to_egglib_data_$status <- ifelse(slim_to_egglib_data_$status == 1, "S", "NS")
             
             if (!file_test("-d", egglib_input_folder)){
@@ -5540,7 +5548,7 @@ do_sim <- function(sim, nsim,
             rm(slim_to_egglib_data_)
             rm(selcoeff_snps_)
             
-            ## RUNNUNG EGGLIB - CALCULATING SUMMARY SteTISTICS
+            ## RUNNUNG EGGLIB - CALCULATING SUMMARY STATISTICS
             ##-----------------------------------------------------------------------------------
             
             if(file.exists(paste0(egglib_input_folder, egglib_converted_file_Ste))){
@@ -5565,7 +5573,7 @@ do_sim <- function(sim, nsim,
                                    paste0("SFS-bins=", sfs_bins_run),
                                    paste0("select=", "all"));
               
-              # run egglib summStet on system
+              # run egglib summstat on system
               system(egglib_run_)
               
               # import egglib output
@@ -5633,21 +5641,21 @@ do_sim <- function(sim, nsim,
                   strong_sample_SelSd_Ste   <- as.numeric(NA)
                 }
                 
-                ## GLOBAL SUMMARY SteTISTICS
+                ## GLOBAL SUMMARY STATISTICS
                 ##---------------------------
                 
-                # remove redundant summary Stetistics
+                # remove redundant summary statistics
                 egglib_summary_stats_ <- egglib_summary_stats_[, unique(names(egglib_summary_stats_))]
                 
-                # rename the summary Stetistics
+                # rename the summary statistics
                 colnames(egglib_summary_stats_) <- gsub(":", "_", names(egglib_summary_stats_))
                 
-                # egglib calculated GLOBAL Stetistics
+                # egglib calculated GLOBAL statistics
                 global_stats_ <- egglib_summary_stats_[1 , grepl("^GSS" , unique(names(egglib_summary_stats_)))]
                 
                 global_SFS_   <- egglib_summary_stats_[1 , grepl("^SFS" , unique(names(egglib_summary_stats_)))]
                 
-                # calculate additional GLOBAL summary Stetistics
+                # calculate additional GLOBAL summary statistics
                 mean_locus_stats_ <- apply(egglib_summary_stats_[,-c(1, which(grepl("^GSS" , unique(names(egglib_summary_stats_))))[1]:length(egglib_summary_stats_))], 2, function(x){mean(x, na.rm=T)})
                 
                 var_locus_stats_ <- apply(egglib_summary_stats_[,-c(1, which(grepl("^GSS" , unique(names(egglib_summary_stats_))))[1]:length(egglib_summary_stats_))], 2, function(x){var(x, na.rm=T)})
@@ -5660,7 +5668,7 @@ do_sim <- function(sim, nsim,
                 
                 q95_locus_stats_ <- apply(egglib_summary_stats_[,-c(1, which(grepl("^GSS" , unique(names(egglib_summary_stats_))))[1]:length(egglib_summary_stats_))], 2, function(x){quantile(x, probs = 0.95, na.rm=T)})
                 
-                # assemble additional GLOBAL summary Stetistics
+                # assemble additional GLOBAL summary statistics
                 add_global_stats_ <-cbind(as.data.frame(t(mean_locus_stats_)), as.data.frame(t(var_locus_stats_)), as.data.frame(t(kurt_locus_stats_)), 
                                           as.data.frame(t(skew_locus_stats_)), as.data.frame(t(q05_locus_stats_)), as.data.frame(t(q95_locus_stats_)))
                 
@@ -5671,7 +5679,7 @@ do_sim <- function(sim, nsim,
                 rm(q05_locus_stats_)
                 rm(q95_locus_stats_)
                 
-                # ASSEMBLY default GLOBAL summary Stetistics
+                # ASSEMBLY default GLOBAL summary statistics
                 global_summary_stats_Ste <- cbind(global_stats_, global_SFS_, add_global_stats_)
                 colnames(global_summary_stats_Ste) <- paste0("GSS","_",seq(from=1,to=dim(global_summary_stats_Ste)[2]),"_","Ste")
                 
@@ -5739,6 +5747,17 @@ do_sim <- function(sim, nsim,
                                                       FSTfdrNS05_Ste,
                                                       FSTfdrNS10_Ste))
                     
+                    # remove files
+                    rm(pred_locusFSTNS_)
+                    rm(perf_locusFSTNS_)
+                    rm(perf_table_)
+                    rm(perf_locusFST_table_)
+                    rm(whichfdrNS005_)
+                    rm(whichfdrNS01_) 
+                    rm(whichfdrNS02_) 
+                    rm(whichfdrNS05_) 
+                    rm(whichfdrNS10_)
+                    
                   } else {
                     
                     # all strongly selected mutations
@@ -5761,17 +5780,8 @@ do_sim <- function(sim, nsim,
                 }
                 
                 rm(locusFST_test_table_)
-                rm(pred_locusFSTNS_)
-                rm(perf_locusFSTNS_)
-                rm(perf_table_)
-                rm(perf_locusFST_table_)
-                rm(whichfdrNS005_)
-                rm(whichfdrNS01_) 
-                rm(whichfdrNS02_) 
-                rm(whichfdrNS05_) 
-                rm(whichfdrNS10_) 
                 
-                ## LOCUS-SPECIFIC SUMMARY SteTISTICS
+                ## LOCUS-SPECIFIC SUMMARY STATISTICS
                 ##----------------------------------
                 
                 # sampling ONE RANDOM mutation for the locus-specific reference table
@@ -5799,17 +5809,17 @@ do_sim <- function(sim, nsim,
                 S2n22_ <- apply(S2_genotypes_==22, 1, sum, na.rm=T)
                 SAAF2_ <- (2*(S2n22_) + S2n12_)/((2*(S2n11_) + S2n12_)+(2*(S2n22_) + S2n12_))
                 
-                # assemble LOCUS-SPECIFIC summary Stetistics
+                # assemble LOCUS-SPECIFIC summary statistics
                 locus_lss_info_  <- sampled_snp_[, which(grepl("^ID" , unique(names(sampled_snp_)))):which(grepl("^GO" , unique(names(sampled_snp_))))]
                 locus_lss_stats_ <- egglib_summary_stats_[egglib_summary_stats_$ID %in% sampled_snp_$ID, grepl("^LSS" , unique(names(egglib_summary_stats_)))]
                 locus_wss_stats_ <- egglib_summary_stats_[egglib_summary_stats_$ID %in% sampled_snp_$ID , grepl("^WSS" , unique(names(egglib_summary_stats_)))]
                 
-                # remove summary Stetistics data after use it
+                # remove summary statistics data after use it
                 rm(egglib_summary_stats_)
                 rm(sampled_snp_)
                 rm(sampled_snp_genotypes_)
                 
-                # ASSEMBLY default LOCUS-SPECIFIC summary Stetistics
+                # ASSEMBLY default LOCUS-SPECIFIC summary statistics
                 locus_summary_stats_Ste <- cbind(locus_lss_info_, SAAF1_, SAAF2_, locus_lss_stats_, locus_wss_stats_)
                 colnames(locus_summary_stats_Ste) <- paste0("LSS","_",seq(from=1,to=dim(locus_summary_stats_Ste)[2]),"_","Ste")
                 
@@ -6425,7 +6435,7 @@ do_sim <- function(sim, nsim,
             rm(slim_to_egglib_data_)
             rm(selcoeff_snps_)
             
-            ## RUNNUNG EGGLIB - CALCULATING SUMMARY SteTISTICS
+            ## RUNNUNG EGGLIB - CALCULATING SUMMARY STATISTICS
             ##-----------------------------------------------------------------------------------
             
             if(file.exists(paste0(egglib_input_folder, egglib_converted_file_Riv))){
@@ -6450,7 +6460,7 @@ do_sim <- function(sim, nsim,
                                    paste0("SFS-bins=", sfs_bins_run),
                                    paste0("select=", "all"));
               
-              # run egglib summStet on system
+              # run egglib summstat on system
               system(egglib_run_)
               
               # import egglib output
@@ -6473,7 +6483,7 @@ do_sim <- function(sim, nsim,
                   actual_sample_SelSd_Riv   <- as.numeric(0)
                 }
                 
-                if (!is.na(meanNe2_Ste)){
+                if (!is.na(meanNe2_Riv)){
                   ## Pr MUTATIONS UNDER STRONG POSITIVE SELECTION --[Ns > 1]-- IN THE SAMPLE
                   ##------------------------------------------------------------------------
                   if(any(meanNe2_Riv*slim_to_egglib_snps_$S > 1, na.rm = TRUE)){
@@ -6518,21 +6528,21 @@ do_sim <- function(sim, nsim,
                   strong_sample_SelSd_Riv   <- as.numeric(NA)
                 }
                 
-                ## GLOBAL SUMMARY SteTISTICS
+                ## GLOBAL SUMMARY STATISTICS
                 ##---------------------------
                 
-                # remove redundant summary Stetistics
+                # remove redundant summary statistics
                 egglib_summary_stats_ <- egglib_summary_stats_[, unique(names(egglib_summary_stats_))]
                 
-                # rename the summary Stetistics
+                # rename the summary statistics
                 colnames(egglib_summary_stats_) <- gsub(":", "_", names(egglib_summary_stats_))
                 
-                # egglib calculated GLOBAL Stetistics
+                # egglib calculated GLOBAL statistics
                 global_stats_ <- egglib_summary_stats_[1 , grepl("^GSS" , unique(names(egglib_summary_stats_)))]
                 
                 global_SFS_   <- egglib_summary_stats_[1 , grepl("^SFS" , unique(names(egglib_summary_stats_)))]
                 
-                # calculate additional GLOBAL summary Stetistics
+                # calculate additional GLOBAL summary statistics
                 mean_locus_stats_ <- apply(egglib_summary_stats_[,-c(1, which(grepl("^GSS" , unique(names(egglib_summary_stats_))))[1]:length(egglib_summary_stats_))], 2, function(x){mean(x, na.rm=T)})
                 
                 var_locus_stats_ <- apply(egglib_summary_stats_[,-c(1, which(grepl("^GSS" , unique(names(egglib_summary_stats_))))[1]:length(egglib_summary_stats_))], 2, function(x){var(x, na.rm=T)})
@@ -6545,7 +6555,7 @@ do_sim <- function(sim, nsim,
                 
                 q95_locus_stats_ <- apply(egglib_summary_stats_[,-c(1, which(grepl("^GSS" , unique(names(egglib_summary_stats_))))[1]:length(egglib_summary_stats_))], 2, function(x){quantile(x, probs = 0.95, na.rm=T)})
                 
-                # assemble additional GLOBAL summary Stetistics
+                # assemble additional GLOBAL summary statistics
                 add_global_stats_ <-cbind(as.data.frame(t(mean_locus_stats_)), as.data.frame(t(var_locus_stats_)), as.data.frame(t(kurt_locus_stats_)), 
                                           as.data.frame(t(skew_locus_stats_)), as.data.frame(t(q05_locus_stats_)), as.data.frame(t(q95_locus_stats_)))
                 
@@ -6556,7 +6566,7 @@ do_sim <- function(sim, nsim,
                 rm(q05_locus_stats_)
                 rm(q95_locus_stats_)
                 
-                # ASSEMBLY default GLOBAL summary Stetistics
+                # ASSEMBLY default GLOBAL summary statistics
                 global_summary_stats_Riv <- cbind(global_stats_, global_SFS_, add_global_stats_)
                 colnames(global_summary_stats_Riv) <- paste0("GSS","_",seq(from=1,to=dim(global_summary_stats_Riv)[2]),"_","Riv")
                 
@@ -6624,6 +6634,17 @@ do_sim <- function(sim, nsim,
                                                       FSTfdrNS05_Riv,
                                                       FSTfdrNS10_Riv))
                     
+                    # remove files
+                    rm(pred_locusFSTNS_)
+                    rm(perf_locusFSTNS_)
+                    rm(perf_table_)
+                    rm(perf_locusFST_table_)
+                    rm(whichfdrNS005_)
+                    rm(whichfdrNS01_) 
+                    rm(whichfdrNS02_) 
+                    rm(whichfdrNS05_) 
+                    rm(whichfdrNS10_)
+                    
                   } else {
                     
                     # all strongly selected mutations
@@ -6646,17 +6667,8 @@ do_sim <- function(sim, nsim,
                 }
                 
                 rm(locusFST_test_table_)
-                rm(pred_locusFSTNS_)
-                rm(perf_locusFSTNS_)
-                rm(perf_table_)
-                rm(perf_locusFST_table_)
-                rm(whichfdrNS005_)
-                rm(whichfdrNS01_) 
-                rm(whichfdrNS02_) 
-                rm(whichfdrNS05_) 
-                rm(whichfdrNS10_) 
                 
-                ## LOCUS-SPECIFIC SUMMARY SteTISTICS
+                ## LOCUS-SPECIFIC SUMMARY STATISTICS
                 ##----------------------------------
                 
                 # sampling ONE RANDOM mutation for the locus-specific reference table
@@ -6684,17 +6696,17 @@ do_sim <- function(sim, nsim,
                 S2n22_ <- apply(S2_genotypes_==22, 1, sum, na.rm=T)
                 SAAF2_ <- (2*(S2n22_) + S2n12_)/((2*(S2n11_) + S2n12_)+(2*(S2n22_) + S2n12_))
                 
-                # assemble LOCUS-SPECIFIC summary Stetistics
+                # assemble LOCUS-SPECIFIC summary statistics
                 locus_lss_info_  <- sampled_snp_[, which(grepl("^ID" , unique(names(sampled_snp_)))):which(grepl("^GO" , unique(names(sampled_snp_))))]
                 locus_lss_stats_ <- egglib_summary_stats_[egglib_summary_stats_$ID %in% sampled_snp_$ID, grepl("^LSS" , unique(names(egglib_summary_stats_)))]
                 locus_wss_stats_ <- egglib_summary_stats_[egglib_summary_stats_$ID %in% sampled_snp_$ID , grepl("^WSS" , unique(names(egglib_summary_stats_)))]
                 
-                # remove summary Stetistics data after use it
+                # remove summary statistics data after use it
                 rm(egglib_summary_stats_)
                 rm(sampled_snp_)
                 rm(sampled_snp_genotypes_)
                 
-                # ASSEMBLY default LOCUS-SPECIFIC summary Stetistics
+                # ASSEMBLY default LOCUS-SPECIFIC summary statistics
                 locus_summary_stats_Riv <- cbind(locus_lss_info_, SAAF1_, SAAF2_, locus_lss_stats_, locus_wss_stats_)
                 colnames(locus_summary_stats_Riv) <- paste0("LSS","_",seq(from=1,to=dim(locus_summary_stats_Riv)[2]),"_","Riv")
                 
@@ -7292,7 +7304,7 @@ do_sim <- function(sim, nsim,
             rm(slim_to_egglib_data_)
             rm(selcoeff_snps_)
             
-            ## RUNNUNG EGGLIB - CALCULATING SUMMARY SteTISTICS
+            ## RUNNUNG EGGLIB - CALCULATING SUMMARY STATISTICS
             ##-----------------------------------------------------------------------------------
             
             if(file.exists(paste0(egglib_input_folder, egglib_converted_file_Pla))){
@@ -7317,7 +7329,7 @@ do_sim <- function(sim, nsim,
                                    paste0("SFS-bins=", sfs_bins_run),
                                    paste0("select=", "all"));
               
-              # run egglib summStet on system
+              # run egglib summstat on system
               system(egglib_run_)
               
               # import egglib output
@@ -7340,7 +7352,7 @@ do_sim <- function(sim, nsim,
                   actual_sample_SelSd_Pla   <- as.numeric(0)
                 }
                 
-                if (!is.na(meanNe2_Ste)){
+                if (!is.na(meanNe2_Pla)){
                   ## Pr MUTATIONS UNDER STRONG POSITIVE SELECTION --[Ns > 1]-- IN THE SAMPLE
                   ##------------------------------------------------------------------------
                   if(any(meanNe2_Pla*slim_to_egglib_snps_$S > 1, na.rm = TRUE)){
@@ -7385,21 +7397,21 @@ do_sim <- function(sim, nsim,
                   strong_sample_SelSd_Pla   <- as.numeric(NA)
                 }
                 
-                ## GLOBAL SUMMARY SteTISTICS
+                ## GLOBAL SUMMARY STATISTICS
                 ##---------------------------
                 
-                # remove redundant summary Stetistics
+                # remove redundant summary statistics
                 egglib_summary_stats_ <- egglib_summary_stats_[, unique(names(egglib_summary_stats_))]
                 
-                # rename the summary Stetistics
+                # rename the summary statistics
                 colnames(egglib_summary_stats_) <- gsub(":", "_", names(egglib_summary_stats_))
                 
-                # egglib calculated GLOBAL Stetistics
+                # egglib calculated GLOBAL statistics
                 global_stats_ <- egglib_summary_stats_[1 , grepl("^GSS" , unique(names(egglib_summary_stats_)))]
                 
                 global_SFS_   <- egglib_summary_stats_[1 , grepl("^SFS" , unique(names(egglib_summary_stats_)))]
                 
-                # calculate additional GLOBAL summary Stetistics
+                # calculate additional GLOBAL summary statistics
                 mean_locus_stats_ <- apply(egglib_summary_stats_[,-c(1, which(grepl("^GSS" , unique(names(egglib_summary_stats_))))[1]:length(egglib_summary_stats_))], 2, function(x){mean(x, na.rm=T)})
                 
                 var_locus_stats_ <- apply(egglib_summary_stats_[,-c(1, which(grepl("^GSS" , unique(names(egglib_summary_stats_))))[1]:length(egglib_summary_stats_))], 2, function(x){var(x, na.rm=T)})
@@ -7412,7 +7424,7 @@ do_sim <- function(sim, nsim,
                 
                 q95_locus_stats_ <- apply(egglib_summary_stats_[,-c(1, which(grepl("^GSS" , unique(names(egglib_summary_stats_))))[1]:length(egglib_summary_stats_))], 2, function(x){quantile(x, probs = 0.95, na.rm=T)})
                 
-                # assemble additional GLOBAL summary Stetistics
+                # assemble additional GLOBAL summary statistics
                 add_global_stats_ <-cbind(as.data.frame(t(mean_locus_stats_)), as.data.frame(t(var_locus_stats_)), as.data.frame(t(kurt_locus_stats_)), 
                                           as.data.frame(t(skew_locus_stats_)), as.data.frame(t(q05_locus_stats_)), as.data.frame(t(q95_locus_stats_)))
                 
@@ -7423,7 +7435,7 @@ do_sim <- function(sim, nsim,
                 rm(q05_locus_stats_)
                 rm(q95_locus_stats_)
                 
-                # ASSEMBLY default GLOBAL summary Stetistics
+                # ASSEMBLY default GLOBAL summary statistics
                 global_summary_stats_Pla <- cbind(global_stats_, global_SFS_, add_global_stats_)
                 colnames(global_summary_stats_Pla) <- paste0("GSS","_",seq(from=1,to=dim(global_summary_stats_Pla)[2]),"_","Pla")
                 
@@ -7491,6 +7503,17 @@ do_sim <- function(sim, nsim,
                                                       FSTfdrNS05_Pla,
                                                       FSTfdrNS10_Pla))
                     
+                    # remove files
+                    rm(pred_locusFSTNS_)
+                    rm(perf_locusFSTNS_)
+                    rm(perf_table_)
+                    rm(perf_locusFST_table_)
+                    rm(whichfdrNS005_)
+                    rm(whichfdrNS01_) 
+                    rm(whichfdrNS02_) 
+                    rm(whichfdrNS05_) 
+                    rm(whichfdrNS10_)
+                    
                   } else {
                     
                     # all strongly selected mutations
@@ -7513,17 +7536,8 @@ do_sim <- function(sim, nsim,
                 }
                 
                 rm(locusFST_test_table_)
-                rm(pred_locusFSTNS_)
-                rm(perf_locusFSTNS_)
-                rm(perf_table_)
-                rm(perf_locusFST_table_)
-                rm(whichfdrNS005_)
-                rm(whichfdrNS01_) 
-                rm(whichfdrNS02_) 
-                rm(whichfdrNS05_) 
-                rm(whichfdrNS10_) 
                 
-                ## LOCUS-SPECIFIC SUMMARY SteTISTICS
+                ## LOCUS-SPECIFIC SUMMARY STATISTICS
                 ##----------------------------------
                 
                 # sampling ONE RANDOM mutation for the locus-specific reference table
@@ -7551,17 +7565,17 @@ do_sim <- function(sim, nsim,
                 S2n22_ <- apply(S2_genotypes_==22, 1, sum, na.rm=T)
                 SAAF2_ <- (2*(S2n22_) + S2n12_)/((2*(S2n11_) + S2n12_)+(2*(S2n22_) + S2n12_))
                 
-                # assemble LOCUS-SPECIFIC summary Stetistics
+                # assemble LOCUS-SPECIFIC summary statistics
                 locus_lss_info_  <- sampled_snp_[, which(grepl("^ID" , unique(names(sampled_snp_)))):which(grepl("^GO" , unique(names(sampled_snp_))))]
                 locus_lss_stats_ <- egglib_summary_stats_[egglib_summary_stats_$ID %in% sampled_snp_$ID, grepl("^LSS" , unique(names(egglib_summary_stats_)))]
                 locus_wss_stats_ <- egglib_summary_stats_[egglib_summary_stats_$ID %in% sampled_snp_$ID , grepl("^WSS" , unique(names(egglib_summary_stats_)))]
                 
-                # remove summary Stetistics data after use it
+                # remove summary statistics data after use it
                 rm(egglib_summary_stats_)
                 rm(sampled_snp_)
                 rm(sampled_snp_genotypes_)
                 
-                # ASSEMBLY default LOCUS-SPECIFIC summary Stetistics
+                # ASSEMBLY default LOCUS-SPECIFIC summary statistics
                 locus_summary_stats_Pla <- cbind(locus_lss_info_, SAAF1_, SAAF2_, locus_lss_stats_, locus_wss_stats_)
                 colnames(locus_summary_stats_Pla) <- paste0("LSS","_",seq(from=1,to=dim(locus_summary_stats_Pla)[2]),"_","Pla")
                 
@@ -8152,8 +8166,8 @@ do_sim <- function(sim, nsim,
     strong_sample_SelMean_Ste <- as.numeric(NA)
     strong_sample_SelSd_Ste   <- as.numeric(NA)
     
-    global_summary_Stets_Ste <- cbind(global_Stets_, global_SFS_, add_global_Stets_)
-    colnames(global_summary_Stets_Ste) <- paste0("GSS","_",seq(from=1,to=dim(global_summary_Stets_Ste)[2]),"_","Ste")
+    global_summary_stats_Ste <- cbind(global_stats_, global_SFS_, add_global_stats_)
+    colnames(global_summary_stats_Ste) <- paste0("GSS","_",seq(from=1,to=dim(global_summary_stats_Ste)[2]),"_","Ste")
     
     FSTfdr_Ste <- as.data.frame(cbind(FSTfdrNS005_Ste = NA,
                                       FSTfdrNS01_Ste  = NA,
@@ -8161,8 +8175,8 @@ do_sim <- function(sim, nsim,
                                       FSTfdrNS05_Ste  = NA,
                                       FSTfdrNS10_Ste  = NA))
     
-    locus_summary_Stets_Ste <- as.data.frame(t(rep(NA, 41)))
-    colnames(locus_summary_Stets_Ste) <- paste0("LSS","_",seq(from=1,to=dim(locus_summary_Stets_Ste)[2]),"_","Ste")
+    locus_summary_stats_Ste <- as.data.frame(t(rep(NA, 41)))
+    colnames(locus_summary_stats_Ste) <- paste0("LSS","_",seq(from=1,to=dim(locus_summary_stats_Ste)[2]),"_","Ste")
     
     ## Riverside population
     ##-----------------
@@ -8175,8 +8189,8 @@ do_sim <- function(sim, nsim,
     strong_sample_SelMean_Riv <- as.numeric(NA)
     strong_sample_SelSd_Riv   <- as.numeric(NA)
     
-    global_summary_Rivts_Riv <- cbind(global_Rivts_, global_SFS_, add_global_Rivts_)
-    colnames(global_summary_Rivts_Riv) <- paRiv0("GSS","_",seq(from=1,to=dim(global_summary_Rivts_Riv)[2]),"_","Riv")
+    global_summary_stats_Riv <- cbind(global_stats_, global_SFS_, add_global_stats_)
+    colnames(global_summary_stats_Riv) <- paste0("GSS","_",seq(from=1,to=dim(global_summary_stats_Riv)[2]),"_","Riv")
     
     FSTfdr_Riv <- as.data.frame(cbind(FSTfdrNS005_Riv = NA,
                                       FSTfdrNS01_Riv  = NA,
@@ -8184,8 +8198,8 @@ do_sim <- function(sim, nsim,
                                       FSTfdrNS05_Riv  = NA,
                                       FSTfdrNS10_Riv  = NA))
     
-    locus_summary_Rivts_Riv <- as.data.frame(t(rep(NA, 41)))
-    colnames(locus_summary_Rivts_Riv) <- paRiv0("LSS","_",seq(from=1,to=dim(locus_summary_Rivts_Riv)[2]),"_","Riv")
+    locus_summary_stats_Riv <- as.data.frame(t(rep(NA, 41)))
+    colnames(locus_summary_stats_Riv) <- paste0("LSS","_",seq(from=1,to=dim(locus_summary_stats_Riv)[2]),"_","Riv")
     
     ## Placerita population
     ##-----------------
@@ -8198,8 +8212,8 @@ do_sim <- function(sim, nsim,
     strong_sample_SelMean_Pla <- as.numeric(NA)
     strong_sample_SelSd_Pla   <- as.numeric(NA)
     
-    global_summary_Plats_Pla <- cbind(global_Plats_, global_SFS_, add_global_Plats_)
-    colnames(global_summary_Plats_Pla) <- paPla0("GSS","_",seq(from=1,to=dim(global_summary_Plats_Pla)[2]),"_","Pla")
+    global_summary_stats_Pla <- cbind(global_stats_, global_SFS_, add_global_stats_)
+    colnames(global_summary_stats_Pla) <- paste0("GSS","_",seq(from=1,to=dim(global_summary_stats_Pla)[2]),"_","Pla")
     
     FSTfdr_Pla <- as.data.frame(cbind(FSTfdrNS005_Pla = NA,
                                       FSTfdrNS01_Pla  = NA,
@@ -8207,8 +8221,8 @@ do_sim <- function(sim, nsim,
                                       FSTfdrNS05_Pla  = NA,
                                       FSTfdrNS10_Pla  = NA))
     
-    locus_summary_Plats_Pla <- as.data.frame(t(rep(NA, 41)))
-    colnames(locus_summary_Plats_Pla) <- paPla0("LSS","_",seq(from=1,to=dim(locus_summary_Plats_Pla)[2]),"_","Pla")
+    locus_summary_stats_Pla <- as.data.frame(t(rep(NA, 41)))
+    colnames(locus_summary_stats_Pla) <- paste0("LSS","_",seq(from=1,to=dim(locus_summary_stats_Pla)[2]),"_","Pla")
     
     if (debug_sim){
       
