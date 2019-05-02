@@ -27,13 +27,13 @@ ls()
 
 # bcftools - https://github.com/samtools/bcftools
 # bgzip & tabix - https://github.com/TabakoffLab/General/wiki/Install-vcftools#Install_tabix
-# (usually bgzip and tabis come with bcftools installation)
+# (usually bgzip and tabix come with bcftools installation)
 
 ###########################################
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 5
+nsim                    <- 20
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/usr/local/bin/slim"   #cbbp-desktop# "/home/pavinato/Softwares/slim3.1/slim" #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim" #GENOTOUL# /usr/local/bioinfo/src/SLiM/SLiM-3.2/SLiM_build/slim
@@ -52,12 +52,12 @@ seed                    <- arg
 set.seed(seed,"Mersenne-Twister")
 parallel_sims           <- FALSE
 num_of_threads          <- 4
-remove_files            <- FALSE
+remove_files            <- TRUE
 debug_sim               <- TRUE
 debug_output_folder     <- "results/debug_output/"
 wfabc_input_file        <- FALSE
 wfabc_input_folder      <- "results/wfabc_input/"
-egglib_input_selcoeff   <- TRUE 
+egglib_input_selcoeff   <- FALSE 
 
 ############################################
 ##            SLiM SIMULATION             ##
@@ -99,20 +99,20 @@ tau = c(55,57,66,86,89,104) # tau => a string with the Time between samples;
 # MUTATION RATE
 mu_random = TRUE
 mu_rate <- 1e-7
-mu_min  = 1e-11
-mu_max  = 1e-6
+mu_min  = 1e-10
+mu_max  = 1e-4
 
 # POPULATION SIZE EQUILIBRIUM PHASE - Neq
 neq_random = TRUE
 neq_value <- 50
-neq_min = 100
-neq_max = 10000
+neq_min = 2
+neq_max = 20000
 
 # POPULATION CENSUS SIZE - Ncs
 ncs_random = TRUE
 ncs_value <- 50
-ncs_min = 1
-ncs_max = 10000
+ncs_min = 2
+ncs_max = 20000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
 # gamma mean
@@ -157,8 +157,8 @@ domB_max = 1
 # PER BASE RECOMBINATION RATE
 rr_random = TRUE
 rr_rate <- 1e-7
-rr_min  = 1e-11
-rr_max  = 1e-6
+rr_min  = 1e-10
+rr_max  = 1e-4
 
 # SELFING RATE
 selfing_random = FALSE
@@ -174,7 +174,7 @@ tc_value = 0             # from = 0 to = tau
 ##      EGGLIB SUMMSTAT SETTINGS         ##
 ###########################################
 
-wss_wspan_run = 1000
+wss_wspan_run = 10e+3
 sfs_bins_run = 10
 
 ###########################################
