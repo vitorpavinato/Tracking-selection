@@ -140,7 +140,11 @@ do_sim <- function(sim, nsim,
   
   # MUTATION RATE
   if (mu_random){
-    mu <- 10^runif(n = 1, min = log10(mu_min), max = log10(mu_max))
+    if (mu_prior == 1){
+      mu <- 10^runif(n = 1, min = log10(mu_min), max = log10(mu_max))
+    } else {
+      mu <- 10^rnorm(n = 1, mean = log10(mu_mean), sd = mu_sd)
+    }
   } else {
     mu <- mu_rate
   }
@@ -187,7 +191,7 @@ do_sim <- function(sim, nsim,
   
   # PROPORTION OF BENEFICIAL MUTATION IN G2 ELEMENTS
   if (prbe_random){
-    prbe <- 10^runif(1, min = log10(prbe_min), max = log10(prbe_max))
+    prbe <- 10^runif(n = 1, min = log10(prbe_min), max = log10(prbe_max))
   } else {
     prbe <- prbe_value
   }
@@ -209,7 +213,11 @@ do_sim <- function(sim, nsim,
   
   # PER BASE RECOMBINATION RATE
   if (rr_random){
-    rr <- 10^runif(1, min = log10(rr_min), max = log10(rr_max))
+    if (rr_prior == 1){
+      rr <- 10^runif(n = 1, min = log10(rr_min), max = log10(rr_max))
+    } else {
+      rr <- 10^rnorm(n = 1, mean = log10(rr_mean), sd = rr_sd)
+    }
   } else {
     rr <- rr_rate
   }
@@ -227,7 +235,7 @@ do_sim <- function(sim, nsim,
   
   # SELFING RATE
   if (selfing_random){
-    selfing <- (10^runif(1, min = log10(selfing_min), max = log10(selfing_max)))
+    selfing <- (10^runif(n = 1, min = log10(selfing_min), max = log10(selfing_max)))
   } else {
     selfing <- selfing_rate
   }
@@ -235,7 +243,7 @@ do_sim <- function(sim, nsim,
   # SELECTION ON STANDING VARIATION
   if (model_type == 3){
     if(tc_random){
-      tc <- round(runif(1, min = 0, max = tau))
+      tc <- round(runif(n = 1, min = 0, max = tau))
     } else {
       tc <- tc_value
     }

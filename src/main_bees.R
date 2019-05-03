@@ -99,8 +99,11 @@ tau = c(55,57,66,86,89,104) # tau => a string with the Time between samples;
 # MUTATION RATE
 mu_random = TRUE
 mu_rate <- 1e-7
-mu_min  = 1e-10
-mu_max  = 1e-4
+mu_prior <- 2              # 1 = log-uniform; 2 = log-normal; 
+mu_min  = 1e-10            # min for the log-uniform, otherwise NULL;
+mu_max  = 1e-4             # max for the log-uniform, otherwise NULL;
+mu_mean = 3.4e-9           # mean for the log-normal, otherwise NULL;
+mu_sd   = 0.5              # sd for the log-normal, otherwise NULL;
 
 # POPULATION SIZE EQUILIBRIUM PHASE - Neq
 neq_random = TRUE
@@ -157,8 +160,11 @@ domB_max = 1
 # PER BASE RECOMBINATION RATE
 rr_random = TRUE
 rr_rate <- 1e-7
-rr_min  = 1e-10
-rr_max  = 1e-4
+rr_prior <- 1             # 1 = log-uniform; 2 = log-normal; 
+rr_min  = 1e-8            # min for the log-uniform, otherwise NULL; 
+rr_max  = 1e-4            # max for the log-uniform, otherwise NULL;
+rr_mean = 2e-7            # mean for the log-normal, otherwise NULL;
+rr_sd   = 0.5             # sd for the log-normal, otherwise NULL;
 
 # SELFING RATE
 selfing_random = FALSE
