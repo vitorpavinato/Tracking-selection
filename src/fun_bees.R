@@ -4022,7 +4022,7 @@ do_sim <- function(sim, nsim,
                 rm(snps_in_reftable_)
                 
                 # calculate sample minor allele frequency
-                sampled_snp_genotypes_ <- sampled_snp_[, (grep("GO", names(sampled_snp_)) + 1):(SSs[3] + (SSs[7]-2) + 6)] #HERE
+                sampled_snp_genotypes_ <- sampled_snp_[, (grep("GO", names(sampled_snp_)) + 1):(SSs[3] + (SSs[7]-3) + 6)] #HERE
                 
                 # sample alternative allele frequency - SAAF1
                 S1_genotypes_ <- sampled_snp_genotypes_[, grepl(paste0("@pop", 1), names(sampled_snp_genotypes_))]
