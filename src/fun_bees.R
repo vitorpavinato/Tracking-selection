@@ -3645,7 +3645,7 @@ do_sim <- function(sim, nsim,
           
           # split the data
           slim_snp_geno_ <- slim_raw_data_[, 9:ncol(slim_raw_data_)]
-          slim_snp_geno_ <- slim_snp_geno_[,-c(9:10)] ## remove extra inds here
+          slim_snp_geno_ <- slim_snp_geno_[,-c(8:10)] ## remove extra inds here
           slim_snp_info_ <- slim_raw_data_[, 1:length(header_1)]
           
           # remove raw snp data after use it
