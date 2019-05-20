@@ -445,7 +445,7 @@ do_sim <- function(sim, nsim,
       if (info_ne2_file$size != 0){
         ne2 <- read.csv(file = slim_output_ne2, sep = "\t", header = F, col.names = c("gen", "time", "ne"), na.strings = "NA")
         
-        if (nrow(ne2) != 0){
+        if (nrow(ne2) == (tau[6]+1)){
           
           # check if there is any -Inf/Inf and susbstitute it for NA
           ne2[which(is.infinite(ne2$ne)), "ne"] <- NA
@@ -473,6 +473,28 @@ do_sim <- function(sim, nsim,
           meanNe2_Ste <- as.numeric(NA)
           meanNe2_Riv = meanNe2_Pla <- as.numeric(NA)
           
+          if (debug_sim){
+            
+            # check if the folder exists
+            if (!file_test("-d", debug_output_folder)){
+              dir.create(file.path(debug_output_folder))
+            }
+            
+            file.copy(from = paste0(slim_output_folder, "slim_coalesced_",model_title,"_", sim, ".tree"), to = debug_output_folder)
+            if (file.exists(slim_output_ne2)){
+              file.copy(from = slim_output_ne2, to = debug_output_folder)
+            }
+            
+            debug_message <- "slim_output_ne2 had insufficient rows"
+            
+            debug_dump  <- suppressWarnings(cbind(as.factor(model_type), 
+                                                  sim_seed, sim, 
+                                                  mu, rr, selfing, Neq, Ncs,
+                                                  gammaM, gammak, tc,
+                                                  PrGWSel, prbe, debug_message))
+            rownames(debug_dump) <- sim
+            write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+          }
         }
         
         # remove pedigreeNe data after use it
@@ -535,7 +557,7 @@ do_sim <- function(sim, nsim,
       if (info_geneticLoad_file$size != 0){
         geneticLoad <- read.csv(file = slim_output_geneticLoad, sep = "\t", header = F, col.names = c("gen", "time", "genetciload"), na.strings = "NA")
         
-        if (nrow(geneticLoad) != 0){
+        if (nrow(geneticLoad) == (tau[6]+1)){
           
           # subset the genetic load for each pair of samples
           # check if there is any -Inf/Inf and remove the rows containing it
@@ -566,6 +588,29 @@ do_sim <- function(sim, nsim,
           averageGenLoad_Sta <- as.numeric(NA)
           averageGenLoad_Ste <- as.numeric(NA)
           averageGenLoad_Riv = averageGenLoad_Pla <- as.numeric(NA)
+          
+          if (debug_sim){
+            
+            # check if the folder exists
+            if (!file_test("-d", debug_output_folder)){
+              dir.create(file.path(debug_output_folder))
+            }
+            
+            file.copy(from = paste0(slim_output_folder, "slim_coalesced_",model_title,"_", sim, ".tree"), to = debug_output_folder)
+            if (file.exists(slim_output_geneticLoad)){
+              file.copy(from = slim_output_geneticLoad, to = debug_output_folder)
+            }
+            
+            debug_message <- "slim_output_geneticLoad had insufficient rows"
+            
+            debug_dump  <- suppressWarnings(cbind(as.factor(model_type), 
+                                                  sim_seed, sim, 
+                                                  mu, rr, selfing, Neq, Ncs,
+                                                  gammaM, gammak, tc,
+                                                  PrGWSel, prbe, debug_message))
+            rownames(debug_dump) <- sim
+            write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+          }
         }
         
         # remove genetic load data after use it
@@ -2373,6 +2418,35 @@ do_sim <- function(sim, nsim,
                   write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
                 }
                 
+                if (remove_files){
+                  if (file.exists(slim_output_sample_ts1)){
+                    file.remove(slim_output_sample_ts1)
+                  }
+                  if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz"))){
+                    file.remove(paste0(slim_output_sample_ts1_sorted, ".gz"))
+                  }
+                  if (genomeS > 2^29){
+                    if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz.csi"))){
+                      file.remove(paste0(slim_output_sample_ts1_sorted, ".gz.csi"))
+                    }
+                  } else {
+                    if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz.tbi"))){
+                      file.remove(paste0(slim_output_sample_ts1_sorted, ".gz.tbi"))
+                    }
+                  }
+                  if(file.exists(slim_output_sample_merged_Ava)){
+                    file.remove(slim_output_sample_merged_Ava)
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Ava))){
+                    file.remove(paste0(egglib_input_folder, egglib_converted_file_Ava))
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Ava))){ #### ADD SNP INFO HERE
+                    file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Ava))
+                  }
+                  if (file.exists(egglib_output_summstats_Ava)){
+                    file.remove(egglib_output_summstats_Ava)
+                  }
+                } 
               }
               
             } else {
@@ -2408,6 +2482,7 @@ do_sim <- function(sim, nsim,
                 }
                 
                 file.copy(from = paste0(slim_output_folder, "slim_coalesced_",model_title,"_", sim, ".tree"), to = debug_output_folder)
+                
                 if(file.exists(slim_output_sample_ts1)){
                   file.copy(from = slim_output_sample_ts1, to = debug_output_folder)
                 }
@@ -2430,6 +2505,33 @@ do_sim <- function(sim, nsim,
                 rownames(debug_dump) <- sim
                 write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
               }
+              
+              if (remove_files){
+                if (file.exists(slim_output_sample_ts1)){
+                  file.remove(slim_output_sample_ts1)
+                }
+                if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz"))){
+                  file.remove(paste0(slim_output_sample_ts1_sorted, ".gz"))
+                }
+                if (genomeS > 2^29){
+                  if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz.csi"))){
+                    file.remove(paste0(slim_output_sample_ts1_sorted, ".gz.csi"))
+                  }
+                } else {
+                  if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz.tbi"))){
+                    file.remove(paste0(slim_output_sample_ts1_sorted, ".gz.tbi"))
+                  }
+                }
+                if(file.exists(slim_output_sample_merged_Ava)){
+                  file.remove(from = slim_output_sample_merged_Ava)
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Ava))){
+                  file.remove(paste0(egglib_input_folder, egglib_converted_file_Ava))
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Ava))){ #### ADD SNP INFO HERE
+                  file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Ava))
+                }
+              } 
             }
             
             if (remove_files){
@@ -2497,6 +2599,27 @@ do_sim <- function(sim, nsim,
               rownames(debug_dump) <- sim
               write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
             }
+            
+            if (remove_files){
+              if (file.exists(slim_output_sample_ts1)){
+                file.remove(slim_output_sample_ts1)
+              }
+              if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz"))){
+                file.remove(paste0(slim_output_sample_ts1_sorted, ".gz"))
+              }
+              if (genomeS > 2^29){
+                if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz.csi"))){
+                  file.remove(paste0(slim_output_sample_ts1_sorted, ".gz.csi"))
+                }
+              } else {
+                if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz.tbi"))){
+                  file.remove(paste0(slim_output_sample_ts1_sorted, ".gz.tbi"))
+                }
+              }
+              if(file.exists(slim_output_sample_merged_Ava)){
+                file.remove(slim_output_sample_merged_Ava)
+              }
+            } 
           }
   
         } else {
@@ -2555,6 +2678,28 @@ do_sim <- function(sim, nsim,
             rownames(debug_dump) <- sim
             write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
           }
+          
+          if (remove_files){
+            if (file.exists(slim_output_sample_ts1)){
+              file.remove(slim_output_sample_ts1)
+            }
+            if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz"))){
+              file.remove(paste0(slim_output_sample_ts1_sorted, ".gz"))
+            }
+            if (genomeS > 2^29){
+              if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz.csi"))){
+                file.remove(paste0(slim_output_sample_ts1_sorted, ".gz.csi"))
+              }
+            } else {
+              if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz.tbi"))){
+                file.remove(paste0(slim_output_sample_ts1_sorted, ".gz.tbi"))
+              }
+            }
+            if(file.exists(slim_output_sample_merged_Ava)){
+              file.remove(slim_output_sample_merged_Ava)
+            }
+            
+          } 
         }
         
       } else {
@@ -2609,10 +2754,30 @@ do_sim <- function(sim, nsim,
           rownames(debug_dump) <- sim
           write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
         }
+        
+        if (remove_files){
+          if (file.exists(slim_output_sample_ts1)){
+            file.remove(slim_output_sample_ts1)
+          }
+          if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz"))){
+            file.remove(paste0(slim_output_sample_ts1_sorted, ".gz"))
+          }
+          if (genomeS > 2^29){
+            if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz.csi"))){
+              file.remove(paste0(slim_output_sample_ts1_sorted, ".gz.csi"))
+            }
+          } else {
+            if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz.tbi"))){
+              file.remove(paste0(slim_output_sample_ts1_sorted, ".gz.tbi"))
+            }
+          }
+        } 
       }
       
       if (remove_files){
-        file.remove(paste0(slim_output_sample_ts1))
+        if (file.exists(slim_output_sample_ts1)){
+          file.remove(slim_output_sample_ts1)
+        }
         if (file.exists(paste0(slim_output_sample_ts1_sorted, ".gz"))){
           file.remove(paste0(slim_output_sample_ts1_sorted, ".gz"))
         }
@@ -2625,7 +2790,9 @@ do_sim <- function(sim, nsim,
             file.remove(paste0(slim_output_sample_ts1_sorted, ".gz.tbi"))
           }
         }
-        file.remove(paste0(slim_output_sample_merged_Ava))
+        if (file.exists(slim_output_sample_merged_Ava)){
+          file.remove(slim_output_sample_merged_Ava)
+        }
       }
       
     } else {
@@ -2661,6 +2828,7 @@ do_sim <- function(sim, nsim,
         }
         
         file.copy(from = paste0(slim_output_folder, "slim_coalesced_",model_title,"_", sim, ".tree"), to = debug_output_folder)
+        
         if(file.exists(slim_output_sample_ts1)){
           file.copy(from = slim_output_sample_ts1, to = debug_output_folder)
         }
@@ -2679,8 +2847,13 @@ do_sim <- function(sim, nsim,
         rownames(debug_dump) <- sim
         write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
       }
+      
+      if (remove_files){
+        if (file.exists(slim_output_sample_ts1)){
+          file.remove(slim_output_sample_ts1)
+        }
+      }
     }
-    
     
     ## Humboldt population
     ##-----------------
@@ -3258,6 +3431,35 @@ do_sim <- function(sim, nsim,
                   write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
                 }
                 
+                if (remove_files){
+                  if (file.exists(slim_output_sample_ts2)){
+                    file.remove(slim_output_sample_ts2)
+                  }
+                  if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz"))){
+                    file.remove(paste0(slim_output_sample_ts2_sorted, ".gz"))
+                  }
+                  if (genomeS > 2^29){
+                    if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz.csi"))){
+                      file.remove(paste0(slim_output_sample_ts2_sorted, ".gz.csi"))
+                    }
+                  } else {
+                    if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz.tbi"))){
+                      file.remove(paste0(slim_output_sample_ts2_sorted, ".gz.tbi"))
+                    }
+                  }
+                  if(file.exists(slim_output_sample_merged_Hum)){
+                    file.remove(slim_output_sample_merged_Hum)
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Hum))){
+                    file.remove(paste0(egglib_input_folder, egglib_converted_file_Hum))
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Hum))){ #### ADD SNP INFO HERE
+                    file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Hum))
+                  }
+                  if (file.exists(egglib_output_summstats_Hum)){
+                    file.remove(egglib_output_summstats_Hum)
+                  }
+                }  
               }
               
             } else {
@@ -3315,6 +3517,33 @@ do_sim <- function(sim, nsim,
                 rownames(debug_dump) <- sim
                 write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
               }
+              
+              if (remove_files){
+                if (file.exists(slim_output_sample_ts2)){
+                  file.remove(slim_output_sample_ts2)
+                }
+                if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz"))){
+                  file.remove(paste0(slim_output_sample_ts2_sorted, ".gz"))
+                }
+                if (genomeS > 2^29){
+                  if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz.csi"))){
+                    file.remove(paste0(slim_output_sample_ts2_sorted, ".gz.csi"))
+                  }
+                } else {
+                  if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz.tbi"))){
+                    file.remove(paste0(slim_output_sample_ts2_sorted, ".gz.tbi"))
+                  }
+                }
+                if(file.exists(slim_output_sample_merged_Hum)){
+                  file.remove(slim_output_sample_merged_Hum)
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Hum))){
+                  file.remove(paste0(egglib_input_folder, egglib_converted_file_Hum))
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Hum))){ #### ADD SNP INFO HERE
+                  file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Hum))
+                }
+              } 
             }
             
             if (remove_files){
@@ -3382,6 +3611,27 @@ do_sim <- function(sim, nsim,
               rownames(debug_dump) <- sim
               write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
             }
+            
+            if (remove_files){
+              if (file.exists(slim_output_sample_ts2)){
+                file.remove(slim_output_sample_ts2)
+              }
+              if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz"))){
+                file.remove(paste0(slim_output_sample_ts2_sorted, ".gz"))
+              }
+              if (genomeS > 2^29){
+                if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz.csi"))){
+                  file.remove(paste0(slim_output_sample_ts2_sorted, ".gz.csi"))
+                }
+              } else {
+                if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz.tbi"))){
+                  file.remove(paste0(slim_output_sample_ts2_sorted, ".gz.tbi"))
+                }
+              }
+              if(file.exists(slim_output_sample_merged_Hum)){
+                file.remove(slim_output_sample_merged_Hum)
+              }
+            } 
           }
           
         } else {
@@ -3440,6 +3690,27 @@ do_sim <- function(sim, nsim,
             rownames(debug_dump) <- sim
             write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
           }
+          
+          if (remove_files){
+            if (file.exists(slim_output_sample_ts2)){
+              file.remove(slim_output_sample_ts2)
+            }
+            if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz"))){
+              file.remove(paste0(slim_output_sample_ts2_sorted, ".gz"))
+            }
+            if (genomeS > 2^29){
+              if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz.csi"))){
+                file.remove(paste0(slim_output_sample_ts2_sorted, ".gz.csi"))
+              }
+            } else {
+              if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz.tbi"))){
+                file.remove(paste0(slim_output_sample_ts2_sorted, ".gz.tbi"))
+              }
+            }
+            if(file.exists(slim_output_sample_merged_Hum)){
+              file.remove(slim_output_sample_merged_Hum)
+            }
+          } 
         }
         
       } else {
@@ -3494,6 +3765,24 @@ do_sim <- function(sim, nsim,
           rownames(debug_dump) <- sim
           write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
         }
+        
+        if (remove_files){
+          if (file.exists(slim_output_sample_ts2)){
+            file.remove(slim_output_sample_ts2)
+          }
+          if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz"))){
+            file.remove(paste0(slim_output_sample_ts2_sorted, ".gz"))
+          }
+          if (genomeS > 2^29){
+            if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz.csi"))){
+              file.remove(paste0(slim_output_sample_ts2_sorted, ".gz.csi"))
+            }
+          } else {
+            if (file.exists(paste0(slim_output_sample_ts2_sorted, ".gz.tbi"))){
+              file.remove(paste0(slim_output_sample_ts2_sorted, ".gz.tbi"))
+            }
+          }
+        } 
       }
       
       if (remove_files){
@@ -3546,6 +3835,7 @@ do_sim <- function(sim, nsim,
         }
         
         file.copy(from = paste0(slim_output_folder, "slim_coalesced_",model_title,"_", sim, ".tree"), to = debug_output_folder)
+        
         if(file.exists(slim_output_sample_ts2)){
           file.copy(from = slim_output_sample_ts2, to = debug_output_folder)
         }
@@ -3564,6 +3854,12 @@ do_sim <- function(sim, nsim,
         rownames(debug_dump) <- sim
         write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
       }
+      
+      if (remove_files){
+        if (file.exists(slim_output_sample_ts2)){
+          file.remove(slim_output_sample_ts2)
+        }
+      } 
     }
     
     ## Davis population
@@ -4142,6 +4438,35 @@ do_sim <- function(sim, nsim,
                   write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
                 }
                 
+                if (remove_files){
+                  if (file.exists(slim_output_sample_ts3)){
+                    file.remove(slim_output_sample_ts3)
+                  }
+                  if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz"))){
+                    file.remove(paste0(slim_output_sample_ts3_sorted, ".gz"))
+                  }
+                  if (genomeS > 2^29){
+                    if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz.csi"))){
+                      file.remove(paste0(slim_output_sample_ts3_sorted, ".gz.csi"))
+                    }
+                  } else {
+                    if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz.tbi"))){
+                      file.remove(paste0(slim_output_sample_ts3_sorted, ".gz.tbi"))
+                    }
+                  }
+                  if(file.exists(slim_output_sample_merged_Dav)){
+                    file.remove(slim_output_sample_merged_Dav)
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Dav))){
+                    file.remove(paste0(egglib_input_folder, egglib_converted_file_Dav))
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Dav))){ #### ADD SNP INFO HERE
+                    file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Dav))
+                  }
+                  if (file.exists(egglib_output_summstats_Dav)){
+                    file.remove(egglib_output_summstats_Dav)
+                  }
+                }
               }
               
             } else {
@@ -4199,6 +4524,34 @@ do_sim <- function(sim, nsim,
                 rownames(debug_dump) <- sim
                 write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
               }
+              
+              if (remove_files){
+                if (file.exists(slim_output_sample_ts3)){
+                  file.remove(slim_output_sample_ts3)
+                }
+                if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz"))){
+                  file.remove(paste0(slim_output_sample_ts3_sorted, ".gz"))
+                }
+                if (genomeS > 2^29){
+                  if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz.csi"))){
+                    file.remove(paste0(slim_output_sample_ts3_sorted, ".gz.csi"))
+                  }
+                } else {
+                  if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz.tbi"))){
+                    file.remove(paste0(slim_output_sample_ts3_sorted, ".gz.tbi"))
+                  }
+                }
+                if(file.exists(slim_output_sample_merged_Dav)){
+                  file.remove(slim_output_sample_merged_Dav)
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Dv))){
+                  file.remove(paste0(egglib_input_folder, egglib_converted_file_Dav))
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Dav))){ #### ADD SNP INFO HERE
+                  file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Dav))
+                }
+              } 
+              
             }
             
             if (remove_files){
@@ -4266,6 +4619,27 @@ do_sim <- function(sim, nsim,
               rownames(debug_dump) <- sim
               write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
             }
+            
+            if (remove_files){
+              if (file.exists(slim_output_sample_ts3)){
+                file.remove(slim_output_sample_ts3)
+              }
+              if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz"))){
+                file.remove(paste0(slim_output_sample_ts3_sorted, ".gz"))
+              }
+              if (genomeS > 2^29){
+                if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz.csi"))){
+                  file.remove(paste0(slim_output_sample_ts3_sorted, ".gz.csi"))
+                }
+              } else {
+                if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz.tbi"))){
+                  file.remove(paste0(slim_output_sample_ts3_sorted, ".gz.tbi"))
+                }
+              }
+              if(file.exists(slim_output_sample_merged_Dav)){
+                file.remove(slim_output_sample_merged_Dav)
+              }
+            }
           }
           
         } else {
@@ -4324,6 +4698,26 @@ do_sim <- function(sim, nsim,
             rownames(debug_dump) <- sim
             write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
           }
+          if (remove_files){
+            if (file.exists(slim_output_sample_ts3)){
+              file.remove(slim_output_sample_ts3)
+            }
+            if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz"))){
+              file.remove(paste0(slim_output_sample_ts3_sorted, ".gz"))
+            }
+            if (genomeS > 2^29){
+              if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz.csi"))){
+                file.remove(paste0(slim_output_sample_ts3_sorted, ".gz.csi"))
+              }
+            } else {
+              if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz.tbi"))){
+                file.remove(paste0(slim_output_sample_ts3_sorted, ".gz.tbi"))
+              }
+            }
+            if(file.exists(slim_output_sample_merged_Dav)){
+              file.remove(slim_output_sample_merged_Dav)
+            }
+          }
         }
         
       } else {
@@ -4377,6 +4771,24 @@ do_sim <- function(sim, nsim,
                                                 PrGWSel, prbe, debug_message))
           rownames(debug_dump) <- sim
           write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+        }
+        
+        if (remove_files){
+          if (file.exists(slim_output_sample_ts3)){
+            file.remove(slim_output_sample_ts3)
+          }
+          if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz"))){
+            file.remove(paste0(slim_output_sample_ts3_sorted, ".gz"))
+          }
+          if (genomeS > 2^29){
+            if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz.csi"))){
+              file.remove(paste0(slim_output_sample_ts3_sorted, ".gz.csi"))
+            }
+          } else {
+            if (file.exists(paste0(slim_output_sample_ts3_sorted, ".gz.tbi"))){
+              file.remove(paste0(slim_output_sample_ts3_sorted, ".gz.tbi"))
+            }
+          }
         }
       }
       
@@ -4448,6 +4860,12 @@ do_sim <- function(sim, nsim,
         rownames(debug_dump) <- sim
         write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
       }
+      
+      if (remove_files){
+        if (file.exists(slim_output_sample_ts3)){
+          file.remove(slim_output_sample_ts3)
+        }
+      } 
     }
     
     ## Stanislaus population
@@ -5025,7 +5443,35 @@ do_sim <- function(sim, nsim,
                   rownames(debug_dump) <- sim
                   write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
                 }
-                
+                if (remove_files){
+                  if (file.exists(slim_output_sample_ts4)){
+                    file.remove(slim_output_sample_ts4)
+                  }
+                  if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz"))){
+                    file.remove(paste0(slim_output_sample_ts4_sorted, ".gz"))
+                  }
+                  if (genomeS > 2^29){
+                    if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz.csi"))){
+                      file.remove(paste0(slim_output_sample_ts4_sorted, ".gz.csi"))
+                    }
+                  } else {
+                    if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz.tbi"))){
+                      file.remove(paste0(slim_output_sample_ts4_sorted, ".gz.tbi"))
+                    }
+                  }
+                  if(file.exists(slim_output_sample_merged_Sta)){
+                    file.remove(slim_output_sample_merged_Sta)
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Sta))){
+                    file.remove(paste0(egglib_input_folder, egglib_converted_file_Sta))
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Sta))){ #### ADD SNP INFO HERE
+                    file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Sta))
+                  }
+                  if (file.exists(egglib_output_summstats_Sta)){
+                    file.remove(egglib_output_summstats_Sta)
+                  }
+                } 
               }
               
             } else {
@@ -5083,6 +5529,33 @@ do_sim <- function(sim, nsim,
                 rownames(debug_dump) <- sim
                 write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
               }
+              
+              if (remove_files){
+                if (file.exists(slim_output_sample_ts4)){
+                  file.remove(slim_output_sample_ts4)
+                }
+                if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz"))){
+                  file.remove(paste0(slim_output_sample_ts4_sorted, ".gz"))
+                }
+                if (genomeS > 2^29){
+                  if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz.csi"))){
+                    file.remove(paste0(slim_output_sample_ts4_sorted, ".gz.csi"))
+                  }
+                } else {
+                  if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz.tbi"))){
+                    file.remove(paste0(slim_output_sample_ts4_sorted, ".gz.tbi"))
+                  }
+                }
+                if(file.exists(slim_output_sample_merged_Sta)){
+                  file.remove(slim_output_sample_merged_Sta)
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Sta))){
+                  file.remove(paste0(egglib_input_folder, egglib_converted_file_Sta))
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Sta))){ #### ADD SNP INFO HERE
+                  file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Sta))
+                }
+              } 
             }
             
             if (remove_files){
@@ -5150,6 +5623,27 @@ do_sim <- function(sim, nsim,
               rownames(debug_dump) <- sim
               write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
             }
+            
+            if (remove_files){
+              if (file.exists(slim_output_sample_ts4)){
+                file.remove(slim_output_sample_ts4)
+              }
+              if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz"))){
+                file.remove(paste0(slim_output_sample_ts4_sorted, ".gz"))
+              }
+              if (genomeS > 2^29){
+                if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz.csi"))){
+                  file.remove(paste0(slim_output_sample_ts4_sorted, ".gz.csi"))
+                }
+              } else {
+                if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz.tbi"))){
+                  file.remove(paste0(slim_output_sample_ts4_sorted, ".gz.tbi"))
+                }
+              }
+              if(file.exists(slim_output_sample_merged_Sta)){
+                file.remove(slim_output_sample_merged_Sta)
+              }
+            } 
           }
           
         } else {
@@ -5208,6 +5702,27 @@ do_sim <- function(sim, nsim,
             rownames(debug_dump) <- sim
             write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
           }
+          
+          if (remove_files){
+            if (file.exists(slim_output_sample_ts4)){
+              file.remove(slim_output_sample_ts4)
+            }
+            if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz"))){
+              file.remove(paste0(slim_output_sample_ts4_sorted, ".gz"))
+            }
+            if (genomeS > 2^29){
+              if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz.csi"))){
+                file.remove(paste0(slim_output_sample_ts4_sorted, ".gz.csi"))
+              }
+            } else {
+              if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz.tbi"))){
+                file.remove(paste0(slim_output_sample_ts4_sorted, ".gz.tbi"))
+              }
+            }
+            if(file.exists(slim_output_sample_merged_Sta)){
+              file.remove(slim_output_sample_merged_Sta)
+            }
+          }
         }
         
       } else {
@@ -5261,6 +5776,24 @@ do_sim <- function(sim, nsim,
                                                 PrGWSel, prbe, debug_message))
           rownames(debug_dump) <- sim
           write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+        }
+        
+        if (remove_files){
+          if (file.exists(slim_output_sample_ts4)){
+            file.remove(slim_output_sample_ts4)
+          }
+          if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz"))){
+            file.remove(paste0(slim_output_sample_ts4_sorted, ".gz"))
+          }
+          if (genomeS > 2^29){
+            if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz.csi"))){
+              file.remove(paste0(slim_output_sample_ts4_sorted, ".gz.csi"))
+            }
+          } else {
+            if (file.exists(paste0(slim_output_sample_ts4_sorted, ".gz.tbi"))){
+              file.remove(paste0(slim_output_sample_ts4_sorted, ".gz.tbi"))
+            }
+          }
         }
       }
       
@@ -5335,6 +5868,12 @@ do_sim <- function(sim, nsim,
         rownames(debug_dump) <- sim
         write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
       }
+      
+      if (remove_files){
+        if (file.exists(slim_output_sample_ts4)){
+          file.remove(slim_output_sample_ts4)
+        }
+      } 
     }
     
     ## Stebbins population
@@ -5913,6 +6452,35 @@ do_sim <- function(sim, nsim,
                   write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
                 }
                 
+                if (remove_files){
+                  if (file.exists(slim_output_sample_ts5)){
+                    file.remove(slim_output_sample_ts5)
+                  }
+                  if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz"))){
+                    file.remove(paste0(slim_output_sample_ts5_sorted, ".gz"))
+                  }
+                  if (genomeS > 2^29){
+                    if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz.csi"))){
+                      file.remove(paste0(slim_output_sample_ts5_sorted, ".gz.csi"))
+                    }
+                  } else {
+                    if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz.tbi"))){
+                      file.remove(paste0(slim_output_sample_ts5_sorted, ".gz.tbi"))
+                    }
+                  }
+                  if(file.exists(slim_output_sample_merged_Ste)){
+                    file.remove(slim_output_sample_merged_Ste)
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Ste))){
+                    file.remove(paste0(egglib_input_folder, egglib_converted_file_Ste))
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Ste))){ #### ADD SNP INFO HERE
+                    file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Ste))
+                  }
+                  if (file.exists(egglib_output_summstats_Ste)){
+                    file.remove(egglib_output_summstats_Ste)
+                  }
+                }
               }
               
             } else {
@@ -5969,6 +6537,33 @@ do_sim <- function(sim, nsim,
                                                       PrGWSel, prbe, debug_message))
                 rownames(debug_dump) <- sim
                 write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+              }
+              
+              if (remove_files){
+                if (file.exists(slim_output_sample_ts5)){
+                  file.remove(slim_output_sample_ts5)
+                }
+                if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz"))){
+                  file.remove(paste0(slim_output_sample_ts5_sorted, ".gz"))
+                }
+                if (genomeS > 2^29){
+                  if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz.csi"))){
+                    file.remove(paste0(slim_output_sample_ts5_sorted, ".gz.csi"))
+                  }
+                } else {
+                  if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz.tbi"))){
+                    file.remove(paste0(slim_output_sample_ts5_sorted, ".gz.tbi"))
+                  }
+                }
+                if(file.exists(slim_output_sample_merged_Ste)){
+                  file.remove(slim_output_sample_merged_Ste)
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Ste))){
+                  file.remove(paste0(egglib_input_folder, egglib_converted_file_Ste))
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Ste))){ #### ADD SNP INFO HERE
+                  file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Ste))
+                }
               }
             }
             
@@ -6037,6 +6632,27 @@ do_sim <- function(sim, nsim,
               rownames(debug_dump) <- sim
               write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
             }
+            
+            if (remove_files){
+              if (file.exists(slim_output_sample_ts5)){
+                file.remove(slim_output_sample_ts5)
+              }
+              if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz"))){
+                file.remove(paste0(slim_output_sample_ts5_sorted, ".gz"))
+              }
+              if (genomeS > 2^29){
+                if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz.csi"))){
+                  file.remove(paste0(slim_output_sample_ts5_sorted, ".gz.csi"))
+                }
+              } else {
+                if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz.tbi"))){
+                  file.remove(paste0(slim_output_sample_ts5_sorted, ".gz.tbi"))
+                }
+              }
+              if(file.exists(slim_output_sample_merged_Ste)){
+                file.remove(slim_output_sample_merged_Ste)
+              }
+            }
           }
           
         } else {
@@ -6095,6 +6711,27 @@ do_sim <- function(sim, nsim,
             rownames(debug_dump) <- sim
             write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
           }
+          
+          if (remove_files){
+            if (file.exists(slim_output_sample_ts5)){
+              file.remove(slim_output_sample_ts5)
+            }
+            if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz"))){
+              file.remove(paste0(slim_output_sample_ts5_sorted, ".gz"))
+            }
+            if (genomeS > 2^29){
+              if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz.csi"))){
+                file.remove(paste0(slim_output_sample_ts5_sorted, ".gz.csi"))
+              }
+            } else {
+              if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz.tbi"))){
+                file.remove(paste0(slim_output_sample_ts5_sorted, ".gz.tbi"))
+              }
+            }
+            if(file.exists(slim_output_sample_merged_Ste)){
+              file.remove(slim_output_sample_merged_Ste)
+            }
+          } 
         }
         
       } else {
@@ -6148,6 +6785,24 @@ do_sim <- function(sim, nsim,
                                                 PrGWSel, prbe, debug_message))
           rownames(debug_dump) <- sim
           write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+        }
+        
+        if (remove_files){
+          if (file.exists(slim_output_sample_ts5)){
+            file.remove(slim_output_sample_ts5)
+          }
+          if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz"))){
+            file.remove(paste0(slim_output_sample_ts5_sorted, ".gz"))
+          }
+          if (genomeS > 2^29){
+            if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz.csi"))){
+              file.remove(paste0(slim_output_sample_ts5_sorted, ".gz.csi"))
+            }
+          } else {
+            if (file.exists(paste0(slim_output_sample_ts5_sorted, ".gz.tbi"))){
+              file.remove(paste0(slim_output_sample_ts5_sorted, ".gz.tbi"))
+            }
+          }
         }
       }
       
@@ -6221,6 +6876,12 @@ do_sim <- function(sim, nsim,
                                               PrGWSel, prbe, debug_message))
         rownames(debug_dump) <- sim
         write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+      }
+      
+      if (remove_files){
+        if (file.exists(slim_output_sample_ts5)){
+          file.remove(slim_output_sample_ts5)
+        }
       }
     }
     
@@ -6799,7 +7460,17 @@ do_sim <- function(sim, nsim,
                   rownames(debug_dump) <- sim
                   write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
                 }
-                
+                if (remove_files){
+                  if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Pla))){
+                    file.remove(paste0(egglib_input_folder, egglib_converted_file_Pla))
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Pla))){ #### ADD SNP INFO HERE
+                    file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Pla))
+                  }
+                  if (file.exists(egglib_output_summstats_Pla)){
+                    file.remove(egglib_output_summstats_Pla)
+                  }
+                }
               }
               
             } else {
@@ -6856,6 +7527,15 @@ do_sim <- function(sim, nsim,
                                                       PrGWSel, prbe, debug_message))
                 rownames(debug_dump) <- sim
                 write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+              }
+              
+              if (remove_files){
+                if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Pla))){
+                  file.remove(paste0(egglib_input_folder, egglib_converted_file_Pla))
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Pla))){ #### ADD SNP INFO HERE
+                  file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Pla))
+                }
               }
             }
             
@@ -7669,6 +8349,47 @@ do_sim <- function(sim, nsim,
                   write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
                 }
                 
+                if (remove_files){
+                  if (file.exists(slim_output_sample_ts6)){
+                    file.remove(slim_output_sample_ts6)
+                  }
+                  if (file.exists(slim_output_sample_ts7)){
+                    file.remove(slim_output_sample_ts7)
+                  }
+                  if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz"))){
+                    file.remove(paste0(slim_output_sample_ts6_sorted, ".gz"))
+                  }
+                  if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz"))){
+                    file.remove(paste0(slim_output_sample_ts7_sorted, ".gz"))
+                  }
+                  if (genomeS > 2^29){
+                    if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz.csi"))){
+                      file.remove(paste0(slim_output_sample_ts6_sorted, ".gz.csi"))
+                    }
+                    if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz.csi"))){
+                      file.remove(paste0(slim_output_sample_ts7_sorted, ".gz.csi"))
+                    }
+                  } else {
+                    if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz.tbi"))){
+                      file.remove(paste0(slim_output_sample_ts6_sorted, ".gz.tbi"))
+                    }
+                    if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz.tbi"))){
+                      file.remove(paste0(slim_output_sample_ts7_sorted, ".gz.tbi"))
+                    }
+                  }
+                  if(file.exists(slim_output_sample_merged_Riv)){
+                    file.remove(slim_output_sample_merged_Riv)
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Pla))){
+                    file.remove(paste0(egglib_input_folder, egglib_converted_file_Pla))
+                  }
+                  if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Pla))){ #### ADD SNP INFO HERE
+                    file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Pla))
+                  }
+                  if (file.exists(egglib_output_summstats_Pla)){
+                    file.remove(egglib_output_summstats_Pla)
+                  }
+                }
               }
               
             } else {
@@ -7725,6 +8446,45 @@ do_sim <- function(sim, nsim,
                                                       PrGWSel, prbe, debug_message))
                 rownames(debug_dump) <- sim
                 write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+              }
+              
+              if (remove_files){
+                if (file.exists(slim_output_sample_ts6)){
+                  file.remove(slim_output_sample_ts6)
+                }
+                if (file.exists(slim_output_sample_ts7)){
+                  file.remove(slim_output_sample_ts7)
+                }
+                if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz"))){
+                  file.remove(paste0(slim_output_sample_ts6_sorted, ".gz"))
+                }
+                if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz"))){
+                  file.remove(paste0(slim_output_sample_ts7_sorted, ".gz"))
+                }
+                if (genomeS > 2^29){
+                  if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz.csi"))){
+                    file.remove(paste0(slim_output_sample_ts6_sorted, ".gz.csi"))
+                  }
+                  if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz.csi"))){
+                    file.remove(paste0(slim_output_sample_ts7_sorted, ".gz.csi"))
+                  }
+                } else {
+                  if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz.tbi"))){
+                    file.remove(paste0(slim_output_sample_ts6_sorted, ".gz.tbi"))
+                  }
+                  if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz.tbi"))){
+                    file.remove(paste0(slim_output_sample_ts7_sorted, ".gz.tbi"))
+                  }
+                }
+                if(file.exists(slim_output_sample_merged_Riv)){
+                  file.remove(slim_output_sample_merged_Riv)
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_converted_file_Pla))){
+                  file.remove(paste0(egglib_input_folder, egglib_converted_file_Pla))
+                }
+                if (file.exists(paste0(egglib_input_folder, egglib_selcoeff_file_Pla))){ #### ADD SNP INFO HERE
+                  file.remove(paste0(egglib_input_folder, egglib_selcoeff_file_Pla))
+                }
               }
             }
             
@@ -7793,6 +8553,39 @@ do_sim <- function(sim, nsim,
               rownames(debug_dump) <- sim
               write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
             }
+            
+            if (remove_files){
+              if (file.exists(slim_output_sample_ts6)){
+                file.remove(slim_output_sample_ts6)
+              }
+              if (file.exists(slim_output_sample_ts7)){
+                file.remove(slim_output_sample_ts7)
+              }
+              if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz"))){
+                file.remove(paste0(slim_output_sample_ts6_sorted, ".gz"))
+              }
+              if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz"))){
+                file.remove(paste0(slim_output_sample_ts7_sorted, ".gz"))
+              }
+              if (genomeS > 2^29){
+                if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz.csi"))){
+                  file.remove(paste0(slim_output_sample_ts6_sorted, ".gz.csi"))
+                }
+                if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz.csi"))){
+                  file.remove(paste0(slim_output_sample_ts7_sorted, ".gz.csi"))
+                }
+              } else {
+                if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz.tbi"))){
+                  file.remove(paste0(slim_output_sample_ts6_sorted, ".gz.tbi"))
+                }
+                if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz.tbi"))){
+                  file.remove(paste0(slim_output_sample_ts7_sorted, ".gz.tbi"))
+                }
+              }
+              if(file.exists(slim_output_sample_merged_Riv)){
+                file.remove(slim_output_sample_merged_Riv)
+              }
+            }
           }
           
         } else {
@@ -7851,6 +8644,39 @@ do_sim <- function(sim, nsim,
             rownames(debug_dump) <- sim
             write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
           }
+          
+          if (remove_files){
+            if (file.exists(slim_output_sample_ts6)){
+              file.remove(slim_output_sample_ts6)
+            }
+            if (file.exists(slim_output_sample_ts7)){
+              file.remove(slim_output_sample_ts7)
+            }
+            if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz"))){
+              file.remove(paste0(slim_output_sample_ts6_sorted, ".gz"))
+            }
+            if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz"))){
+              file.remove(paste0(slim_output_sample_ts7_sorted, ".gz"))
+            }
+            if (genomeS > 2^29){
+              if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz.csi"))){
+                file.remove(paste0(slim_output_sample_ts6_sorted, ".gz.csi"))
+              }
+              if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz.csi"))){
+                file.remove(paste0(slim_output_sample_ts7_sorted, ".gz.csi"))
+              }
+            } else {
+              if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz.tbi"))){
+                file.remove(paste0(slim_output_sample_ts6_sorted, ".gz.tbi"))
+              }
+              if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz.tbi"))){
+                file.remove(paste0(slim_output_sample_ts7_sorted, ".gz.tbi"))
+              }
+            }
+            if(file.exists(slim_output_sample_merged_Riv)){
+              file.remove(slim_output_sample_merged_Riv)
+            }
+          }
         }
         
       } else {
@@ -7904,6 +8730,36 @@ do_sim <- function(sim, nsim,
                                                 PrGWSel, prbe, debug_message))
           rownames(debug_dump) <- sim
           write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+        }
+        
+        if (remove_files){
+          if (file.exists(slim_output_sample_ts6)){
+            file.remove(slim_output_sample_ts6)
+          }
+          if (file.exists(slim_output_sample_ts7)){
+            file.remove(slim_output_sample_ts7)
+          }
+          if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz"))){
+            file.remove(paste0(slim_output_sample_ts6_sorted, ".gz"))
+          }
+          if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz"))){
+            file.remove(paste0(slim_output_sample_ts7_sorted, ".gz"))
+          }
+          if (genomeS > 2^29){
+            if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz.csi"))){
+              file.remove(paste0(slim_output_sample_ts6_sorted, ".gz.csi"))
+            }
+            if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz.csi"))){
+              file.remove(paste0(slim_output_sample_ts7_sorted, ".gz.csi"))
+            }
+          } else {
+            if (file.exists(paste0(slim_output_sample_ts6_sorted, ".gz.tbi"))){
+              file.remove(paste0(slim_output_sample_ts6_sorted, ".gz.tbi"))
+            }
+            if (file.exists(paste0(slim_output_sample_ts7_sorted, ".gz.tbi"))){
+              file.remove(paste0(slim_output_sample_ts7_sorted, ".gz.tbi"))
+            }
+          }
         }
       }
       
@@ -7986,6 +8842,15 @@ do_sim <- function(sim, nsim,
                                               PrGWSel, prbe, debug_message))
         rownames(debug_dump) <- sim
         write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
+      }
+      
+      if (remove_files){
+        if (file.exists(slim_output_sample_ts6)){
+          file.remove(slim_output_sample_ts6)
+        }
+        if (file.exists(slim_output_sample_ts7)){
+          file.remove(slim_output_sample_ts7)
+        }
       }
     }
     
@@ -8249,6 +9114,11 @@ do_sim <- function(sim, nsim,
       write.table(debug_dump,file=paste0(debug_output_folder, "debug_",sim,".txt"), row.names = F, quote = F)
     }
     
+    if (remove_files){
+      if (file.exists(paste0(slim_output_folder,"slim_output_ne1_", sim, ".txt"))){
+        file.remove(paste0(slim_output_folder,"slim_output_ne1_", sim, ".txt"))
+      }
+    }
   }
   
   ## RAW REFERENCE TABLE

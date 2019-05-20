@@ -33,7 +33,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 20
+nsim                    <- 5
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/usr/local/bin/slim"   #cbbp-desktop# "/home/pavinato/Softwares/slim3.1/slim" #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim" #GENOTOUL# /usr/local/bioinfo/src/SLiM/SLiM-3.2/SLiM_build/slim
@@ -109,13 +109,13 @@ mu_sd   = 0.5              # sd for the log-normal, otherwise NULL;
 neq_random = TRUE
 neq_value <- 50
 neq_min = 2
-neq_max = 20000
+neq_max = 10000
 
 # POPULATION CENSUS SIZE - Ncs
 ncs_random = TRUE
 ncs_value <- 50
 ncs_min = 2
-ncs_max = 20000
+ncs_max = 10000
 
 # GENOME-WIDE DFE FOR BENEFICIAL MUTATIONS 
 # gamma mean
