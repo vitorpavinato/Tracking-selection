@@ -214,6 +214,13 @@ global_sumstats_pods <- pooled_reftable_pods[, -c(1:104)]
 #save(global_sumstats_pods, 
 #     file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/global_sumstats_pods",".RData"))
 #load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/global_sumstats_pods",".RData"))
+
+# select randomly 1000 random PODs
+random1000_rows <- sample(x=1:1877, size = 1000, replace = FALSE)
+
+#save(random1000_rows,
+#     file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random1000_rows",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random1000_rows",".RData"))
 ```
 
 #### Prepare the FIXED PODS reftable
@@ -639,6 +646,41 @@ abline(a=0, b=1, col = "#cb181d")
 #plot(logitpopstrongmsel, logitaverageGenload[-neutralsims],
 #     xlab = expression(log(italic(P[strong])/1-italic(P[strong]))),
 #     ylab = expression(log(italic(L)/1-italic(L))))
+```
+
+#### Likelihood of strongly selected mutations given the Ne of sampling period
+```{r regression likelihoods strong selection, echo=TRUE, eval=FALSE, include=TRUE}
+
+invNe2 <- 1/pooled_reftable_total[, "meanNe2"]
+gammashape <- pooled_reftable_total[, "gammaShape"]
+
+likelystrongMsel <- pgamma(invNe2,shape=gammashape,rate=1,lower.tail=FALSE)
+
+hist(probstrongMsel, freq = TRUE, xlab = expression(paste("Likelihood of mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_likelystrongMsel <- regAbcrf(formula = likelystrongMsel~.,
+                                data    = data.frame(likelystrongMsel, global_sumstats),
+                                ntree   = 1000,
+                                paral   = T,
+                                ncores  = 28)
+
+zero_likelystrongMsel <- which(likelystrongMsel == 0)
+
+nozero_likelystrongMsel <- likelystrongMsel[-zero_likelystrongMsel]
+global_sumstats_likelystrongMsel <- global_sumstats[-zero_likelystrongMsel,]
+
+loglikelystrongMsel <- log10(nozero_likelystrongMsel)
+
+## rf-regression
+reg_loglikelystrongMsel <- regAbcrf(formula = loglikelystrongMsel~.,
+                                    data    = data.frame(loglikelystrongMsel, global_sumstats_likelystrongMsel),
+                                    ntree   = 1000,
+                                    paral   = T,
+                                    ncores  = 28)
+
+
+
 ```
 
 #### ThetaS - selected mutations
@@ -1115,6 +1157,91 @@ plot(x    = logmeanpopsel_2,
 abline(a=0, b=1, col = "#cb181d")
 ```
 
+#### DFE gamma mean
+```{r regression gamma mean, echo=TRUE, eval=FALSE, include=TRUE}
+
+loggammamean <- log10(pooled_reftable_total[, "gammaMean"])
+
+hist(loggammamean, freq = TRUE, xlab = expression(log[10](paste("gamma ", kappa, theta))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_loggammamean <- regAbcrf(formula = loggammamean~.,
+                             data    = data.frame(loggammamean, global_sumstats),
+                             ntree   = 1000,
+                             paral   = T,
+                             ncores  = 28)
+
+#save(reg_loggammamean, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_loggammamean",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_loggammamean",".RData"))
+
+## variable Importance plot
+plot(x = reg_loggammamean, n.var = 20)
+
+#head(sort(reg_loggammamean$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_loggammamean$model.rf$prediction.error
+# 0.6123305
+
+## error rate plot
+#err.regAbcrf(object   = reg_loggammamean,
+#             training = data.frame(loggammamean, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = loggammamean,
+     y    = reg_loggammamean$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-3,0),
+     ylim = c(-3,0),
+     main = expression(log[10](paste("gamma ", kappa, theta))),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+```
+
+#### Ns
+```{r regression Ns, echo=TRUE, eval=FALSE, include=TRUE}
+logNs <- log10(pooled_reftable_total[, "meanNe2"] * pooled_reftable_total[, "gammaMean"])
+
+hist(logNs, freq = TRUE, xlab = expression(log[10](N[s])), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_logNs <- regAbcrf(formula = logNs~.,
+                      data    = data.frame(logNs, global_sumstats),
+                      ntree   = 1000,
+                      paral   = T,
+                      ncores  = 28)
+
+#save(reg_logNs, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logNs",".RData"))
+
+# variable Importance plot
+plot(x = reg_logNs, n.var = 20)
+
+#head(sort(reg_logNs$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logNs$model.rf$prediction.error
+
+# error rate plot
+#err.regAbcrf(object   = reg_logNs,
+#             training = data.frame(logNs, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logNs,
+     y    = reg_logNs$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-3,3),
+     ylim = c(-3,3),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "#cb181d")
+```
+
 ### ABC-RF regression for demography: growing trees
 
 #### Harmonic mean of the effective population sizes of period 2
@@ -1254,10 +1381,23 @@ plot(x    = logmeanNe2ncs,
 abline(a=0, b=1, col = "#cb181d")
 ```
 
-## Equilibrium period inference
+#### Theta of perido 2
+```{r regression theta 2, echo=TRUE, eval=FALSE, include=TRUE}
+genomeS = 100e+6
+logtheta2 <- log10(4 * pooled_reftable_total[, "meanNe2"] * (pooled_reftable_total[, "mu"]) * genomeS)
 
+hist(logtheta2, freq = TRUE, xlab = expression(log[10](italic(theta[2]))), main = "", col = "#bdbdbd")
+
+reg_logtheta2 <- regAbcrf(formula = logtheta2~.,
+                          data    = data.frame(logtheta2, global_sumstats),
+                          ntree   = 1000,
+                          paral   = T,
+                          ncores  = 28)
+
+```
 #### Theta of perido 1
 ```{r regression theta, echo=TRUE, eval=FALSE, include=TRUE}
+genomeS = 100e+6
 logtheta1 <- log10(4 * pooled_reftable_total[, "meanNe1"] * (pooled_reftable_total[, "mu"]) * genomeS)
 
 hist(logtheta1, freq = TRUE, xlab = expression(log[10](italic(theta[1]))), main = "", col = "#bdbdbd")
@@ -1295,93 +1435,6 @@ plot(x    = logtheta1,
      xlim = c(-1,6),
      ylim = c(-1,6),
      main = expression(log[10](italic(theta[1]))),
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
-```
-
-## Simulation parameter´s inference
-
-#### DFE gamma mean
-```{r regression gamma mean, echo=TRUE, eval=FALSE, include=TRUE}
-
-loggammamean <- log10(pooled_reftable_total[, "gammaMean"])
-
-hist(loggammamean, freq = TRUE, xlab = expression(log[10](paste("gamma ", kappa, theta))), main = "", col = "#bdbdbd")
-
-## rf-regression
-reg_loggammamean <- regAbcrf(formula = loggammamean~.,
-                             data    = data.frame(loggammamean, global_sumstats),
-                             ntree   = 1000,
-                             paral   = T,
-                             ncores  = 28)
-
-#save(reg_loggammamean, 
-#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_loggammamean",".RData"))
-#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_loggammamean",".RData"))
-
-## variable Importance plot
-plot(x = reg_loggammamean, n.var = 20)
-
-#head(sort(reg_loggammamean$model.rf$variable.importance, decreasing = T), n=20)
-
-## prediction error
-reg_loggammamean$model.rf$prediction.error
-# 0.6123305
-
-## error rate plot
-#err.regAbcrf(object   = reg_loggammamean,
-#             training = data.frame(loggammamean, global_sumstats),
-#             paral    = T,
-#             ncores   = 28)
-
-plot(x    = loggammamean,
-     y    = reg_loggammamean$model.rf$predictions, 
-     xlab = "True value",
-     ylab = "OOB predictions",
-     xlim = c(-3,0),
-     ylim = c(-3,0),
-     main = expression(log[10](paste("gamma ", kappa, theta))),
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
-```
-
-#### Ns
-```{r regression Ns, echo=TRUE, eval=FALSE, include=TRUE}
-logNs <- log10(pooled_reftable_model_1$PedigreeNetotal[-random_pods] * pooled_reftable_model_1[-random_pods, "gammaMean"])
-
-#hist(logNs, freq = TRUE, xlab = expression(log[10](N[s])), main = "", col = "#bdbdbd")
-
-# abf-rf regression
-reg_logNs <- regAbcrf(formula = logNs~.,
-                      data    = data.frame(logNs, global_sumstats),
-                      ntree   = 1000,
-                      paral   = T,
-                      ncores  = 28)
-
-save(reg_logNs, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logNs",".RData"))
-
-# variable Importance plot
-plot(x = reg_logNs, n.var = 20)
-
-#head(sort(reg_logNs$model.rf$variable.importance, decreasing = T), n=20)
-
-# prediction error
-reg_logNs$model.rf$prediction.error
-
-# error rate plot
-#err.regAbcrf(object   = reg_logNs,
-#             training = data.frame(logNs, global_sumstats),
-#             paral    = T,
-#             ncores   = 28)
-
-plot(x    = logNs,
-     y    = reg_logNs$model.rf$predictions, 
-     xlab = "True value",
-     ylab = "OOB predictions",
-     xlim = c(-3,3),
-     ylim = c(-3,3),
      cex.axis = 1.2,
      cex.lab  = 1.5)
 abline(a=0, b=1, col = "#cb181d")
