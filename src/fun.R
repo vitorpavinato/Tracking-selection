@@ -83,8 +83,8 @@ countgen4wfabc <- function(input, t_points = 2){
   n_Aalleles = NULL
   for (t in seq(t_points)){
     g[[t]] <- d[grepl(paste0("@pop", t), names(d))]
-    n_chromT <- 2 * sum(g[[t]] != 00)
-    n_AallelesT <- sum(g[[t]] == 12 | g[[t]] == 21) + 2 * sum(g[[t]] == 22)
+    n_chromT <- 2 * sum(g[[t]] != "00")
+    n_AallelesT <- sum(g[[t]] == "12" | g[[t]] == "21") + 2 * sum(g[[t]] == "22")
     
     n_chrom <- cbind(n_chrom, n_chromT)
     n_Aalleles <- cbind(n_Aalleles, n_AallelesT)
