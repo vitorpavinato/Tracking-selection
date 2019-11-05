@@ -23,14 +23,14 @@ ls()
 ###########################################
 
 dataset_path <- "data/ApisMellifera/merged_file/"
-dataset_name <- "humboldt_merged.txt"
-pop_prefix <- "Hum"
+dataset_name <- "placerita_merged.txt"
+pop_prefix <- "Pla"
 snpsTable2egglib <- TRUE
 snptTable2wfabc <- TRUE
 wfacbInput_path <- "data/ApisMellifera/wfabc/"
-wfabcInput_file <- "humboldt_wfabc_input.txt"
+wfabcInput_file <- "placerita_wfabc_input.txt"
 globalStats_path <- "data/ApisMellifera/globalStats_reftable/"
-globalStats_file <- "humboldt_globalStats_reftable"
+globalStats_file <- "placerita_globalStats_reftable"
 
 ##########################################
 ##       EGGLIB SUMMSTAT SETTINGS       ##
@@ -43,17 +43,17 @@ wss_wspan = 10e+3
 sfs_bins = 10
 
 snps2egglib_path <- "data/ApisMellifera/egglib/"
-snps2egglib_file <- "humboldt_egglib_input.txt"
+snps2egglib_file <- "placerita_egglib_input.txt"
 egglib2summstats_path <- "data/ApisMellifera/egglib/"
-egglib2summstats_file <- "humboldt_summstats.txt"
+egglib2summstats_file <- "placerita_summstats.txt"
 
 ############################################
 ##              SAMPLE SIZE               ##
 ############################################
 
-SS1 = 2
-SS2 = 5
-tau = 104
+SS1 = 5
+SS2 = 6
+tau = 15
 
 ###########################################
 ##    LOAD REQUIRED FUNCTIONS/PACKAGES   ##
