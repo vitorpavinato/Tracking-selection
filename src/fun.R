@@ -83,8 +83,8 @@ countgen4wfabc <- function(input, t_points = 2){
   n_Aalleles = NULL
   for (t in seq(t_points)){
     g[[t]] <- d[grepl(paste0("@pop", t), names(d))]
-    n_chromT <- 2 * sum(g[[t]] != 00)
-    n_AallelesT <- sum(g[[t]] == 12 | g[[t]] == 21) + 2 * sum(g[[t]] == 22)
+    n_chromT <- 2 * sum(g[[t]] != "00")
+    n_AallelesT <- sum(g[[t]] == "12" | g[[t]] == "21") + 2 * sum(g[[t]] == "22")
     
     n_chrom <- cbind(n_chrom, n_chromT)
     n_Aalleles <- cbind(n_Aalleles, n_AallelesT)
@@ -101,7 +101,7 @@ do_sim <- function(sim, nsim,
                    egglib_input_folder, egglib_output_folder,
                    path_to_python, path_to_egglib_summstat,
                    remove_files, debug_sim, debug_output_folder,
-                   wfabc_input_file, wfabc_input_folder,
+                   wfabc_input_file, wfabc_input_folder, egglib_input_selcoeff,  # add egglib_input_selcoeff 25/Oct/19
                    model_type, model_title, genomeS, fragS, chrN, chrS,
                    chrTAG, chromtagging, data_type, 
                    radseq_readL, radseq_readN, radseq_cov,
@@ -906,6 +906,13 @@ do_sim <- function(sim, nsim,
                                        DOM=slim_data$DOM, 
                                        GO=slim_data$GO,
                                        slim_data[, (length(header_1)+1):ncol(slim_data)])
+          
+          # expor the complete data of mutations present in egglib input file
+          egglib_selcoeff_file <- paste0("egglib_input_sample_selcoeff", "_", sim, ".txt")
+          
+          if (egglib_input_selcoeff){
+            write.table(slim_to_egglib_snps, file = paste0(egglib_input_folder, egglib_selcoeff_file), quote=FALSE, sep="\t", row.names = FALSE)
+          }
           
           # remove snp datasets after use it
           rm(slim_data)

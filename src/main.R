@@ -36,27 +36,28 @@ ls()
 nsim                    <- 20
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
-path_to_slim            <- "/home/pavinato/Softwares/slim3.1/slim"  #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim" #GENOTOUL# /usr/local/bioinfo/src/SLiM/SLiM-3.2/SLiM_build/slim
+path_to_slim            <- "/usr/local/bin/slim"     #cbgp-desktop "/home/pavinato/Softwares/slim3.1/slim" #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim" #GENOTOUL# /usr/local/bioinfo/src/SLiM/SLiM-3.2/SLiM_build/slim
 slim_output_folder      <- "results/slim_output/"
-path_to_bgzip           <- "/usr/local/bin/bgzip"                   #cluster# "./bin/bgzip"    #GENOTOUL# "/usr/local/bioinfo/src/Tabix/tabix-0.2.5/bgzip"
-path_to_tabix           <- "/usr/local/bin/tabix"                   #cluster# "./bin/tabix"    #GENOTOUL# "/usr/local/bioinfo/src/Tabix/tabix-0.2.5/tabix"
-path_to_bcftools        <- "/usr/local/bin/bcftools"                #cluster# "./bin/bcftools" #GENOTOUL# "/usr/local/bioinfo/src/BCFtools/bcftools-1.6/bin/bcftools"
+path_to_bgzip           <- "/usr/local/bin/bgzip"    #cbgp-desktop "/usr/local/bin/bgzip" #cluster# "./bin/bgzip" #GENOTOUL# "/usr/local/bioinfo/src/Tabix/tabix-0.2.5/bgzip"
+path_to_tabix           <- "/usr/local/bin/tabix"    #cbgp-desktop "/usr/local/bin/tabix" #cluster# "./bin/tabix" #GENOTOUL# "/usr/local/bioinfo/src/Tabix/tabix-0.2.5/tabix"
+path_to_bcftools        <- "/usr/local/bin/bcftools" #cbgp-desktop "/usr/local/bin/bcftools" #cluster# "./bin/bcftools" #GENOTOUL# "/usr/local/bioinfo/src/BCFtools/bcftools-1.6/bin/bcftools"
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
-path_to_python          <- "/home/pavinato/py-egglib-3.0.0b22/bin/python" #cluster# "./bin/pyegglib22/bin/python"
+path_to_python          <- "/Users/vitorpavinato/myPython2venvs/python-egglib3.0.0b22/bin/python" #cbgp-desktop "/home/pavinato/py-egglib-3.0.0b22/bin/python" #cluster# "./bin/pyegglib22/bin/python"
 path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b22
 reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
 seed                    <- arg
-#seed                    <- 1234 # this is here only for small tests
+#seed                    <- 12347319 # this is here only for small tests and for fixed pods (proof model)
 set.seed(seed,"Mersenne-Twister")
 parallel_sims           <- FALSE
-num_of_threads          <- 18
-remove_files            <- TRUE
+num_of_threads          <- 6
+remove_files            <- TRUE # it is not necessary to grow RF
 debug_sim               <- TRUE
 debug_output_folder     <- "results/debug_output/"
-wfabc_input_file        <- FALSE
+wfabc_input_file        <- FALSE # it is not necessary to grow RF
 wfabc_input_folder      <- "results/wfabc_input/"
+egglib_input_selcoeff   <- FALSE # it is not necessary to grow RF
 
 ############################################
 ##            SLiM SIMULATION             ##
@@ -217,7 +218,7 @@ if(parallel_sims){
                                                                                egglib_input_folder, egglib_output_folder,
                                                                                path_to_python, path_to_egglib_summstat,
                                                                                remove_files, debug_sim, debug_output_folder,
-                                                                               wfabc_input_file, wfabc_input_folder,
+                                                                               wfabc_input_file, wfabc_input_folder, egglib_input_selcoeff,  # add egglib_input_selcoeff 25/Oct/19
                                                                                model_type, model_title, genomeS, fragS, chrN, chrS,
                                                                                chrTAG, chromtagging, data_type, 
                                                                                radseq_readL, radseq_readN, radseq_cov,
@@ -252,7 +253,7 @@ if(parallel_sims){
                                   egglib_input_folder, egglib_output_folder,
                                   path_to_python, path_to_egglib_summstat,
                                   remove_files, debug_sim, debug_output_folder,
-                                  wfabc_input_file, wfabc_input_folder,
+                                  wfabc_input_file, wfabc_input_folder, egglib_input_selcoeff,  # add egglib_input_selcoeff 25/Oct/19
                                   model_type, model_title, genomeS, fragS, chrN, chrS,
                                   chrTAG, chromtagging, data_type, 
                                   radseq_readL, radseq_readN, radseq_cov,
