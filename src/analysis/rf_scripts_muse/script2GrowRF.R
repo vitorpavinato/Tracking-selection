@@ -119,48 +119,6 @@ load(file=paste0("/nfs/work/select/rf_analysis/global_sumstats",".RData"))
 #save(reg_logtheta2, 
 #     file = paste0("/nfs/work/select/rf_analysis/reg_logtheta2",".RData")) 
 
-## Likelihood mutation strong selection
-
-## preparation
-##--------------------------------------------------
-invNe2 <- 1/pooled_reftable_total[, "meanNe2"]
-gammashape <- pooled_reftable_total[, "gammaShape"]
-
-likelystrongMsel <- pgamma(invNe2,shape=gammashape,rate=1,lower.tail=FALSE)
-
-## rf-regression
-##--------------------------------------------------
-reg_likelystrongMsel <- regAbcrf(formula = likelystrongMsel~.,
-                                 data    = data.frame(likelystrongMsel, global_sumstats),
-                                 ntree   = 1000,
-                                 paral   = T,
-                                 ncores  = 28)
-
-#save(reg_likelystrongMsel, 
-#     file = paste0("/nfs/work/select/rf_analysis/reg_likelystrongMsel",".RData")) 
-
-
-## Log Likelihood mutation strong selection
-
-## preparation
-##--------------------------------------------------
-zero_likelystrongMsel <- which(likelystrongMsel == 0)
-
-nozero_likelystrongMsel <- likelystrongMsel[-zero_likelystrongMsel]
-global_sumstats_likelystrongMsel <- global_sumstats[-zero_likelystrongMsel,]
-
-loglikelystrongMsel <- log10(nozero_likelystrongMsel)
-
-## rf-regression
-reg_loglikelystrongMsel <- regAbcrf(formula = loglikelystrongMsel~.,
-                                    data    = data.frame(loglikelystrongMsel, global_sumstats_likelystrongMsel),
-                                    ntree   = 1000,
-                                    paral   = T,
-                                    ncores  = 28)
-
-#save(reg_loglikelystrongMsel, 
-#     file = paste0("/nfs/work/select/rf_analysis/reg_loglikelystrongMsel",".RData")) 
-    
 gc()
 
 

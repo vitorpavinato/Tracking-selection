@@ -1,0 +1,1275 @@
+---
+title: "Tracking Selection in Bees with ABC-RF"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r clean cache, echo=TRUE, eval=FALSE, include=TRUE}
+rm(list=ls())
+ls()
+```
+
+## ABC random forests analysis
+
+#### Install required packages
+```{r install packages, echo=TRUE}
+#install.packages(c("DataExplorer", 
+#                   "abcrf",
+#                   "weights",
+#                   "grDevices",
+#                   "gplots",
+#                   "viridis"),
+#                 dependencies = T)
+```
+
+#### Load packages and source file
+```{r load packages, echo=TRUE, eval=FALSE, include=TRUE}
+library(DataExplorer)
+library(abcrf)
+library(weights)
+library(grDevices)
+library(gplots)
+library(viridis)
+```
+
+#### Upload the RF training reference table files
+```{r load superbatch 2, echo=TRUE, eval=FALSE, include=TRUE}
+# MUSE 1 - Super-batch 1
+load("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/Cluster_data/muse/tracking-selection-bees-2/results/pooled_reftable_2.RData")
+pooled_raw_reftable_1 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
+```
+
+```{r load superbatch 2, echo=TRUE, eval=FALSE, include=TRUE}
+# MUSE 2 - Super-batch 2
+load("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/Cluster_data/muse/tracking-selection-bees-3/results/pooled_reftable_3.RData")
+pooled_raw_reftable_2 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
+```
+
+```{r load superbatch 3, echo=TRUE, eval=FALSE, include=TRUE}
+# MUSE 3 - Super-batch 3
+load("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/Cluster_data/muse/tracking-selection-bees-4/results/pooled_reftable_4.RData")
+pooled_raw_reftable_3 <- pooled_raw_reftable
+rm(pooled_raw_reftable)
+```
+
+#```{r load superbatch 4, echo=TRUE, eval=FALSE, include=TRUE}
+# Super-batch 4
+#load("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/Cluster_data/pooled_reftable_4_cbgp/results/pooled_reftable_4.RData")
+#pooled_raw_reftable_4 <- pooled_raw_reftable
+#rm(pooled_raw_reftable)
+#```
+
+#### Pool together the reftables from super-batches
+```{r pooling reftable, echo=TRUE, eval=FALSE, include=TRUE}
+pooled_raw_reftable_bees_total <- rbind(pooled_raw_reftable_1,
+                                        pooled_raw_reftable_2,
+                                        pooled_raw_reftable_3
+                                        #,pooled_raw_reftable_4
+                                       )
+
+rm(pooled_raw_reftable_1)
+rm(pooled_raw_reftable_2)
+rm(pooled_raw_reftable_3)
+#rm(pooled_raw_reftable_4)
+
+#save(pooled_raw_reftable_bees_total, 
+#     file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/pooled_raw_reftable_bees_total",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/pooled_raw_reftable_bees_total",".RData"))
+```
+
+#### Prepare the training RF reftable
+```{r training data preparation, echo=TRUE, eval=FALSE, include=TRUE}
+
+# Check missing data
+plot_missing(pooled_raw_reftable_bees_total) 
+missing_count <- sapply(pooled_raw_reftable_bees_total, function(x) sum(is.na(x)))
+
+# produce a data.frame with only summary statistics that contain missing values higher than a threshold
+pooled_reftable_bees_total <- pooled_raw_reftable_bees_total[,missing_count < nrow(pooled_raw_reftable_bees_total)/2]
+
+# remove also POPSelSd, SAMSelSd and locus-specific summary stats columns
+pooled_reftable_bees_total <- pooled_reftable_bees_total[,-c(124,127,130,133,134:138,139:167,         #Avalon
+                                                             346,349,352,355,356:360,361:389,         #Humboldt
+                                                             556,559,562,565,566:570,571:599,         #Davis
+                                                             766,769,772,775,776:780,781:809,         #Stanislaus
+                                                             976,979,982,985,986:990,991:1019,        #Stebbins
+                                                             1186,1189,1192,1195,1196:1200,1201:1229, #Riverside
+                                                             1396,1399,1402,1405,1406:1410,1411:1439  #Placerita
+                                                             )] 
+
+
+# check it!
+missing_count <- sapply(pooled_reftable_bees_total, function(x) sum(is.na(x)))
+plot_missing(pooled_reftable_bees_total) 
+
+# remove remaining rows with missing data
+pooled_reftable_bees_total <- pooled_reftable_bees_total[complete.cases(pooled_reftable_bees_total), ]
+
+# check it again
+plot_missing(pooled_reftable_bees_total)
+table(missing_count <- sapply(pooled_reftable_bees_total, function(x) sum(is.na(x))))
+
+# Check != numeric values
+table(infinite_count <- sapply(pooled_reftable_bees_total, function(x) sum(is.infinite(x))))
+
+# check the number of rows and columns of the final reference table
+dim(pooled_reftable_bees_total)
+# 8036 1335
+
+#save(pooled_reftable_bees_total, 
+#     file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/pooled_reftable_bees_total",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6/pooled_reftable_bees_total",".RData"))
+
+# subset by population
+bees_avalon <- pooled_reftable_bees_total[, grepl("_Ava", names(pooled_reftable_bees_total))]
+
+pooled_reftable_bees_avalon <- cbind(pooled_reftable_bees_total[,1:119], bees_avalon)
+
+#save(pooled_reftable_bees_avalon, 
+#     file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/pooled_reftable_bees_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/pooled_reftable_bees_avalon",".RData"))
+
+# Prepare the global summary statistics table by removing columns that do not contain summary stats
+global_sumstats4training_avalon <- pooled_reftable_bees_avalon[, -c(1:129)]
+
+# check the number of rows and columns of the final global summary stats table
+dim(global_sumstats4training_avalon)
+# 8036  174
+
+#save(global_sumstats4training_avalon, 
+#     file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/global_sumstats4training_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/global_sumstats4training_avalon",".RData"))
+```
+
+#### Prepare the DATA reftable
+```{r fixedpods data preparation, echo=TRUE, eval=FALSE, include=TRUE}
+
+# Avalon global summary stats reftable
+load("~/My_repositories/Tracking-selection/data/ApisMellifera/globalStats_reftable/avalon_globalStats_reftable.RData")
+
+global_Obssumstats_avalon <- data2globalStats
+
+global_Obssumstats_avalon <- global_Obssumstats_avalon[, names(global_Obssumstats_avalon) %in% names(global_sumstats4training_avalon), drop=FALSE]
+
+global_Obssumstats_avalon$GSSp_D1_Ava <- 0
+
+#save(global_Obssumstats_avalon, 
+#     file=paste0("~/My_repositories/Tracking-selection/data/ApisMellifera/globalStats_reftable/global_Obssumstats_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/data/ApisMellifera/globalStats_reftable/global_Obssumstats_avalon",".RData"))
+```
+
+## Sampling period inference
+
+### ABC-RF regression for selection: growing trees
+
+#### Average genetic load
+```{r regression genetic load, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+averageGenLoad_avalon <- pooled_reftable_bees_avalon[, "averageGenLoad_Ava"]
+hist(averageGenLoad_avalon, freq = TRUE, xlab = expression(italic(L)), main = "", col = "#bdbdbd")
+
+logaverageGenload_avalon <- -log10(1-averageGenLoad_avalon)
+hist(logaverageGenload_avalon, freq = TRUE, xlab = expression(-log[10](1 - italic(L))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_averageGenLoad_avalon <- regAbcrf(formula = logaverageGenload_avalon~.,
+                                      data    = data.frame(logaverageGenload_avalon, global_sumstats4training_avalon),
+                                      ntree   = 1000,
+                                      paral   = T,
+                                      ncores  = 8)
+
+#save(reg_averageGenLoad_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_averageGenLoad_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/reg_averageGenLoad_avalon",".RData"))
+
+## variable Importance plot
+plot(x = reg_averageGenLoad_avalon, n.var = 20)
+
+#head(sort(reg_averageGenLoad_avalon$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_averageGenLoad_avalon$model.rf$prediction.error
+# 0.04227891
+
+## error rate plot
+#err.regAbcrf(object   = reg_averageGenLoad_avalon,
+#             training = data.frame(logaverageGenload_avalon, global_sumstats4training_avalon),
+#             paral    = T,
+#             ncores   = 8)
+
+## oob predictions vs true values
+# basic plot for diagnostic
+plot(x    = logaverageGenload_avalon,
+     y    = reg_averageGenLoad_avalon$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,3),
+     ylim = c(0,3),
+     main = expression(-log[10](1 - italic(L))),
+     cex.axis = 1.2,
+     cex.lab  = 1.2)
+abline(a=0, b=1, col = "green")
+
+# manuscript plot
+df.loggl.ava <- data.frame(x = logaverageGenload_avalon,
+                           y = reg_averageGenLoad_avalon$model.rf$predictions)
+
+par(mar=c(5,5,4,1)+.1)
+hist2d(df.loggl.ava, nbins=70, 
+       col=viridis::viridis(32), 
+       FUN=function(x) log(length(x)),
+       xlab = expression(paste("true", " ", -log[10](italic(1-L)))),
+       ylab = expression(paste(-log[10](italic(1-hat(L))), " ","(OOB prediction)")),
+       xlim = c(0,3),
+       ylim = c(0,3),
+       cex.axis = 1.2,
+       cex.lab  = 1.2)
+abline(a=0, b=1, col = "black", lty = 3)
+
+## logit transformation I:
+# removing "quasi-neutral" simulations
+load_zero_avalon <- which(averageGenLoad_avalon == 0)
+averageGenLoad_avalon_2 <- averageGenLoad_avalon[-load_zero_avalon]
+global_sumstats4training_avalon_averageGenLoad <- global_sumstats4training_avalon[-load_zero_avalon,]
+
+logitaverageGenload_avalon_1 <- log(averageGenLoad_avalon_2/(1-averageGenLoad_avalon_2))
+hist(logitaverageGenload_avalon_1, freq = TRUE, xlab = expression(logit(italic(L))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_averageGenLoad_avalon_2 <- regAbcrf(formula = logitaverageGenload_avalon_1~.,
+                                        data    = data.frame(logitaverageGenload_avalon_1, global_sumstats4training_avalon_averageGenLoad),
+                                        ntree   = 1000,
+                                        paral   = T,
+                                        ncores  = 8)
+
+#save(reg_averageGenLoad_avalon_2, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_averageGenLoad_avalon_2",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_averageGenLoad_avalon_2",".RData"))
+
+## variable Importance plot
+plot(x = reg_averageGenLoad_avalon_2, n.var = 20)
+
+#head(sort(reg_averageGenLoad_avalon_2$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_averageGenLoad_avalon_2$model.rf$prediction.error
+# 10.17163
+
+## error rate plot
+#err.regAbcrf(object   = reg_averageGenLoad_avalon_2,
+#             training = data.frame(logitaverageGenload_avalon_1, global_sumstats4training_avalon_averageGenLoad),
+#             paral    = T,
+#             ncores   = 8)
+
+## oob predictions vs true values
+# basic plot for diagnostic
+plot(x    = logitaverageGenload_avalon_1,
+     y    = reg_averageGenLoad_avalon_2$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-24,6),
+     ylim = c(-24,6),
+     main = expression(logit(italic(L))),
+     cex.axis = 1.2,
+     cex.lab  = 1.2)
+abline(a=0, b=1, col = "green")
+
+# manuscript plot
+df.ltgl.ava <- data.frame(x = logitaverageGenload_avalon_1,
+                           y = reg_averageGenLoad_avalon_2$model.rf$predictions)
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/oob_plots/reg_averageGenLoad_avalon_2.pdf", 
+    width=6, height=6)
+par(mar=c(5,5,4,1)+.1)
+hist2d(df.ltgl.ava, nbins=70, 
+       col=viridis::viridis(32), 
+       FUN=function(x) log(length(x)),
+       xlab = expression(paste("true", " ", logit(italic(L)))),
+       ylab = expression(paste(logit(italic(hat(L))), " ","(OOB prediction)")),
+       xlim = c(-8,6),
+       ylim = c(-8,6),
+       cex.axis = 1.2,
+       cex.lab  = 1.2)
+abline(a=0, b=1, col = "black", lty = 3)
+dev.off()
+
+## logit transformation II:
+# substitute 0 for 10e-1 * lowest-before-0-value
+averageGenLoad_avalon_3 <- replace(averageGenLoad_avalon, averageGenLoad_avalon== 0, (5.67662857142857e-10*1e-1))
+
+logitaverageGenload_avalon_2 <- log(averageGenLoad_avalon_3/(1-averageGenLoad_avalon_3))
+hist(logitaverageGenload_avalon_2, freq = TRUE, xlab = expression(logit(italic(L))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_averageGenLoad_avalon_3 <- regAbcrf(formula = logitaverageGenload_avalon_2~.,
+                                        data    = data.frame(logitaverageGenload_avalon_2, global_sumstats4training_avalon),
+                                        ntree   = 1000,
+                                        paral   = T,
+                                        ncores  = 8)
+
+#save(reg_averageGenLoad_avalon_3, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_averageGenLoad_avalon_3",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_averageGenLoad_avalon_3",".RData"))
+
+## variable Importance plot
+plot(x = reg_averageGenLoad_avalon_3, n.var = 20)
+
+#head(sort(reg_averageGenLoad_avalon_3$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_averageGenLoad_avalon_3$model.rf$prediction.error
+# 59.34408
+
+## error rate plot
+#err.regAbcrf(object   = reg_averageGenLoad_avalon_3,
+#             training = data.frame(logitaverageGenload_avalon_2, global_sumstats4training_avalon),
+#             paral    = T,
+#             ncores   = 8)
+
+## oob predictions vs true values
+# diagnistic plot
+plot(x    = logitaverageGenload_avalon_2,
+     y    = reg_averageGenLoad_avalon_3$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-24,6),
+     ylim = c(-24,6),
+     main = expression(logit(italic(L))),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
+
+# manuscript plot
+df.ltgl.ava_2 <- data.frame(x = logitaverageGenload_avalon_2,
+                            y = reg_averageGenLoad_avalon_3$model.rf$predictions)
+
+
+par(mar=c(5,5,4,1)+.1)
+hist2d(df.ltgl.ava_2, nbins=70, 
+       col=viridis::viridis(32), 
+       FUN=function(x) log(length(x)),
+       xlab = expression(paste("true", " ", logit(italic(L)))),
+       ylab = expression(paste(logit(italic(hat(L))), " ","(OOB prediction)")),
+       xlim = c(-12,10),
+       ylim = c(-12,10),
+       cex.axis = 1.2,
+       cex.lab  = 1.2)
+abline(a=0, b=1, col = "black", lty = 3)
+```
+
+#### Proportion of strongly selected mutations - POPPrStrongMSel
+```{r regression strongly selected, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+prPOPStrongMSel_avalon <- pooled_reftable_bees_avalon[, "POPPrStrongMSel_Ava"]
+hist(prPOPStrongMSel_avalon, freq = TRUE, xlab = expression(italic(P)), main = "", col = "#bdbdbd")
+
+## removing "quasi-neutral" simulations
+neutralsims_avalon <- which(prPOPStrongMSel_avalon == 0)
+prPOPStrongMSel_avalon_2 <- prPOPStrongMSel_avalon[-neutralsims_avalon]
+global_sumstats4training_avalon_popstrongmsel <- global_sumstats4training_avalon[-neutralsims_avalon,]
+
+hist(prPOPStrongMSel_avalon_2, freq = TRUE, xlab = expression(italic(P)), main = "", col = "#bdbdbd")
+
+## log10 transformation PrPOPStrongMSel
+logpopstrongmsel_avalon <- log10(prPOPStrongMSel_avalon_2)
+
+hist(logpopstrongmsel_avalon, freq = TRUE, xlab = expression(log[10](italic(P))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_logpopstrongmsel_avalon <- regAbcrf(formula = logpopstrongmsel_avalon~.,
+                                        data    = data.frame(logpopstrongmsel_avalon, global_sumstats4training_avalon_popstrongmsel),
+                                        ntree   = 1000,
+                                        paral   = T,
+                                        ncores  = 8)
+
+#save(reg_logpopstrongmsel_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logpopstrongmsel_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logpopstrongmsel_avalon",".RData"))
+
+## variable Importance plot
+plot(x = reg_logpopstrongmsel_avalon, n.var = 20)
+
+#head(sort(reg_logpopstrongmsel_avalon$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_logpopstrongmsel_avalon$model.rf$prediction.error
+# 0.2722564
+
+## error rate plot
+#err.regAbcrf(object   = reg_logpopstrongmsel_avalon,
+#             training = data.frame(logpopstrongmsel_avalon, global_sumstats4training_avalon_popstrongmsel),
+#             paral    = T,
+#            ncores   = 28)
+
+## oob predictions vs true values
+# diagnostic plot
+plot(x    = logpopstrongmsel_avalon,
+     y    = reg_logpopstrongmsel_avalon$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-7,1),
+     ylim = c(-7,1),
+     main = expression(log[10](italic(P))),
+     cex.axis = 1.2,
+     cex.lab  = 1.2)
+abline(a=0, b=1, col = "green")
+
+
+## logit transformation I: 
+# PrPOPStrongMSel_2 - without neutral/quasi-neutral simulations
+logitpopstrongmsel_avalon_1 <- log(prPOPStrongMSel_avalon_2/(1-prPOPStrongMSel_avalon_2))
+hist(logitpopstrongmsel_avalon_1, freq = TRUE, xlab = expression(logit(italic(P))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_logitpopstrongmsel_avalon_1 <- regAbcrf(formula = logitpopstrongmsel_avalon_1~.,
+                                            data    = data.frame(logitpopstrongmsel_avalon_1, global_sumstats4training_avalon_popstrongmsel),
+                                            ntree   = 1000,
+                                            paral   = T,
+                                            ncores  = 8)
+
+#save(reg_logitpopstrongmsel_avalon_1, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logitpopstrongmsel_avalon_1",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logitpopstrongmsel_avalon_1",".RData"))
+
+## variable Importance plot
+plot(x = reg_logitpopstrongmsel_avalon_1, n.var = 20)
+
+#head(sort(reg_logpopstrongmsel_avalon_1$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_logitpopstrongmsel_avalon_1$model.rf$prediction.error
+# 1.476709
+
+## error rate plot
+#err.regAbcrf(object   = reg_logitpopstrongmsel_avalon_1,
+#             training = data.frame(logitpopstrongmsel, global_sumstats4training_avalon_popstrongmsel),
+#             paral    = T,
+#            ncores   = 8)
+
+## oob predictions vs true values
+# diagnostic plot
+plot(x    = logitpopstrongmsel_avalon_1,
+     y    = reg_logitpopstrongmsel_avalon_1$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-15,2),
+     ylim = c(-15,2),
+     main = expression(logit(italic(P))),
+     cex.axis = 1.2,
+     cex.lab  = 1.2)
+abline(a=0, b=1, col = "green")
+
+# manuscript plot
+df.ltps.ava <- data.frame(x = logitpopstrongmsel_avalon_1,
+                          y = reg_logitpopstrongmsel_avalon_1$model.rf$predictions)
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/oob_plots/reg_logitpopstrongmsel_avalon_1.pdf", 
+    width=6, height=6)
+par(mar=c(5,5,4,1)+.1)
+hist2d(df.ltps.ava, nbins=70, 
+       col=viridis::viridis(32), 
+       FUN=function(x) log(length(x)),
+       xlab = expression(paste("true", " ", logit(italic(P)))),
+       ylab = expression(paste(logit(italic(hat(P))), " ","(OOB prediction)")),
+       xlim = c(-15,2),
+       ylim = c(-15,2),
+       cex.axis = 1.2,
+       cex.lab  = 1.2)
+abline(a=0, b=1, col = "black", lty = 3)
+dev.off()
+
+## logit transformation II: 
+# PrPOPStrongMSel - with all simulations
+# substitute 0 for 10e-1 * lowest-before-0-value
+prPOPStrongMSel_avalon_3 <- replace(prPOPStrongMSel_avalon, prPOPStrongMSel_avalon== 0, (2.96548120566976e-07*1e-1))
+
+logitpopstrongmsel_avalon_2 <- log(prPOPStrongMSel_avalon_3/(1-prPOPStrongMSel_avalon_3))
+hist(logitpopstrongmsel_avalon_2, freq = TRUE, xlab = expression(logit(italic(P))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_logitpopstrongmsel_avalon_2 <- regAbcrf(formula = logitpopstrongmsel_avalon_2~.,
+                                     data    = data.frame(logitpopstrongmsel_avalon_2, global_sumstats4training_avalon),
+                                     ntree   = 1000,
+                                     paral   = T,
+                                     ncores  = 8)
+
+#save(reg_logitpopstrongmsel_avalon_2, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logitpopstrongmsel_avalon_2",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logitpopstrongmsel_avalon_2",".RData"))
+
+## variable Importance plot
+plot(x = reg_logitpopstrongmsel_avalon_2, n.var = 20)
+
+#head(sort(reg_logpopstrongmsel_avalon_2$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_logitpopstrongmsel_avalon_2$model.rf$prediction.error
+# 17.56852
+
+## error rate plot
+#err.regAbcrf(object   = reg_logitpopstrongmsel_avalon_2,
+#             training = data.frame(logitpopstrongmsel_avalon_2, global_sumstats4training_avalon),
+#             paral    = T,
+#            ncores   = 28)
+
+## oob predictions vs true values
+# diagnostic plot
+plot(x    = logitpopstrongmsel_avalon_2,
+     y    = reg_logitpopstrongmsel_avalon_2$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-18,2),
+     ylim = c(-18,2),
+     main = expression(logit(italic(P))),
+     cex.axis = 1.2,
+     cex.lab  = 1.2)
+abline(a=0, b=1, col = "green")
+```
+
+#### Theta selected mutations
+```{r regression thetaS, echo=TRUE, eval=FALSE, include=TRUE}
+genomeS = 250e+6
+
+### AVALON
+###-----------------------------------------------------------
+
+prRSel <- pooled_reftable_bees_avalon[, "PrGWSel"] * pooled_reftable_bees_avalon[, "PrMSel"]
+  
+logthetaS_avalon <- log10(4 * pooled_reftable_bees_avalon[, "meanNe2_Ava"] * (pooled_reftable_bees_avalon[, "mu"] * prRSel) * genomeS)
+
+hist(logthetaS_avalon, freq = TRUE, xlab = expression(log[10](italic(theta*P[S]))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_logthetaS_avalon <- regAbcrf(formula = logthetaS_avalon~.,
+                                 data    = data.frame(logthetaS_avalon, global_sumstats4training_avalon),
+                                 ntree   = 1000,
+                                 paral   = T,
+                                 ncores  = 8)
+
+#save(reg_logthetaS_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logthetaS_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logthetaS_avalon",".RData"))
+
+## variable Importance plot
+plot(x = reg_logthetaS_avalon, n.var = 20)
+
+#head(sort(reg_logthetaS_avalon$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_logthetaS_avalon$model.rf$prediction.error
+# 1.405771
+
+## error rate plot
+#err.regAbcrf(object   = reg_logthetaS_avalon,
+#             training = data.frame(logthetaS_avalon, global_sumstats4training_avalon),
+#             paral    = T,
+#             ncores   = 28)
+
+## oob predictions vs true values
+# diagnostic plot
+plot(x    = logthetaS_avalon,
+     y    = reg_logthetaS_avalon$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-6,4),
+     ylim = c(-6,4),
+     main = expression(log[10](italic(theta*P[S]))),
+     cex.axis = 1.2,
+     cex.lab  = 1.2)
+abline(a=0, b=1, col = "green")
+
+# manuscript plot
+df.logthetaS.ava <- data.frame(x = logthetaS_avalon,
+                               y = reg_logthetaS_avalon$model.rf$predictions)
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/oob_plots/reg_logthetaS_avalon.pdf", 
+    width=6, height=6)
+par(mar=c(5,5,4,1)+.1)
+hist2d(df.logthetaS.ava, nbins=70, 
+       col=viridis::viridis(32), 
+       FUN=function(x) log(length(x)),
+       xlab = expression(paste("true", " ", log[10](italic(theta*P[S])))),
+       ylab = expression(paste(log[10](italic(hat(theta*P[S]))), " ","(OOB prediction)")),
+       xlim = c(-6,4),
+       ylim = c(-6,4),
+       cex.axis = 1.2,
+       cex.lab  = 1.2)
+abline(a=0, b=1, col = "black", lty = 3)
+dev.off()
+```
+
+### ABC-RF regression for demography: growing trees
+
+#### Harmonic mean of the effective population sizes of period 2
+```{r regression meanNe2, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+logmeanNe2_avalon <- log10(pooled_reftable_bees_avalon[, "meanNe2_Ava"])
+
+hist(logmeanNe2_avalon, freq = TRUE, xlab = expression(log[10](italic(N[e]))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_logmeanNe2_avalon <- regAbcrf(formula = logmeanNe2_avalon~.,
+                                  data    = data.frame(logmeanNe2_avalon, global_sumstats4training_avalon),
+                                  ntree   = 1000,
+                                  paral   = T,
+                                  ncores  = 8)
+
+#save(reg_logmeanNe2_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logmeanNe2_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logmeanNe2_avalon",".RData"))
+
+## Variable Importance plot
+plot(x = reg_logmeanNe2_avalon, n.var = 20)
+
+#head(sort(reg_logmeanNe2_avalon$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_logmeanNe2_avalon$model.rf$prediction.error
+# 0.05484883
+
+## error rate plot
+#err.regAbcrf(object   = reg_logmeanNe2_avalon,
+#             training = data.frame(logmeanNe2_avalon, global_sumstats4training_avalon),
+#             paral    = T,
+#             ncores   = 8)
+
+## oob predictions vs true values
+# diagnostic plot
+plot(x    = logmeanNe2_avalon,
+     y    = reg_logmeanNe2_avalon$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,4),
+     ylim = c(0,4),
+     main = expression(log[10](italic(N[e]))),
+     cex.axis = 1.2,
+     cex.lab  = 1.2)
+abline(a=0, b=1, col = "green")
+
+# manuscript plot
+df.logmeanNe2.ava <- data.frame(x = logmeanNe2_avalon,
+                                y = reg_logmeanNe2_avalon$model.rf$predictions)
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/oob_plots/reg_logmeanNe2_avalon.pdf", 
+    width=6, height=6)
+par(mar=c(5,5,4,1)+.1)
+hist2d(df.logmeanNe2.ava, nbins=70, 
+       col=viridis::viridis(32), 
+       FUN=function(x) log(length(x)),
+       xlab = expression(paste("true", " ", log[10](italic(N[e])))),
+       ylab = expression(paste(log[10](italic(hat(N[e]))), " ","(OOB prediction)")),
+       xlim = c(0,4),
+       ylim = c(0,4),
+       cex.axis = 1.2,
+       cex.lab  = 1.2)
+abline(a=0, b=1, col = "black", lty = 3)
+dev.off()
+```
+
+#### Population size of period 2 - census size Ncs
+```{r regression Ncs, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+logncs_avalon <- log10(pooled_reftable_bees_avalon[, "Ncs"])
+
+hist(logncs_avalon, freq = TRUE, xlab = expression(log[10](italic(N))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_logncs_avalon <- regAbcrf(formula = logncs_avalon~.,
+                                 data = data.frame(logncs_avalon, global_sumstats4training_avalon),
+                                ntree = 1000,
+                                paral = T,
+                               ncores = 8)
+
+#save(reg_logncs_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logncs_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logncs_avalon",".RData"))
+
+## Variable Importance plot
+plot(x = reg_logncs_avalon, n.var = 20)
+
+#head(sort(reg_logn_avalon$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_logncs_avalon$model.rf$prediction.error
+# 0.1182102
+
+## error rate plot
+#err.regAbcrf(object   = reg_logncs_avalon,
+#             training = data.frame(logncs_avalon, global_sumstats4training_avalon),
+#             paral    = T,
+#             ncores   = 28)
+
+## oob predictions vs true values
+# diagnostic plot
+plot(x    = logncs_avalon,
+     y    = reg_logncs_avalon$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,4),
+     ylim = c(0,4),
+     main = expression(log[10](italic(N))),
+     cex.axis = 1.2,
+     cex.lab  = 1.2)
+abline(a=0, b=1, col = "green")
+
+# manuscript plot
+df.logncs.ava <- data.frame(x = logncs_avalon,
+                            y = reg_logncs_avalon$model.rf$predictions)
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/oob_plots/reg_logncs_avalon.pdf", 
+    width=6, height=6)
+par(mar=c(5,5,4,1)+.1)
+hist2d(df.logncs.ava, nbins=70, 
+       col=viridis::viridis(32), 
+       FUN=function(x) log(length(x)),
+       xlab = expression(paste("true", " ", log[10](italic(N[e])))),
+       ylab = expression(paste(log[10](italic(hat(N[e]))), " ","(OOB prediction)")),
+       xlim = c(0,4),
+       ylim = c(0,4),
+       cex.axis = 1.2,
+       cex.lab  = 1.2)
+abline(a=0, b=1, col = "black", lty = 3)
+dev.off()
+```
+
+#### Per site mutation rate mu
+```{r regression site mutation rate, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+logmu_avalon <- log10(pooled_reftable_bees_avalon[, "mu"])
+
+hist(logmu_avalon, freq = TRUE, xlab = expression(log[10](italic(mu))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_logmu_avalon <- regAbcrf(formula = logmu_avalon~.,
+                                 data = data.frame(logmu_avalon, global_sumstats4training_avalon),
+                                ntree = 1000,
+                                paral = T,
+                               ncores = 8)
+
+#save(reg_logmu_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logmu_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logmu_avalon",".RData"))
+
+## variable Importance plot
+plot(x = reg_logmu_avalon, n.var = 20)
+
+#head(sort(reg_logmu_avalon$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_logmu_avalon$model.rf$prediction.error
+# 0.01524504
+
+## error rate plot
+#err.regAbcrf(object   = reg_logmu_avalon,
+#             training = data.frame(logmu, global_sumstats4training_avalon),
+#             paral    = T,
+#             ncores   = 28)
+
+## oob predictions vs true values
+# diagnostic plot
+plot(x    = logmu_avalon,
+     y    = reg_logmu_avalon$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-10,-6),
+     ylim = c(-10,-6),
+     main = expression(log[10](italic(mu))),
+     cex.axis = 1.2,
+     cex.lab  = 1.2)
+abline(a=0, b=1, col = "green")
+
+# manuscript plot
+df.logmu.ava <- data.frame(x = logmu_avalon,
+                            y = reg_logmu_avalon$model.rf$predictions)
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/oob_plots/reg_logmu_avalon.pdf", 
+    width=6, height=6)
+par(mar=c(5,5,4,1)+.1)
+hist2d(df.logmu.ava, nbins=70, 
+       col=viridis::viridis(32), 
+       FUN=function(x) log(length(x)),
+       xlab = expression(paste("true", " ", log[10](italic(mu)))),
+       ylab = expression(paste(log[10](italic(hat(mu))), " ","(OOB prediction)")),
+       xlim = c(-10,-7),
+       ylim = c(-10,-7),
+       cex.axis = 1.2,
+       cex.lab  = 1.2)
+abline(a=0, b=1, col = "black", lty = 3)
+dev.off()
+```
+
+#### Rho = Nr
+```{r regression rho, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+logrho_avalon <- log10(pooled_reftable_bees_avalon[, "meanNe2_Ava"] * pooled_reftable_bees_avalon[, "rr"])
+
+hist(logrho_avalon, freq = TRUE, xlab = expression(log[10](italic(rho))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_logrho_avalon <- regAbcrf(formula = logrho_avalon~.,
+                                 data = data.frame(logrho_avalon, global_sumstats4training_avalon),
+                                ntree = 1000,
+                                paral = T,
+                               ncores = 8)
+#save(reg_logrho_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logrho_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/reg_logrho_avalon",".RData"))
+
+
+## variable Importance plot
+plot(x = reg_logrho_avalon, n.var = 20)
+
+#head(sort(reg_logrho_avalon$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_logrho_avalon$model.rf$prediction.error
+#  0.5835657
+
+## error rate plot
+#err.regAbcrf(object   = reg_logrho_avalon,
+#             training = data.frame(logrho_avalon, global_sumstats4training_avalon),
+#             paral    = T,
+#             ncores   = 28)
+
+## oob predictions vs true values
+# diagnostic plot
+plot(x    = logrho_avalon,
+     y    = reg_logrho_avalon$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-8,-2),
+     ylim = c(-8,-2),
+     main = expression(log[10](italic(rho))),
+     cex.axis = 1.2,
+     cex.lab  = 1.2)
+abline(a=0, b=1, col = "green")
+
+# manuscript plot
+df.logrho.ava <- data.frame(x = logrho_avalon,
+                            y = reg_logrho_avalon$model.rf$predictions)
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/random_forests/regression/oob_plots/reg_logrho_avalon.pdf", 
+    width=6, height=6)
+par(mar=c(5,5,4,1)+.1)
+hist2d(df.logrho.ava, nbins=70, 
+       col=viridis::viridis(32), 
+       FUN=function(x) log(length(x)),
+       xlab = expression(paste("true", " ", log[10](italic(rho)))),
+       ylab = expression(paste(log[10](italic(hat(rho))), " ","(OOB prediction)")),
+       xlim = c(-8,-2),
+       ylim = c(-8,-2),
+       cex.axis = 1.2,
+       cex.lab  = 1.2)
+abline(a=0, b=1, col = "black", lty = 3)
+dev.off()
+```
+
+## Sampling period inference
+
+### ABC-RF regression for selection: prediction
+
+#### Average genetic load
+```{r prediction genetic load, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+posterior_averageGenLoad_avalon <- predict(object     = reg_averageGenLoad_avalon,
+                                           obs        = global_Obssumstats_avalon,
+                                           training   = data.frame(logaverageGenload_avalon, global_sumstats4training_avalon),
+                                           quantiles  = c(0.025,0.5,0.975),
+                                           paral      = T,
+                                           ncores     = 8,
+                                           rf.weights = T)
+
+
+#save(posterior_averageGenLoad_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_averageGenLoad_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_averageGenLoad_avalon",".RData"))
+
+(posterior_averageGenLoad_avalon)
+
+1-10^(-posterior_averageGenLoad_avalon$expectation)
+# 0.6764724
+
+1-10^(-posterior_averageGenLoad_avalon$med)
+# 0.3673043
+
+1-10^(-posterior_averageGenLoad_avalon$quantiles)
+# quantile=0.025 quantile=0.5 quantile=0.975
+#              0    0.3673043      0.9932947
+
+hist(x      = logaverageGenload_avalon,
+     breaks = seq(0,3.0,0.1),
+     col    = "#969696",
+     freq   = FALSE,
+     main   = "",
+     xlab   = expression(-log[10](1 - italic(L))),
+     ylab   = "probability density")
+wtd.hist(x      = logaverageGenload_avalon,
+         breaks = seq(0,3,0.1),
+         col    = adjustcolor( "#41b6c4", alpha.f = 0.5), freq=FALSE, add=TRUE,
+         weight = posterior_averageGenLoad_avalon$weights)
+
+## logit transformation I:
+# removing "quasi-neutral" simulations
+posterior_averageGenLoad_avalon_2 <- predict(object     = reg_averageGenLoad_avalon_2,
+                                             obs        = global_Obssumstats_avalon,
+                                             training   = data.frame(logitaverageGenload_avalon_1, global_sumstats4training_avalon_averageGenLoad),
+                                             quantiles  = c(0.025,0.5,0.975),
+                                             paral      = T,
+                                             ncores     = 8,
+                                             rf.weights = T)
+
+#save(posterior_averageGenLoad_avalon_2, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_averageGenLoad_avalon_2",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_averageGenLoad_avalon_2",".RData"))
+
+(posterior_averageGenLoad_avalon_2)
+
+inv.logit(posterior_averageGenLoad_avalon_2$expectation)
+#0.0004093727
+
+inv.logit(posterior_averageGenLoad_avalon_2$med)
+# 0.002005405
+
+inv.logit(posterior_averageGenLoad_avalon_2$quantiles)
+#     quantile=0.025 quantile=0.5 quantile=0.975
+#    1.13521e-09  0.002005405      0.9928679
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/histograms/posterior_averageGenLoad_avalon_2.pdf", 
+    width=6, height=6)
+hist(x      = logitaverageGenload_avalon_1,
+     breaks = seq(-22,6,0.5),
+     col    = "#969696",
+     freq   = FALSE,
+     main   = "",
+     xlab   = expression(logit(italic(L))),
+     ylab   = "probability density")
+wtd.hist(x      = logitaverageGenload_avalon_1,
+         breaks = seq(-22,6,0.5),
+         col    = adjustcolor( "#41b6c4", alpha.f = 0.5), freq=FALSE, add=TRUE,
+         weight = posterior_averageGenLoad_avalon_2$weights)
+dev.off()
+```
+
+#### Proportion of strongly selected mutations - POPPrStrongMSel
+```{r prediction strongly selected, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+## log10 transformation PrPOPStrongMSel
+posterior_logpopstrongmsel_avalon <- predict(object     = reg_logpopstrongmsel_avalon,
+                                             obs        = global_Obssumstats_avalon,
+                                             training   = data.frame(logpopstrongmsel_avalon, global_sumstats4training_avalon_popstrongmsel),
+                                             quantiles  = c(0.025,0.5,0.975),
+                                             paral      = T,
+                                             ncores     = 8,
+                                             rf.weights = T)
+
+
+#save(posterior_logpopstrongmsel_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logpopstrongmsel_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logpopstrongmsel_avalon",".RData"))
+
+(posterior_logpopstrongmsel_avalon)
+
+10^(posterior_logpopstrongmsel_avalon$expectation)
+# 3.662311e-05
+
+10^(posterior_logpopstrongmsel_avalon$med)
+# 2.641727e-05
+
+10^(posterior_logpopstrongmsel_avalon$quantiles)
+#quantile=0.025 quantile=0.5 quantile=0.975
+#   1.385907e-06 2.641727e-05    0.007666561
+
+hist(x      = logpopstrongmsel_avalon,
+     #breaks = seq(0,3.0,0.1),
+     col    = "#969696",
+     freq   = FALSE,
+     main   = "",
+     xlab   =expression(log[10](italic(P))),
+     ylab   = "probability density")
+wtd.hist(x      = logpopstrongmsel_avalon,
+         #breaks = seq(0,3,0.1),
+         col    = adjustcolor( "#41b6c4", alpha.f = 0.5), freq=FALSE, add=TRUE,
+         weight = posterior_logpopstrongmsel_avalon$weights)
+
+## logit transformation I: 
+posterior_logitpopstrongmsel_avalon_1 <- predict(object = reg_logitpopstrongmsel_avalon_1,
+                                             obs        = global_Obssumstats_avalon,
+                                             training   = data.frame(logitpopstrongmsel_avalon_1, global_sumstats4training_avalon_popstrongmsel),
+                                             quantiles  = c(0.025,0.5,0.975),
+                                             paral      = T,
+                                             ncores     = 8,
+                                             rf.weights = T)
+
+
+#save(posterior_logitpopstrongmsel_avalon_1, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logitpopstrongmsel_avalon_1",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logitpopstrongmsel_avalon_1",".RData"))
+
+(posterior_logitpopstrongmsel_avalon_1)
+
+inv.logit(posterior_logitpopstrongmsel_avalon_1$expectation)
+# 4.03592e-05
+
+inv.logit(posterior_logitpopstrongmsel_avalon_1$med)
+# 2.836647e-05
+
+inv.logit(posterior_logitpopstrongmsel_avalon_1$quantiles)
+#quantile=0.025 quantile=0.5 quantile=0.975
+#   1.388322e-06 2.836647e-05     0.01323624
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/histograms/posterior_logitpopstrongmsel_avalon_1.pdf", 
+    width=6, height=6)
+hist(x      = logitpopstrongmsel_avalon_1,
+     breaks = seq(-16,1,0.5),
+     col    = "#969696",
+     freq   = FALSE,
+     main   = "",
+     xlab   = expression(logit(italic(P))),
+     ylab   = "probability density",
+     ylim   = c(0,0.5))
+wtd.hist(x      = logitpopstrongmsel_avalon_1,
+         breaks = seq(-16,1,0.5),
+         col    = adjustcolor( "#41b6c4", alpha.f = 0.5), freq=FALSE, add=TRUE,
+         weight = posterior_logitpopstrongmsel_avalon_1$weights)
+dev.off()
+```
+
+#### Theta selected mutations
+```{r prediction thetaS, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+posterior_logthetaS_avalon <- predict(object     = reg_logthetaS_avalon,
+                                      obs        = global_Obssumstats_avalon,
+                                      training   = data.frame(logthetaS_avalon, global_sumstats4training_avalon),
+                                      quantiles  = c(0.025,0.5,0.975),
+                                      paral      = T,
+                                      ncores     = 8,
+                                      rf.weights = T)
+
+
+#save(posterior_logthetaS_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logthetaS_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logthetaS_avalon",".RData"))
+
+(posterior_logthetaS_avalon)
+
+10^(posterior_logthetaS_avalon$expectation)
+# 0.2937635
+
+10^(posterior_logthetaS_avalon$med)
+# 0.2279054
+
+10^(posterior_logthetaS_avalon$quantiles)
+#quantile=0.025 quantile=0.5 quantile=0.975
+#   0.0001917634    0.2279054       227.3279
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/histograms/posterior_logthetaS_avalon.pdf", 
+    width=6, height=6)
+hist(x      = logthetaS_avalon,
+     breaks = seq(-6,4,0.5),
+     col    = "#969696",
+     freq   = FALSE,
+     main   = "",
+     xlab   = expression(log[10](italic(theta*P[S]))),
+     ylab   = "probability density",
+     ylim   = c(0,0.5))
+wtd.hist(x      = logthetaS_avalon,
+         breaks = seq(-6,4,0.5),
+         col    = adjustcolor( "#41b6c4", alpha.f = 0.5), freq=FALSE, add=TRUE,
+         weight = posterior_logthetaS_avalon$weights)
+dev.off()
+```
+
+### ABC-RF regression for demography: prediction
+
+#### Harmonic mean of the effective population sizes of period 2 - meanNe2
+```{r prediction MeanNe2, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+posterior_logmeanNe2_avalon <- predict(object     = reg_logmeanNe2_avalon,
+                                       obs        = global_Obssumstats_avalon,
+                                       training   = data.frame(logmeanNe2_avalon, global_sumstats4training_avalon),
+                                       quantiles  = c(0.025,0.5,0.975),
+                                       paral      = T,
+                                       ncores     = 8,
+                                       rf.weights = T)
+
+
+#save(posterior_logmeanNe2_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logmeanNe2_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logmeanNe2_avalon",".RData"))
+
+(posterior_logmeanNe2_avalon)
+
+10^(posterior_logmeanNe2_avalon$expectation)
+# 89.86069
+
+10^(posterior_logmeanNe2_avalon$med)
+# 74.43513
+
+10^(posterior_logmeanNe2_avalon$quantiles)
+# quantile=0.025 quantile=0.5 quantile=0.975
+#       22.83093     74.43513       887.1588
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/histograms/posterior_logmeanNe2_avalon.pdf", 
+    width=6, height=6)
+hist(x      = logmeanNe2_avalon,
+     breaks = seq(-1,5,0.1),
+     col    = "#969696",
+     freq   = FALSE,
+     main   = "",
+     xlab   = expression(log[10](italic(N[e]))),
+     ylab   = "probability density",
+     ylim   = c(0,2.0))
+wtd.hist(x      = logmeanNe2_avalon,
+         breaks = seq(-1,5,0.1),
+         col    = adjustcolor( "#41b6c4", alpha.f = 0.5), freq=FALSE, add=TRUE,
+         weight = posterior_logmeanNe2_avalon$weights)
+dev.off()
+```
+
+#### Population size of period 2 - census size Ncs
+```{r predition Ncs, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+posterior_logncs_avalon <- predict(object     = reg_logncs_avalon,
+                                  obs        = global_Obssumstats_avalon,
+                                  training   = data.frame(logncs_avalon, global_sumstats4training_avalon),
+                                  quantiles  = c(0.025,0.5,0.975),
+                                  paral      = T,
+                                  ncores     = 8,
+                                  rf.weights = T)
+
+
+#save(posterior_logncs_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logncs_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logncs_avalon",".RData"))
+
+(posterior_logncs_avalon)
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/histograms/posterior_logncs_avalon.pdf", 
+    width=6, height=6)
+hist(x      = logncs_avalon,
+     breaks = seq(0,4.0,0.1),
+     col    = "#969696",
+     freq   = FALSE,
+     main   = "",
+     xlab   = expression(log[10](italic(N))),
+     ylab   = "probability density",
+     ylim   = c(0,2.0))
+wtd.hist(x      = logncs_avalon,
+         breaks = seq(0,4,0.1),
+         col    = adjustcolor( "#41b6c4", alpha.f = 0.5), freq=FALSE, add=TRUE,
+         weight = posterior_logncs_avalon$weights)
+dev.off()
+```
+
+#### Per site mutation rate mu
+```{r predition site mutation rate, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+posterior_logmu_avalon <- predict(object     = reg_logmu_avalon,
+                                  obs        = global_Obssumstats_avalon,
+                                  training   = data.frame(logmu_avalon, global_sumstats4training_avalon),
+                                  quantiles  = c(0.025,0.5,0.975),
+                                  paral      = T,
+                                  ncores     = 8,
+                                  rf.weights = T)
+
+
+#save(posterior_logmu_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logmu_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logmu_avalon",".RData"))
+
+(posterior_logmu_avalon)
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/histograms/posterior_logmu_avalon.pdf", 
+    width=6, height=6)
+hist(x      = logmu_avalon,
+     breaks = seq(-10,-6,0.1),
+     col    = "#969696",
+     freq   = FALSE,
+     main   = "",
+     xlab   = expression(log[10](italic(mu))),
+     ylab   = "probability density",
+     ylim   = c(0,2.0))
+wtd.hist(x      = logmu_avalon,
+         breaks = seq(-10,-6,0.1),
+         col    = adjustcolor( "#41b6c4", alpha.f = 0.5), freq=FALSE, add=TRUE,
+         weight = posterior_logmu_avalon$weights)
+dev.off()
+```
+
+#### Per site mutation rate mu
+```{r predition site mutation rate, echo=TRUE, eval=FALSE, include=TRUE}
+
+### AVALON
+###-----------------------------------------------------------
+
+posterior_logrho_avalon <- predict(object     = reg_logrho_avalon,
+                                  obs        = global_Obssumstats_avalon,
+                                  training   = data.frame(logrho_avalon, global_sumstats4training_avalon),
+                                  quantiles  = c(0.025,0.5,0.975),
+                                  paral      = T,
+                                  ncores     = 8,
+                                  rf.weights = T)
+
+
+#save(posterior_logrho_avalon, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logrho_avalon",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/posterior_logrho_avalon",".RData"))
+
+(posterior_logrho_avalon)
+
+pdf(file="~/My_repositories/Tracking-selection/results/pipeline_v6_bees/posterior_obs/histograms/posterior_logrho_avalon.pdf", 
+    width=6, height=6)
+hist(x      = logrho_avalon,
+     #breaks = seq(-10,-7,0.1),
+     col    = "#969696",
+     freq   = FALSE,
+     main   = "",
+     xlab   = expression(log[10](italic(rho))),
+     ylab   = "probability density",
+     ylim   = c(0,1.0))
+wtd.hist(x      = logrho_avalon,
+         #breaks = seq(-10,-7,0.1),
+         col    = adjustcolor( "#41b6c4", alpha.f = 0.5), freq=FALSE, add=TRUE,
+         weight = posterior_logrho_avalon$weights)
+dev.off()
+```

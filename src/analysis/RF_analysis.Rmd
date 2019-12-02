@@ -184,12 +184,20 @@ table(missing_count <- sapply(pooled_reftable_total, function(x) sum(is.na(x))))
 # Check != numeric values
 infinite_count <- sapply(pooled_reftable_total, function(x) sum(is.infinite(x)))
 
+# check the number of rows and columns of the final reference table
+dim(pooled_reftable_total)
+# 53757   509
+
 #save(pooled_reftable_total, 
 #     file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/pooled_reftable_total",".RData"))
 #load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/pooled_reftable_total",".RData"))
 
 # Prepare the global summary statistics table by removing columns that do not contain summary stats
 global_sumstats <- pooled_reftable_total[, -c(1:104)]
+
+# check the number of rows and columns of the final global summary stats table
+dim(global_sumstats)
+# 53757   405
 
 #save(global_sumstats, 
 #     file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/global_sumstats",".RData"))
@@ -371,7 +379,7 @@ abline(a=0, b=1, col = "green")
 #hist(logaverageGenload[which(pooled_reftable_total[, "POPPrStrongMSel"] == 0)], breaks = 100,
 #     freq = TRUE, xlab = expression(-log[10](1 - italic(bar(L)))), main = "", col = "#bdbdbd")
 
-## logit transformation
+## logit transformation I:
 # removing "quasi-neutral" simulations
 load_zero <- which(averageGenLoad == 0)
 averageGenLoad_2 <- averageGenLoad[-load_zero]
@@ -413,6 +421,51 @@ plot(x    = logitaverageGenload,
      ylab = "OOB predictions",
      xlim = c(-20,7),
      ylim = c(-20,7),
+     main = expression(logit(italic(bar(L)))),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
+
+## logit transformation II:
+# substitute 0 for 10e-1 * lowest-before-0-value
+averageGenLoad_3 <- replace(averageGenLoad, averageGenLoad== 0, (5.4186e-09*1e-1))
+
+logitaverageGenload_2 <- log(averageGenLoad_3/(1-averageGenLoad_3))
+hist(logitaverageGenload_2, freq = TRUE, xlab = expression(logit(italic(bar(L)))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_averageGenLoad_3 <- regAbcrf(formula = logitaverageGenload_2~.,
+                                 data    = data.frame(logitaverageGenload_2, global_sumstats),
+                                 ntree   = 1000,
+                                 paral   = T,
+                                 ncores  = 8)
+
+#save(reg_averageGenLoad_3, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_averageGenLoad_3",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_averageGenLoad_3",".RData"))
+
+## variable Importance plot
+plot(x = reg_averageGenLoad_3, n.var = 20)
+
+#head(sort(reg_averageGenLoad_3$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_averageGenLoad_3$model.rf$prediction.error
+# 52.70968
+
+## error rate plot
+err.regAbcrf(object   = reg_averageGenLoad_3,
+             training = data.frame(logitaverageGenload_2, global_sumstats),
+             paral    = T,
+             ncores   = 28)
+
+## oob predictions vs true values
+plot(x    = logitaverageGenload_2,
+     y    = reg_averageGenLoad_3$model.rf$predictions,
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-22,7),
+     ylim = c(-22,7),
      main = expression(logit(italic(bar(L)))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
@@ -578,14 +631,15 @@ plot(x    = logpopstrongmsel,
      main = expression(log[10](italic(P[strong]))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 #legend("topleft", legend = c("genetic load < 0.3", "genetic load >= 0.3"), col = c("red", "black"), pch = 1, bty = "n")
 #identify(x = logpopstrongmsel,
 #         y = reg_logpopstrongmsel$model.rf$predictions)
 # example: simulation row 559 (1133)
 # probably when wmax == mean(w)
 
-## logit transformation PrPOPStrongMSel
+## logit transformation I: 
+# PrPOPStrongMSel_2 - without neutral/quasi-neutral simulations
 logitpopstrongmsel <- log(prPOPStrongMSel_2/(1-prPOPStrongMSel_2))
 hist(logitpopstrongmsel, freq = TRUE, xlab = expression(paste("Pr mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
 
@@ -626,7 +680,7 @@ plot(x    = logitpopstrongmsel,
      main = expression(log(italic(P[strong])/(1-italic(P[strong])))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 #legend("topleft", legend = c("genetic load < 0.3", "genetic load >= 0.3"), col = c("red", "black"), pch = 1, bty = "n")
 #identify(x = logpopstrongmsel,
 #         y = reg_logpopstrongmsel$model.rf$predictions)
@@ -646,44 +700,146 @@ abline(a=0, b=1, col = "#cb181d")
 #plot(logitpopstrongmsel, logitaverageGenload[-neutralsims],
 #     xlab = expression(log(italic(P[strong])/1-italic(P[strong]))),
 #     ylab = expression(log(italic(L)/1-italic(L))))
+
+## logit transformation II: 
+# PrPOPStrongMSel - with all simulations
+# substitute 0 for 10e-1 * lowest-before-0-value
+prPOPStrongMSel_3 <- replace(prPOPStrongMSel, prPOPStrongMSel== 0, (2.638936e-07*1e-1))
+
+logitpopstrongmsel_2 <- log(prPOPStrongMSel_3/(1-prPOPStrongMSel_3))
+hist(logitpopstrongmsel_2, freq = TRUE, xlab = expression(paste("Pr mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_logitpopstrongmsel_2 <- regAbcrf(formula = logitpopstrongmsel_2~.,
+                                     data    = data.frame(logitpopstrongmsel_2, global_sumstats),
+                                     ntree   = 1000,
+                                     paral   = T,
+                                     ncores  = 8)
+
+#save(reg_logitpopstrongmsel_2, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logitpopstrongmsel_2",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logitpopstrongmsel_2",".RData"))
+
+## variable Importance plot
+plot(x = reg_logitpopstrongmsel_2, n.var = 20)
+
+#head(sort(reg_logpopstrongmsel_2$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_logitpopstrongmsel_2$model.rf$prediction.error
+# 1.608456
+
+## error rate plot
+#err.regAbcrf(object   = reg_logitpopstrongmsel_2,
+#             training = data.frame(logitpopstrongmsel_2, global_sumstats),
+#             paral    = T,
+#            ncores   = 28)
+
+## oob predictions vs true values
+plot(x    = logitpopstrongmsel_2,
+     y    = reg_logitpopstrongmsel_2$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-18,2),
+     ylim = c(-18,2),
+     main = expression(log(italic(P[strong])/(1-italic(P[strong])))),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
 ```
 
-#### Likelihood of strongly selected mutations given the Ne of sampling period
+#### Likelihood of having strongly selected mutations given the Ne and s mean (gamma shape) of sampling period
 ```{r regression likelihoods strong selection, echo=TRUE, eval=FALSE, include=TRUE}
 
 invNe2 <- 1/pooled_reftable_total[, "meanNe2"]
 gammashape <- pooled_reftable_total[, "gammaShape"]
-
 likelystrongMsel <- pgamma(invNe2,shape=gammashape,rate=1,lower.tail=FALSE)
 
-hist(probstrongMsel, freq = TRUE, xlab = expression(paste("Likelihood of mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
+hist(likelystrongMsel, freq = TRUE, xlab = expression(paste("Likelihood of mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
 
 ## rf-regression
 reg_likelystrongMsel <- regAbcrf(formula = likelystrongMsel~.,
-                                data    = data.frame(likelystrongMsel, global_sumstats),
-                                ntree   = 1000,
-                                paral   = T,
-                                ncores  = 28)
+                                 data    = data.frame(likelystrongMsel, global_sumstats),
+                                 ntree   = 1000,
+                                 paral   = T,
+                                 ncores  = 8)
 
-zero_likelystrongMsel <- which(likelystrongMsel == 0)
+#save(reg_likelystrongMsel, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_likelystrongMsel",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_likelystrongMsel",".RData"))
 
-nozero_likelystrongMsel <- likelystrongMsel[-zero_likelystrongMsel]
-global_sumstats_likelystrongMsel <- global_sumstats[-zero_likelystrongMsel,]
+## variable Importance plot
+plot(x = reg_likelystrongMsel, n.var = 20)
 
-loglikelystrongMsel <- log10(nozero_likelystrongMsel)
+#head(sort(reg_likelystrongMsel$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+#reg_likelystrongMsel$model.rf$prediction.error
+#0.07389625
+
+## error rate plot
+#err.regAbcrf(object   = reg_likelystrongMsel,
+#             training = data.frame(likelystrongMsel, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+## oob predictions vs true values
+plot(x    = likelystrongMsel,
+     y    = reg_likelystrongMsel$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,1),
+     ylim = c(0,1),
+     main = expression(paste("Pr mutations with"," ", italic(N[s]) , " > 1")),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
+
+## logit transformation of the likelihood
+##-----------------------------------------------------------
+logitlikelyhoodstrongMsel <- log(likelystrongMsel/(1-likelystrongMsel))
+
+hist(logitlikelyhoodstrongMsel, freq = TRUE, xlab = expression(paste("Likelihood of mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
 
 ## rf-regression
-reg_loglikelystrongMsel <- regAbcrf(formula = loglikelystrongMsel~.,
-                                    data    = data.frame(loglikelystrongMsel, global_sumstats_likelystrongMsel),
-                                    ntree   = 1000,
-                                    paral   = T,
-                                    ncores  = 28)
+reg_logitlikelyhoodstrongMsel <- regAbcrf(formula = logitlikelyhoodstrongMsel~.,
+                                          data    = data.frame(logitlikelyhoodstrongMsel, global_sumstats),
+                                          ntree   = 1000,
+                                          paral   = T,
+                                          ncores  = 8)
+#save(reg_logitlikelyhoodstrongMsel, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logitlikelyhoodstrongMsel",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logitlikelyhoodstrongMsel",".RData"))
 
+## variable Importance plot
+plot(x = reg_logitlikelyhoodstrongMsel, n.var = 20)
 
+#head(sort(reg_logitlikelyhoodstrongMsel$model.rf$variable.importance, decreasing = T), n=20)
 
+## prediction error
+#reg_logitlikelyhoodstrongMsel$model.rf$prediction.error
+#5.519425
+
+## error rate plot
+#err.regAbcrf(object   = reg_logitlikelyhoodstrongMsel,
+#             training = data.frame(logitlikelyhoodstrongMsel, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+## oob predictions vs true values
+plot(x    = logitlikelyhoodstrongMsel,
+     y    = reg_logitlikelyhoodstrongMsel$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-40,10),
+     ylim = c(-40,10),
+     main = expression(paste("Logit Pr mutations with"," ", italic(N[s]) , " > 1")),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
 ```
 
-#### ThetaS - selected mutations
+#### Theta selected mutations
 ```{r regression thetaS, echo=TRUE, eval=FALSE, include=TRUE}
 genomeS = 100e+6
 
@@ -786,6 +942,10 @@ abline(a=0, b=1, col = "green")
 
 ## ThetaS_3 - Proportion of strongly selecte mutations POPPrMSel
 ##----------------------------------------------------------- 
+neutralsims <- which(prPOPStrongMSel == 0)
+prPOPStrongMSel_2 <- prPOPStrongMSel[-neutralsims]
+global_sumstats_popstrongmsel <- global_sumstats[-neutralsims,]
+
 logthetaS_3 <- log10(4 * pooled_reftable_total[-neutralsims, "meanNe2"] * (pooled_reftable_total[-neutralsims, "mu"] * prPOPStrongMSel_2) * genomeS)
 
 hist(logthetaS_3, freq = TRUE, xlab = expression(log[10](italic(theta[S]))), main = "", col = "#bdbdbd")
@@ -839,6 +999,52 @@ abline(a=0, b=1, col = "green")
 #     xlab = expression(log(italic(theta[s]))),
 #     ylab = expression(-log10(1-italic(L)))
 #     )
+
+## ThetaS_4 - Calculated with the probability of having strongly selected mutations give Ne and gammashape
+##-------------------------------------------------------------------------------------------------------- 
+invNe2 <- 1/pooled_reftable_total[, "meanNe2"]
+gammashape <- pooled_reftable_total[, "gammaShape"]
+likelystrongMsel <- pgamma(invNe2,shape=gammashape,rate=1,lower.tail=FALSE)
+
+logthetaS_4 <- log10(4 * pooled_reftable_total[, "meanNe2"] * (pooled_reftable_total[, "mu"] * likelystrongMsel) * genomeS)
+
+hist(logthetaS_4, freq = TRUE, xlab = expression(log[10](italic(theta[S]))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_logthetaS_4 <- regAbcrf(formula = logthetaS_4~.,
+                            data    = data.frame(logthetaS_4, global_sumstats),
+                            ntree   = 1000,
+                            paral   = T,
+                            ncores  = 8)
+
+#save(reg_logthetaS_4, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logthetaS_4",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logthetaS_3",".RData"))
+
+## variable Importance plot
+plot(x = reg_logthetaS_4, n.var = 20)
+
+#head(sort(reg_logthetaS_4$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_logthetaS_4$model.rf$prediction.error
+# 0.6459325
+
+## error rate plot
+#err.regAbcrf(object   = reg_logthetaS_4,
+#             training = data.frame(logthetaS_4, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logthetaS_4,
+     y    = reg_logthetaS_4$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-42,6),
+     ylim = c(-42,6),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
 ```
 
 #### FDR 1% of the FST hypothesis of Ns>1
@@ -885,7 +1091,7 @@ plot(x    = fstfdrNs01,
      cex.axis = 1.2,
      cex.lab  = 1.5)
 legend("bottomright", legend = c("Quasi Neutral", "Strong Selection"), col = c("red", "black"), pch = 1, bty = "n")
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 
 ## removing "quasi-neutral" simulations
 #fstfdrNs01_2 <- fstfdrNs01[-neutralsims]
@@ -929,7 +1135,7 @@ abline(a=0, b=1, col = "#cb181d")
 #     main = expression(paste("FDR 1%"," ", F[ST], " and ", "mutations with", italic(N[s]) , " > 1")),
 #     cex.axis = 1.2,
 #     cex.lab  = 1.5)
-#abline(a=0, b=1, col = "#cb181d")
+#abline(a=0, b=1, col = "green")
 ```
 
 #### FDR 5% of the FST hypothesis of Ns>1
@@ -976,7 +1182,7 @@ plot(x    = fstfdrNs05,
      cex.axis = 1.2,
      cex.lab  = 1.5)
 #legend("bottomright", legend = c("Quasi Neutral", "Strong Selection"), col = c("red", "black"), pch = 1, bty = "n")
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 ```
 
 #### Mean of the selection coefficients - based on POPSelMean and POPStrongSelMean
@@ -1024,7 +1230,7 @@ plot(x    = meanPOPSel_2,
      main = expression(log[10](paste("gamma ", kappa, theta))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 
 ## log POPSelMean
 ##-----------------------------------------------------------
@@ -1067,7 +1273,7 @@ plot(x    = logmeanpopsel_1,
      main = expression(log[10](paste("gamma ", kappa, theta))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 
 ## POPStrongSelMean
 ##-----------------------------------------------------------
@@ -1111,7 +1317,7 @@ plot(x    = meanstrongPOPSel_2,
      main = expression(log[10](paste("gamma ", kappa, theta))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 
 ## log POPStrongSelMean
 ##-----------------------------------------------------------
@@ -1154,7 +1360,7 @@ plot(x    = logmeanpopsel_2,
      main = expression(log[10](paste("gamma ", kappa, theta))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 ```
 
 #### DFE gamma mean
@@ -1199,7 +1405,7 @@ plot(x    = loggammamean,
      main = expression(log[10](paste("gamma ", kappa, theta))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 ```
 
 #### Ns
@@ -1215,7 +1421,9 @@ reg_logNs <- regAbcrf(formula = logNs~.,
                       paral   = T,
                       ncores  = 28)
 
-#save(reg_logNs, file = paste0("/home/pavinato/My_repositories/Tracking-selection/src/analysis/RF_analysis_files/reg_logNs",".RData"))
+#save(reg_logNs, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logNs",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logNs",".RData"))
 
 # variable Importance plot
 plot(x = reg_logNs, n.var = 20)
@@ -1224,22 +1432,23 @@ plot(x = reg_logNs, n.var = 20)
 
 # prediction error
 reg_logNs$model.rf$prediction.error
+# 0.6397764
 
 # error rate plot
 #err.regAbcrf(object   = reg_logNs,
 #             training = data.frame(logNs, global_sumstats),
 #             paral    = T,
-#             ncores   = 28)
+#             ncores   = 8)
 
 plot(x    = logNs,
      y    = reg_logNs$model.rf$predictions, 
      xlab = "True value",
      ylab = "OOB predictions",
-     xlim = c(-3,3),
-     ylim = c(-3,3),
+     xlim = c(-4,4),
+     ylim = c(-4,4),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 ```
 
 ### ABC-RF regression for demography: growing trees
@@ -1286,7 +1495,7 @@ plot(x    = logmeanNe2,
      main = expression(log[10](italic(bar(N[e]2)))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 ```
 
 #### Population size of period 2 - census size Ncs
@@ -1332,7 +1541,7 @@ plot(x    = logncs,
      main = expression(log[10](italic(N[cs]))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 ```
 
 #### Ratio Mean effective size / population size of period 2 - MeanNe2/Ncs
@@ -1378,7 +1587,7 @@ plot(x    = logmeanNe2ncs,
      main = expression(log[10](italic(bar(N[e]2))/italic(N[cs]))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 ```
 
 #### Theta of perido 2
@@ -1394,7 +1603,37 @@ reg_logtheta2 <- regAbcrf(formula = logtheta2~.,
                           paral   = T,
                           ncores  = 28)
 
+#save(reg_logtheta2, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logtheta2",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logtheta2",".RData"))
+
+## variable Importance plot
+plot(x = reg_logtheta2, n.var = 20)
+
+#head(sort(reg_logtheta2$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_logtheta2$model.rf$prediction.error
+# 0.02097791
+
+## error rate plot
+#err.regAbcrf(object   = reg_logtheta2,
+#             training = data.frame(logtheta1, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = logtheta2,
+     y    = reg_logtheta2$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-2,6),
+     ylim = c(-2,6),
+     main = expression(log[10](italic(theta[2]))),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
 ```
+
 #### Theta of perido 1
 ```{r regression theta, echo=TRUE, eval=FALSE, include=TRUE}
 genomeS = 100e+6
@@ -1437,7 +1676,7 @@ plot(x    = logtheta1,
      main = expression(log[10](italic(theta[1]))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 ```
 
 #### Per site mutation rate mu
@@ -1482,7 +1721,7 @@ plot(x    = logmu,
      main = expression(log[10](italic(mu))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 ```
 
 #### Rho = Nr
@@ -1526,7 +1765,7 @@ plot(x    = logrho,
      main = expression(log[10](italic(rho))),
      cex.axis = 1.2,
      cex.lab  = 1.5)
-abline(a=0, b=1, col = "#cb181d")
+abline(a=0, b=1, col = "green")
 ```
 
 ## Sampling period inference
