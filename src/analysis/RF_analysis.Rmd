@@ -748,97 +748,6 @@ plot(x    = logitpopstrongmsel_2,
 abline(a=0, b=1, col = "green")
 ```
 
-#### Likelihood of having strongly selected mutations given the Ne and s mean (gamma shape) of sampling period
-```{r regression likelihoods strong selection, echo=TRUE, eval=FALSE, include=TRUE}
-
-invNe2 <- 1/pooled_reftable_total[, "meanNe2"]
-gammashape <- pooled_reftable_total[, "gammaShape"]
-likelystrongMsel <- pgamma(invNe2,shape=gammashape,rate=1,lower.tail=FALSE)
-
-hist(likelystrongMsel, freq = TRUE, xlab = expression(paste("Likelihood of mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
-
-## rf-regression
-reg_likelystrongMsel <- regAbcrf(formula = likelystrongMsel~.,
-                                 data    = data.frame(likelystrongMsel, global_sumstats),
-                                 ntree   = 1000,
-                                 paral   = T,
-                                 ncores  = 8)
-
-#save(reg_likelystrongMsel, 
-#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_likelystrongMsel",".RData"))
-#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_likelystrongMsel",".RData"))
-
-## variable Importance plot
-plot(x = reg_likelystrongMsel, n.var = 20)
-
-#head(sort(reg_likelystrongMsel$model.rf$variable.importance, decreasing = T), n=20)
-
-## prediction error
-#reg_likelystrongMsel$model.rf$prediction.error
-#0.07389625
-
-## error rate plot
-#err.regAbcrf(object   = reg_likelystrongMsel,
-#             training = data.frame(likelystrongMsel, global_sumstats),
-#             paral    = T,
-#             ncores   = 28)
-
-## oob predictions vs true values
-plot(x    = likelystrongMsel,
-     y    = reg_likelystrongMsel$model.rf$predictions, 
-     xlab = "True value",
-     ylab = "OOB predictions",
-     xlim = c(0,1),
-     ylim = c(0,1),
-     main = expression(paste("Pr mutations with"," ", italic(N[s]) , " > 1")),
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
-abline(a=0, b=1, col = "green")
-
-## logit transformation of the likelihood
-##-----------------------------------------------------------
-logitlikelyhoodstrongMsel <- log(likelystrongMsel/(1-likelystrongMsel))
-
-hist(logitlikelyhoodstrongMsel, freq = TRUE, xlab = expression(paste("Likelihood of mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
-
-## rf-regression
-reg_logitlikelyhoodstrongMsel <- regAbcrf(formula = logitlikelyhoodstrongMsel~.,
-                                          data    = data.frame(logitlikelyhoodstrongMsel, global_sumstats),
-                                          ntree   = 1000,
-                                          paral   = T,
-                                          ncores  = 8)
-#save(reg_logitlikelyhoodstrongMsel, 
-#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logitlikelyhoodstrongMsel",".RData"))
-#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logitlikelyhoodstrongMsel",".RData"))
-
-## variable Importance plot
-plot(x = reg_logitlikelyhoodstrongMsel, n.var = 20)
-
-#head(sort(reg_logitlikelyhoodstrongMsel$model.rf$variable.importance, decreasing = T), n=20)
-
-## prediction error
-#reg_logitlikelyhoodstrongMsel$model.rf$prediction.error
-#5.519425
-
-## error rate plot
-#err.regAbcrf(object   = reg_logitlikelyhoodstrongMsel,
-#             training = data.frame(logitlikelyhoodstrongMsel, global_sumstats),
-#             paral    = T,
-#             ncores   = 28)
-
-## oob predictions vs true values
-plot(x    = logitlikelyhoodstrongMsel,
-     y    = reg_logitlikelyhoodstrongMsel$model.rf$predictions, 
-     xlab = "True value",
-     ylab = "OOB predictions",
-     xlim = c(-40,10),
-     ylim = c(-40,10),
-     main = expression(paste("Logit Pr mutations with"," ", italic(N[s]) , " > 1")),
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
-abline(a=0, b=1, col = "green")
-```
-
 #### Theta selected mutations
 ```{r regression thetaS, echo=TRUE, eval=FALSE, include=TRUE}
 genomeS = 100e+6
@@ -1042,6 +951,185 @@ plot(x    = logthetaS_4,
      ylab = "OOB predictions",
      xlim = c(-42,6),
      ylim = c(-42,6),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
+```
+
+#### Ns
+```{r regression Ns, echo=TRUE, eval=FALSE, include=TRUE}
+logNs <- log10(pooled_reftable_total[, "meanNe2"] * pooled_reftable_total[, "gammaMean"])
+
+hist(logNs, freq = TRUE, xlab = expression(log[10](N[s])), main = "", col = "#bdbdbd")
+
+# abf-rf regression
+reg_logNs <- regAbcrf(formula = logNs~.,
+                      data    = data.frame(logNs, global_sumstats),
+                      ntree   = 1000,
+                      paral   = T,
+                      ncores  = 28)
+
+#save(reg_logNs, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logNs",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logNs",".RData"))
+
+# variable Importance plot
+plot(x = reg_logNs, n.var = 20)
+
+#head(sort(reg_logNs$model.rf$variable.importance, decreasing = T), n=20)
+
+# prediction error
+reg_logNs$model.rf$prediction.error
+# 0.6397764
+
+# error rate plot
+#err.regAbcrf(object   = reg_logNs,
+#             training = data.frame(logNs, global_sumstats),
+#             paral    = T,
+#             ncores   = 8)
+
+plot(x    = logNs,
+     y    = reg_logNs$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-4,4),
+     ylim = c(-4,4),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
+```
+
+#### DFE gamma mean
+```{r regression gamma mean, echo=TRUE, eval=FALSE, include=TRUE}
+
+loggammamean <- log10(pooled_reftable_total[, "gammaMean"])
+
+hist(loggammamean, freq = TRUE, xlab = expression(log[10](paste("gamma ", kappa, theta))), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_loggammamean <- regAbcrf(formula = loggammamean~.,
+                             data    = data.frame(loggammamean, global_sumstats),
+                             ntree   = 1000,
+                             paral   = T,
+                             ncores  = 28)
+
+#save(reg_loggammamean, 
+#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_loggammamean",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_loggammamean",".RData"))
+
+## variable Importance plot
+plot(x = reg_loggammamean, n.var = 20)
+
+#head(sort(reg_loggammamean$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+reg_loggammamean$model.rf$prediction.error
+# 0.6123305
+
+## error rate plot
+#err.regAbcrf(object   = reg_loggammamean,
+#             training = data.frame(loggammamean, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+plot(x    = loggammamean,
+     y    = reg_loggammamean$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-3,0),
+     ylim = c(-3,0),
+     main = expression(log[10](paste("gamma ", kappa, theta))),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
+```
+
+#### Likelihood of having strongly selected mutations given the Ne and s mean (gamma shape) of sampling period
+```{r regression likelihoods strong selection, echo=TRUE, eval=FALSE, include=TRUE}
+
+invNe2 <- 1/pooled_reftable_total[, "meanNe2"]
+gammashape <- pooled_reftable_total[, "gammaShape"]
+likelystrongMsel <- pgamma(invNe2,shape=gammashape,rate=1,lower.tail=FALSE)
+
+hist(likelystrongMsel, freq = TRUE, xlab = expression(paste("Likelihood of mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_likelystrongMsel <- regAbcrf(formula = likelystrongMsel~.,
+                                 data    = data.frame(likelystrongMsel, global_sumstats),
+                                 ntree   = 1000,
+                                 paral   = T,
+                                 ncores  = 8)
+
+#save(reg_likelystrongMsel, 
+#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_likelystrongMsel",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_likelystrongMsel",".RData"))
+
+## variable Importance plot
+plot(x = reg_likelystrongMsel, n.var = 20)
+
+#head(sort(reg_likelystrongMsel$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+#reg_likelystrongMsel$model.rf$prediction.error
+#0.07389625
+
+## error rate plot
+#err.regAbcrf(object   = reg_likelystrongMsel,
+#             training = data.frame(likelystrongMsel, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+## oob predictions vs true values
+plot(x    = likelystrongMsel,
+     y    = reg_likelystrongMsel$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(0,1),
+     ylim = c(0,1),
+     main = expression(paste("Pr mutations with"," ", italic(N[s]) , " > 1")),
+     cex.axis = 1.2,
+     cex.lab  = 1.5)
+abline(a=0, b=1, col = "green")
+
+## logit transformation of the likelihood
+##-----------------------------------------------------------
+logitlikelyhoodstrongMsel <- log(likelystrongMsel/(1-likelystrongMsel))
+
+hist(logitlikelyhoodstrongMsel, freq = TRUE, xlab = expression(paste("Likelihood of mutations with"," ", italic(N[s]) , " > 1")), main = "", col = "#bdbdbd")
+
+## rf-regression
+reg_logitlikelyhoodstrongMsel <- regAbcrf(formula = logitlikelyhoodstrongMsel~.,
+                                          data    = data.frame(logitlikelyhoodstrongMsel, global_sumstats),
+                                          ntree   = 1000,
+                                          paral   = T,
+                                          ncores  = 8)
+#save(reg_logitlikelyhoodstrongMsel, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logitlikelyhoodstrongMsel",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logitlikelyhoodstrongMsel",".RData"))
+
+## variable Importance plot
+plot(x = reg_logitlikelyhoodstrongMsel, n.var = 20)
+
+#head(sort(reg_logitlikelyhoodstrongMsel$model.rf$variable.importance, decreasing = T), n=20)
+
+## prediction error
+#reg_logitlikelyhoodstrongMsel$model.rf$prediction.error
+#5.519425
+
+## error rate plot
+#err.regAbcrf(object   = reg_logitlikelyhoodstrongMsel,
+#             training = data.frame(logitlikelyhoodstrongMsel, global_sumstats),
+#             paral    = T,
+#             ncores   = 28)
+
+## oob predictions vs true values
+plot(x    = logitlikelyhoodstrongMsel,
+     y    = reg_logitlikelyhoodstrongMsel$model.rf$predictions, 
+     xlab = "True value",
+     ylab = "OOB predictions",
+     xlim = c(-40,10),
+     ylim = c(-40,10),
+     main = expression(paste("Logit Pr mutations with"," ", italic(N[s]) , " > 1")),
      cex.axis = 1.2,
      cex.lab  = 1.5)
 abline(a=0, b=1, col = "green")
@@ -1358,94 +1446,6 @@ plot(x    = logmeanpopsel_2,
      xlim = c(-4,2),
      ylim = c(-4,2),
      main = expression(log[10](paste("gamma ", kappa, theta))),
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
-abline(a=0, b=1, col = "green")
-```
-
-#### DFE gamma mean
-```{r regression gamma mean, echo=TRUE, eval=FALSE, include=TRUE}
-
-loggammamean <- log10(pooled_reftable_total[, "gammaMean"])
-
-hist(loggammamean, freq = TRUE, xlab = expression(log[10](paste("gamma ", kappa, theta))), main = "", col = "#bdbdbd")
-
-## rf-regression
-reg_loggammamean <- regAbcrf(formula = loggammamean~.,
-                             data    = data.frame(loggammamean, global_sumstats),
-                             ntree   = 1000,
-                             paral   = T,
-                             ncores  = 28)
-
-#save(reg_loggammamean, 
-#     file = paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_loggammamean",".RData"))
-#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_loggammamean",".RData"))
-
-## variable Importance plot
-plot(x = reg_loggammamean, n.var = 20)
-
-#head(sort(reg_loggammamean$model.rf$variable.importance, decreasing = T), n=20)
-
-## prediction error
-reg_loggammamean$model.rf$prediction.error
-# 0.6123305
-
-## error rate plot
-#err.regAbcrf(object   = reg_loggammamean,
-#             training = data.frame(loggammamean, global_sumstats),
-#             paral    = T,
-#             ncores   = 28)
-
-plot(x    = loggammamean,
-     y    = reg_loggammamean$model.rf$predictions, 
-     xlab = "True value",
-     ylab = "OOB predictions",
-     xlim = c(-3,0),
-     ylim = c(-3,0),
-     main = expression(log[10](paste("gamma ", kappa, theta))),
-     cex.axis = 1.2,
-     cex.lab  = 1.5)
-abline(a=0, b=1, col = "green")
-```
-
-#### Ns
-```{r regression Ns, echo=TRUE, eval=FALSE, include=TRUE}
-logNs <- log10(pooled_reftable_total[, "meanNe2"] * pooled_reftable_total[, "gammaMean"])
-
-hist(logNs, freq = TRUE, xlab = expression(log[10](N[s])), main = "", col = "#bdbdbd")
-
-# abf-rf regression
-reg_logNs <- regAbcrf(formula = logNs~.,
-                      data    = data.frame(logNs, global_sumstats),
-                      ntree   = 1000,
-                      paral   = T,
-                      ncores  = 28)
-
-#save(reg_logNs, 
-#     file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logNs",".RData"))
-#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/random_forests/reg_logNs",".RData"))
-
-# variable Importance plot
-plot(x = reg_logNs, n.var = 20)
-
-#head(sort(reg_logNs$model.rf$variable.importance, decreasing = T), n=20)
-
-# prediction error
-reg_logNs$model.rf$prediction.error
-# 0.6397764
-
-# error rate plot
-#err.regAbcrf(object   = reg_logNs,
-#             training = data.frame(logNs, global_sumstats),
-#             paral    = T,
-#             ncores   = 8)
-
-plot(x    = logNs,
-     y    = reg_logNs$model.rf$predictions, 
-     xlab = "True value",
-     ylab = "OOB predictions",
-     xlim = c(-4,4),
-     ylim = c(-4,4),
      cex.axis = 1.2,
      cex.lab  = 1.5)
 abline(a=0, b=1, col = "green")
@@ -2364,6 +2364,306 @@ text(x = 1:6,
      cex = 1)
 ```
 
+#### Proportion of strongly selected mutations - POPPrStrongMSel
+```{r prediction strongly selected, echo=TRUE, eval=FALSE, include=TRUE}
+
+# prepare a table with the true classification and the RF classification
+load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_class_selection_1",".RData"))
+selection_1_pods <- ifelse(pooled_reftable_pods[, "POPPrStrongMSel"] == 0, "qNeutral", "sSel")
+
+class_selection_1_table <- data.frame(pred=posterior_class_selection_1$allocation, obs=selection_1_pods)
+table(class_selection_1_table)
+
+## get the random pods were truly classified as quasi-Neutral
+qneutral_qneutral <- which(selection_1_pods == "qNeutral" & posterior_class_selection_1$allocation == "qNeutral")
+
+# remove the correct qNeutral-qNeutral classification
+class_selection_1_table_sSel <- class_selection_1_table[-qneutral_qneutral,]
+
+# color code the remaining classification
+class_selection_1_table_sSel$col_classi<- ifelse(class_selection_1_table_sSel$obs == "qNeutral" & class_selection_1_table_sSel$pred == "sSel", "#a50026",
+                                                 ifelse(class_selection_1_table_sSel$obs == "sSel" & class_selection_1_table_sSel$pred == "qNeutral", "#fdae61", "#006837"))
+
+## RANDOM PODs
+##-----------------------------------------------------------
+
+## log10 Pstrong
+##--------------------------------------
+
+posterior_radnompods_logpopstrongmsel <- predict(object     = reg_logpopstrongmsel,
+                                                 obs        = global_sumstats_pods,
+                                                 training   = data.frame(logpopstrongmsel, global_sumstats_popstrongmsel),
+                                                 quantiles  = c(0.025,0.5,0.975),
+                                                 paral      = T,
+                                                 ncores     = 20,
+                                                 rf.weights = T)
+
+#(posterior_radnompods_logpopstrongmsel)
+
+#save(posterior_radnompods_logpopstrongmsel, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_logpopstrongmsel",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_logpopstrongmsel",".RData"))
+
+## log10 transformation
+log_radnompods_popstrongmsel <- log10(pooled_reftable_pods[, "POPPrStrongMSel"])
+log_radnompods_popstrongmsel[which(log_radnompods_popstrongmsel == -Inf)] <- -7
+
+hist(log_radnompods_popstrongmsel, freq = TRUE, xlab = expression(log[10](italic(P[strong]))), main = "", col = "#bdbdbd")
+
+## Expected True vs estimated
+plot(x    = log_radnompods_popstrongmsel[-qneutral_qneutral], 
+     y    = posterior_radnompods_logpopstrongmsel$expectation[-qneutral_qneutral],
+     xlim = c(-7,0),
+     ylim = c(-7,0),
+     xlab = expression(log[10](italic(P[strong]))), 
+     ylab = expression(hat(log[10](italic(P[strong])))),
+     col  = class_selection_1_table_sSel$col_classi,
+     pch  = 1
+     )
+legend("bottomright", legend = c("qNeutral-sSel", "sSel-qNeutral", "sSel-sSel"), col = c("#a50026", "#f46d43","#006837"), pch = 1, bty = "n")
+abline(a=0, b=1, col = "#cb181d")
+
+## logit Pstrong
+##--------------------------------------
+
+posterior_radnompods_logitpopstrongmsel <- predict(object     = reg_logitpopstrongmsel,
+                                                   obs        = global_sumstats_pods,
+                                                   training   = data.frame(logitpopstrongmsel,global_sumstats_popstrongmsel),
+                                                   quantiles  = c(0.025,0.5,0.975),
+                                                   paral      = T,
+                                                   ncores     = 28,
+                                                   rf.weights = T)
+
+#(posterior_radnompods_logitpopstrongmsel)
+
+#save(posterior_radnompods_logitpopstrongmsel, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_logitpopstrongmsel",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_logitpopstrongmsel",".RData"))
+
+## logit transformation
+logit_radnompods_popstrongmsel <- log(pooled_reftable_pods[, "POPPrStrongMSel"]/(1-pooled_reftable_pods[, "POPPrStrongMSel"]))
+logit_radnompods_popstrongmsel[which(logit_radnompods_popstrongmsel == -Inf)] <- -15
+
+hist(logit_radnompods_popstrongmsel, freq = TRUE, xlab = expression(log[10](italic(P[strong]))), main = "", col = "#bdbdbd")
+
+## Expected True vs estimated
+plot(x    = logit_radnompods_popstrongmsel[-qneutral_qneutral], 
+     y    = posterior_radnompods_logitpopstrongmsel$expectation[-qneutral_qneutral],
+     xlim = c(-15,2),
+     ylim = c(-15,2),
+     xlab = expression(logit(italic(P[strong]))), 
+     ylab = expression(hat(logit(italic(P[strong])))),
+     col  = class_selection_1_table_sSel$col_classi,
+     pch  = 1
+     )
+legend("bottomright", legend = c("qNeutral-sSel", "sSel-qNeutral", "sSel-sSel"), col = c("#a50026", "#f46d43","#006837"), pch = 1, bty = "n")
+abline(a=0, b=1, col = "#cb181d")
+
+## ggplot2 plots
+# prepar the table for ggplot 
+randompods_popstrongmsel_table <- data.frame(est_1=posterior_radnompods_logpopstrongmsel$expectation[-qneutral_qneutral],
+                                             obs_1=log_radnompods_popstrongmsel[-qneutral_qneutral],
+                                             est_2=posterior_radnompods_logitpopstrongmsel$expectation[-qneutral_qneutral],
+                                             obs_2=logit_radnompods_popstrongmsel[-qneutral_qneutral],
+                                             rfclass=ifelse(class_selection_1_table_sSel$obs == "qNeutral" & class_selection_1_table_sSel$pred == "sSel", "a",
+                                                 ifelse(class_selection_1_table_sSel$obs == "sSel" & class_selection_1_table_sSel$pred == "qNeutral", "b", "c"))
+                                             )
+
+## Pstrong in log10 scale - color code by "true-predicted" classification
+ggplot(randompods_popstrongmsel_table, aes(x=obs_1 , y=est_1, color=rfclass)) + 
+  geom_point(size=3, alpha=0.75) + 
+  scale_colour_manual(values = c("#a50026","#f46d43","#006837"),
+                      name   = "True-Predicted",
+                      breaks = c("a","b","c"),
+                      labels = c("qNeutral-sSel", "sSel-qNeutral", "sSel-sSel")) + 
+  xlab(expression(log[10](italic(P[strong])))) +
+  ylab(expression(hat(log[10](italic(P[strong])))))+
+  xlim(-7,0) +
+  ylim(-7,0) +
+  geom_abline(intercept = 0, slope = 1, color = "black") +
+  theme_bw() + theme(panel.border = element_rect(colour = "black", fill=NA),
+                     panel.grid.major = element_blank(),
+                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                     legend.position = "right", axis.text = element_text(size = 12),
+                     axis.title=element_text(size=14))
+
+## Pstrong in logit scale - color code by the the "true-predicted" classification
+ggplot(randompods_popstrongmsel_table, aes(x=obs_2 , y=est_2, color=rfclass)) + 
+  geom_point(size=3, alpha=0.75) + 
+  scale_colour_manual(values = c("#a50026","#f46d43","#006837"),
+                      name   = "True-Predicted",
+                      breaks = c("a","b","c"),
+                      labels = c("qNeutral-sSel", "sSel-qNeutral", "sSel-sSel")) + 
+  xlab(expression(paste("True"," ",logit(P[strong])))) +
+  ylab(expression(paste("ABC-RF", " ",logit(P[strong])))) +
+  xlim(-15,2) +
+  ylim(-15,2) +
+  geom_abline(intercept = 0, slope = 1, color = "black") +
+  theme_bw() + theme(panel.border = element_rect(colour = "black", fill=NA),
+                     panel.grid.major = element_blank(),
+                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                     legend.position = "right", axis.text = element_text(size = 11),
+                     axis.title=element_text(size=12))
+
+#popstrongmsel_applic_data = data.frame(pooled_reftable_pods[-qneutral_qneutral, c("sim", "meanNe2")], 
+#                                       True_popstrongmsel=pooled_reftable_pods[-qneutral_qneutral,"POPPrStrongMSel"], 
+#                                       Infe_popstrongmsel = inv.logit(posterior_radnompods_logpopstrongmsel$expectation))
+#
+#cl <- makeCluster(5)
+#registerDoParallel(cl)
+#clusterEvalQ(cl)
+#  
+## PARALLEL PROCESSING
+#------------------------------------------
+#popstrongmsel_calc <- foreach(i=1:length(popstrongmsel_applic_data$sim),
+#                              .combine=rbind, 
+#                              .errorhandling="pass", .verbose = TRUE) %dopar% { library(ROCR)
+#                                                                                selstrongthreshold(x = popstrongmsel_applic_data[i,], tau = 10)}
+#stopCluster(cl)
+#
+#save(popstrongmsel_calc, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/popstrongmsel_calc",".RData"))
+#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/popstrongmsel_calc",".RData"))
+
+
+## FIXED PODs
+##-----------------------------------------------------------
+
+## log10 Pstrong
+##--------------------------------------
+
+posterior_fixedpods_logpopstrongmsel <- predict(object     = reg_logpopstrongmsel,
+                                                obs        = global_sumstats_fixedpods,
+                                                training   = data.frame(logpopstrongmsel, global_sumstats_popstrongmsel),
+                                                quantiles  = c(0.025,0.5,0.975),
+                                                paral      = T,
+                                                ncores     = 20,
+                                                rf.weights = T)
+
+#(posterior_fixedpods_logpopstrongmsel)
+
+#save(posterior_fixedpods_logitpopstrongmsel, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logpopstrongmsel",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logpopstrongmsel",".RData"))
+
+log_fixedpods_popstrongmsel <- log10(pooled_reftable_fixedpods[, "POPPrStrongMSel"])
+log_fixedpods_popstrongmsel[which(log_fixedpods_popstrongmsel == -Inf)] <- -7
+
+## Expected True vs estimated
+plot(x    = log_fixedpods_popstrongmsel[-c(1:100)], 
+     y    = posterior_fixedpods_logpopstrongmsel$expectation[-c(1:100)],
+     xlim = c(-7,0),
+     ylim = c(-7,0),
+     xlab = expression(log[10](italic(P[strong]))), 
+     ylab = expression(hat(log[10](italic(P[strong])))),
+     pch  = 1,
+     col  = c(rep("#ff7f00",100), rep("#e31a1c",100))
+     )
+abline(a=0, b=1, col = "#cb181d")
+
+## logit Pstrong
+##--------------------------------------
+
+posterior_fixedpods_logitpopstrongmsel <- predict(object     = reg_logitpopstrongmsel,
+                                                   obs        = global_sumstats_fixedpods,
+                                                   training   = data.frame(logitpopstrongmsel,global_sumstats_popstrongmsel),
+                                                   quantiles  = c(0.025,0.5,0.975),
+                                                   paral      = T,
+                                                   ncores     = 28,
+                                                   rf.weights = T)
+
+#(posterior_fixedpods_logitpopstrongmsel)
+
+#save(posterior_fixedpods_logitpopstrongmsel, 
+#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logitpopstrongmsel",".RData"))
+#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logitpopstrongmsel",".RData"))
+
+logit_fixedpods_popstrongmsel <- log(pooled_reftable_fixedpods[, "POPPrStrongMSel"]/(1-pooled_reftable_fixedpods[, "POPPrStrongMSel"]))
+logit_fixedpods_popstrongmsel[which(logit_fixedpods_popstrongmsel == -Inf)] <- -15
+
+## Expected True vs estimated
+plot(x    = logit_fixedpods_popstrongmsel[-c(1:100)], 
+     y    = posterior_fixedpods_logitpopstrongmsel$expectation[-c(1:100)],
+     xlim = c(-15,2),
+     ylim = c(-15,2),
+     xlab = expression(logit(italic(P[strong]))), 
+     ylab = expression(hat(logit(italic(P[strong])))),
+     pch  = 1,
+     col  = c(rep("#ff7f00",100), rep("#e31a1c",100))
+     )
+abline(a=0, b=1, col = "#cb181d")
+
+## prepar the table for ggplot 
+fixedpods_popstrongmsel_table <- data.frame(est_1=posterior_fixedpods_logpopstrongmsel$expectation[-c(1:100)],
+                                            obs_1=log_fixedpods_popstrongmsel[-c(1:100)],
+                                            est_2=posterior_fixedpods_logitpopstrongmsel$expectation[-c(1:100)],
+                                            obs_2=logit_fixedpods_popstrongmsel[-c(1:100)],
+                                            scenario=c(rep("limited",100),rep("unlimited",100)))
+
+## Pstrong in log10 scale - color code by the scenario
+ggplot(fixedpods_popstrongmsel_table, aes(x=obs_1 , y=est_1, color=scenario)) + 
+  geom_point(size=3, alpha=0.75) + 
+  scale_colour_manual(values = c("#ff7f00","#e31a1c"),
+                    name   = "Scenario",
+                    breaks = c("limited", "unlimited"),
+                    labels = c("mutation limited", "mutation unlimited")) + 
+  xlab(expression(log[10](italic(P[strong])))) +
+  ylab(expression(hat(log[10](italic(P[strong])))))+
+  xlim(-7, 0) +
+  ylim(-7, 0) +
+  geom_abline(intercept = 0, slope = 1, color = "black") +
+  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                              panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                              legend.position = "right", axis.text = element_text(size = 12),
+                              axis.title=element_text(size=14))
+
+## Pstrong in logit scale - color code by the scenario
+ggplot(fixedpods_popstrongmsel_table, aes(x=obs_2 , y=est_2, color=scenario)) + 
+  geom_point(size=3, alpha=0.75) + 
+  scale_colour_manual(values = c("#ff7f00","#e31a1c"),
+                    name   = "Scenario",
+                    breaks = c("limited", "unlimited"),
+                    labels = c("mutation limited", "mutation unlimited")) + 
+  xlab(expression(logit(italic(P[strong])))) +
+  ylab(expression(hat(logit(italic(P[strong])))))+
+  xlim(-15, 2) +
+  ylim(-15, 2) +
+  geom_abline(intercept = 0, slope = 1, color = "black") +
+  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                              panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                              legend.position = "right", axis.text = element_text(size = 12),
+                              axis.title=element_text(size=14))
+
+## boxplot
+fixedpods_logitpopstrongmsel_data <- data.frame(model  = c(rep("A", 200), rep("B", 200)), 
+                                                type   = c(rep("a",100), rep("b",100), 
+                                                           rep("a",100), rep("b",100)),
+                                                 values = c(logit_fixedpods_popstrongmsel[101:200], posterior_fixedpods_logitpopstrongmsel$expectation[101:200], 
+                                                            logit_fixedpods_popstrongmsel[201:300], posterior_fixedpods_logitpopstrongmsel$expectation[201:300]))
+
+boxplot(fixedpods_logitpopstrongmsel_data$values ~ fixedpods_logitpopstrongmsel_data$type * fixedpods_logitpopstrongmsel_data$model,
+        lwd = 2,
+        ylim = c(-11,0),
+        ylab = expression(logit(P[strong])),
+        xlab = "",
+        xaxt = "n",
+        cex.axis = 0.8,
+        cex.lab  = 1,
+        col = c(rep("#ff7f00",2),rep("#e31a1c",2)))
+abline(h=c(-10.12411,-7.998965,-3.910197,-3.590937), col = c("blue","green3"), lty = 3)
+legend("topleft", legend = c("mutation limited", "mutation unlimited", "true lower limit","true upper limit"), 
+       col = c("#ff7f00","#e31a1c","blue","green3"), pch = c(15,15,26,26), lty = c(0,0,3,3), bty = "n")
+axis(side = 1, at = 1:4, labels = FALSE)
+text(x = 1:4, 
+     y = par()$usr[3]-0.03*(par()$usr[4]-par()$usr[3]), 
+     srt=90, 
+     adj=1, 
+     xpd=TRUE, 
+     labels = paste(rep(c("True", "ABC-RF"),2)),
+     cex = 1)
+
+```
+
 #### ThetaS - selected mutations
 ```{r prediction thetaS, echo=TRUE, eval=FALSE, include=TRUE}
 
@@ -2697,306 +2997,6 @@ plot(x    = log_fixedpods_thetaS_3[-c(1:100)],
      col  = c(rep("#ff7f00",100), rep("#e31a1c",100))
      )
 abline(a=0, b=1, col = "#cb181d")
-```
-
-#### Proportion of strongly selected mutations - POPPrStrongMSel
-```{r prediction strongly selected, echo=TRUE, eval=FALSE, include=TRUE}
-
-# prepare a table with the true classification and the RF classification
-load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_class_selection_1",".RData"))
-selection_1_pods <- ifelse(pooled_reftable_pods[, "POPPrStrongMSel"] == 0, "qNeutral", "sSel")
-
-class_selection_1_table <- data.frame(pred=posterior_class_selection_1$allocation, obs=selection_1_pods)
-table(class_selection_1_table)
-
-## get the random pods were truly classified as quasi-Neutral
-qneutral_qneutral <- which(selection_1_pods == "qNeutral" & posterior_class_selection_1$allocation == "qNeutral")
-
-# remove the correct qNeutral-qNeutral classification
-class_selection_1_table_sSel <- class_selection_1_table[-qneutral_qneutral,]
-
-# color code the remaining classification
-class_selection_1_table_sSel$col_classi<- ifelse(class_selection_1_table_sSel$obs == "qNeutral" & class_selection_1_table_sSel$pred == "sSel", "#a50026",
-                                                 ifelse(class_selection_1_table_sSel$obs == "sSel" & class_selection_1_table_sSel$pred == "qNeutral", "#fdae61", "#006837"))
-
-## RANDOM PODs
-##-----------------------------------------------------------
-
-## log10 Pstrong
-##--------------------------------------
-
-posterior_radnompods_logpopstrongmsel <- predict(object     = reg_logpopstrongmsel,
-                                                 obs        = global_sumstats_pods,
-                                                 training   = data.frame(logpopstrongmsel, global_sumstats_popstrongmsel),
-                                                 quantiles  = c(0.025,0.5,0.975),
-                                                 paral      = T,
-                                                 ncores     = 20,
-                                                 rf.weights = T)
-
-#(posterior_radnompods_logpopstrongmsel)
-
-#save(posterior_radnompods_logpopstrongmsel, 
-#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_logpopstrongmsel",".RData"))
-#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_logpopstrongmsel",".RData"))
-
-## log10 transformation
-log_radnompods_popstrongmsel <- log10(pooled_reftable_pods[, "POPPrStrongMSel"])
-log_radnompods_popstrongmsel[which(log_radnompods_popstrongmsel == -Inf)] <- -7
-
-hist(log_radnompods_popstrongmsel, freq = TRUE, xlab = expression(log[10](italic(P[strong]))), main = "", col = "#bdbdbd")
-
-## Expected True vs estimated
-plot(x    = log_radnompods_popstrongmsel[-qneutral_qneutral], 
-     y    = posterior_radnompods_logpopstrongmsel$expectation[-qneutral_qneutral],
-     xlim = c(-7,0),
-     ylim = c(-7,0),
-     xlab = expression(log[10](italic(P[strong]))), 
-     ylab = expression(hat(log[10](italic(P[strong])))),
-     col  = class_selection_1_table_sSel$col_classi,
-     pch  = 1
-     )
-legend("bottomright", legend = c("qNeutral-sSel", "sSel-qNeutral", "sSel-sSel"), col = c("#a50026", "#f46d43","#006837"), pch = 1, bty = "n")
-abline(a=0, b=1, col = "#cb181d")
-
-## logit Pstrong
-##--------------------------------------
-
-posterior_radnompods_logitpopstrongmsel <- predict(object     = reg_logitpopstrongmsel,
-                                                   obs        = global_sumstats_pods,
-                                                   training   = data.frame(logitpopstrongmsel,global_sumstats_popstrongmsel),
-                                                   quantiles  = c(0.025,0.5,0.975),
-                                                   paral      = T,
-                                                   ncores     = 28,
-                                                   rf.weights = T)
-
-#(posterior_radnompods_logitpopstrongmsel)
-
-#save(posterior_radnompods_logitpopstrongmsel, 
-#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_logitpopstrongmsel",".RData"))
-#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_radnompods_logitpopstrongmsel",".RData"))
-
-## logit transformation
-logit_radnompods_popstrongmsel <- log(pooled_reftable_pods[, "POPPrStrongMSel"]/(1-pooled_reftable_pods[, "POPPrStrongMSel"]))
-logit_radnompods_popstrongmsel[which(logit_radnompods_popstrongmsel == -Inf)] <- -15
-
-hist(logit_radnompods_popstrongmsel, freq = TRUE, xlab = expression(log[10](italic(P[strong]))), main = "", col = "#bdbdbd")
-
-## Expected True vs estimated
-plot(x    = logit_radnompods_popstrongmsel[-qneutral_qneutral], 
-     y    = posterior_radnompods_logitpopstrongmsel$expectation[-qneutral_qneutral],
-     xlim = c(-15,2),
-     ylim = c(-15,2),
-     xlab = expression(logit(italic(P[strong]))), 
-     ylab = expression(hat(logit(italic(P[strong])))),
-     col  = class_selection_1_table_sSel$col_classi,
-     pch  = 1
-     )
-legend("bottomright", legend = c("qNeutral-sSel", "sSel-qNeutral", "sSel-sSel"), col = c("#a50026", "#f46d43","#006837"), pch = 1, bty = "n")
-abline(a=0, b=1, col = "#cb181d")
-
-## ggplot2 plots
-# prepar the table for ggplot 
-randompods_popstrongmsel_table <- data.frame(est_1=posterior_radnompods_logpopstrongmsel$expectation[-qneutral_qneutral],
-                                             obs_1=log_radnompods_popstrongmsel[-qneutral_qneutral],
-                                             est_2=posterior_radnompods_logitpopstrongmsel$expectation[-qneutral_qneutral],
-                                             obs_2=logit_radnompods_popstrongmsel[-qneutral_qneutral],
-                                             rfclass=ifelse(class_selection_1_table_sSel$obs == "qNeutral" & class_selection_1_table_sSel$pred == "sSel", "a",
-                                                 ifelse(class_selection_1_table_sSel$obs == "sSel" & class_selection_1_table_sSel$pred == "qNeutral", "b", "c"))
-                                             )
-
-## Pstrong in log10 scale - color code by "true-predicted" classification
-ggplot(randompods_popstrongmsel_table, aes(x=obs_1 , y=est_1, color=rfclass)) + 
-  geom_point(size=3, alpha=0.75) + 
-  scale_colour_manual(values = c("#a50026","#f46d43","#006837"),
-                      name   = "True-Predicted",
-                      breaks = c("a","b","c"),
-                      labels = c("qNeutral-sSel", "sSel-qNeutral", "sSel-sSel")) + 
-  xlab(expression(log[10](italic(P[strong])))) +
-  ylab(expression(hat(log[10](italic(P[strong])))))+
-  xlim(-7,0) +
-  ylim(-7,0) +
-  geom_abline(intercept = 0, slope = 1, color = "black") +
-  theme_bw() + theme(panel.border = element_rect(colour = "black", fill=NA),
-                     panel.grid.major = element_blank(),
-                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
-                     legend.position = "right", axis.text = element_text(size = 12),
-                     axis.title=element_text(size=14))
-
-## Pstrong in logit scale - color code by the the "true-predicted" classification
-ggplot(randompods_popstrongmsel_table, aes(x=obs_2 , y=est_2, color=rfclass)) + 
-  geom_point(size=3, alpha=0.75) + 
-  scale_colour_manual(values = c("#a50026","#f46d43","#006837"),
-                      name   = "True-Predicted",
-                      breaks = c("a","b","c"),
-                      labels = c("qNeutral-sSel", "sSel-qNeutral", "sSel-sSel")) + 
-  xlab(expression(paste("True"," ",logit(P[strong])))) +
-  ylab(expression(paste("ABC-RF", " ",logit(P[strong])))) +
-  xlim(-15,2) +
-  ylim(-15,2) +
-  geom_abline(intercept = 0, slope = 1, color = "black") +
-  theme_bw() + theme(panel.border = element_rect(colour = "black", fill=NA),
-                     panel.grid.major = element_blank(),
-                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
-                     legend.position = "right", axis.text = element_text(size = 11),
-                     axis.title=element_text(size=12))
-
-#popstrongmsel_applic_data = data.frame(pooled_reftable_pods[-qneutral_qneutral, c("sim", "meanNe2")], 
-#                                       True_popstrongmsel=pooled_reftable_pods[-qneutral_qneutral,"POPPrStrongMSel"], 
-#                                       Infe_popstrongmsel = inv.logit(posterior_radnompods_logpopstrongmsel$expectation))
-#
-#cl <- makeCluster(5)
-#registerDoParallel(cl)
-#clusterEvalQ(cl)
-#  
-## PARALLEL PROCESSING
-#------------------------------------------
-#popstrongmsel_calc <- foreach(i=1:length(popstrongmsel_applic_data$sim),
-#                              .combine=rbind, 
-#                              .errorhandling="pass", .verbose = TRUE) %dopar% { library(ROCR)
-#                                                                                selstrongthreshold(x = popstrongmsel_applic_data[i,], tau = 10)}
-#stopCluster(cl)
-#
-#save(popstrongmsel_calc, 
-#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/popstrongmsel_calc",".RData"))
-#load(file=paste0("/home/pavinato/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/popstrongmsel_calc",".RData"))
-
-
-## FIXED PODs
-##-----------------------------------------------------------
-
-## log10 Pstrong
-##--------------------------------------
-
-posterior_fixedpods_logpopstrongmsel <- predict(object     = reg_logpopstrongmsel,
-                                                obs        = global_sumstats_fixedpods,
-                                                training   = data.frame(logpopstrongmsel, global_sumstats_popstrongmsel),
-                                                quantiles  = c(0.025,0.5,0.975),
-                                                paral      = T,
-                                                ncores     = 20,
-                                                rf.weights = T)
-
-#(posterior_fixedpods_logpopstrongmsel)
-
-#save(posterior_fixedpods_logitpopstrongmsel, 
-#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logpopstrongmsel",".RData"))
-#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logpopstrongmsel",".RData"))
-
-log_fixedpods_popstrongmsel <- log10(pooled_reftable_fixedpods[, "POPPrStrongMSel"])
-log_fixedpods_popstrongmsel[which(log_fixedpods_popstrongmsel == -Inf)] <- -7
-
-## Expected True vs estimated
-plot(x    = log_fixedpods_popstrongmsel[-c(1:100)], 
-     y    = posterior_fixedpods_logpopstrongmsel$expectation[-c(1:100)],
-     xlim = c(-7,0),
-     ylim = c(-7,0),
-     xlab = expression(log[10](italic(P[strong]))), 
-     ylab = expression(hat(log[10](italic(P[strong])))),
-     pch  = 1,
-     col  = c(rep("#ff7f00",100), rep("#e31a1c",100))
-     )
-abline(a=0, b=1, col = "#cb181d")
-
-## logit Pstrong
-##--------------------------------------
-
-posterior_fixedpods_logitpopstrongmsel <- predict(object     = reg_logitpopstrongmsel,
-                                                   obs        = global_sumstats_fixedpods,
-                                                   training   = data.frame(logitpopstrongmsel,global_sumstats_popstrongmsel),
-                                                   quantiles  = c(0.025,0.5,0.975),
-                                                   paral      = T,
-                                                   ncores     = 28,
-                                                   rf.weights = T)
-
-#(posterior_fixedpods_logitpopstrongmsel)
-
-#save(posterior_fixedpods_logitpopstrongmsel, 
-#    file = paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logitpopstrongmsel",".RData"))
-#load(file=paste0("~/My_repositories/Tracking-selection/results/pipeline_v5/posterior_pods/posterior_fixedpods_logitpopstrongmsel",".RData"))
-
-logit_fixedpods_popstrongmsel <- log(pooled_reftable_fixedpods[, "POPPrStrongMSel"]/(1-pooled_reftable_fixedpods[, "POPPrStrongMSel"]))
-logit_fixedpods_popstrongmsel[which(logit_fixedpods_popstrongmsel == -Inf)] <- -15
-
-## Expected True vs estimated
-plot(x    = logit_fixedpods_popstrongmsel[-c(1:100)], 
-     y    = posterior_fixedpods_logitpopstrongmsel$expectation[-c(1:100)],
-     xlim = c(-15,2),
-     ylim = c(-15,2),
-     xlab = expression(logit(italic(P[strong]))), 
-     ylab = expression(hat(logit(italic(P[strong])))),
-     pch  = 1,
-     col  = c(rep("#ff7f00",100), rep("#e31a1c",100))
-     )
-abline(a=0, b=1, col = "#cb181d")
-
-## prepar the table for ggplot 
-fixedpods_popstrongmsel_table <- data.frame(est_1=posterior_fixedpods_logpopstrongmsel$expectation[-c(1:100)],
-                                            obs_1=log_fixedpods_popstrongmsel[-c(1:100)],
-                                            est_2=posterior_fixedpods_logitpopstrongmsel$expectation[-c(1:100)],
-                                            obs_2=logit_fixedpods_popstrongmsel[-c(1:100)],
-                                            scenario=c(rep("limited",100),rep("unlimited",100)))
-
-## Pstrong in log10 scale - color code by the scenario
-ggplot(fixedpods_popstrongmsel_table, aes(x=obs_1 , y=est_1, color=scenario)) + 
-  geom_point(size=3, alpha=0.75) + 
-  scale_colour_manual(values = c("#ff7f00","#e31a1c"),
-                    name   = "Scenario",
-                    breaks = c("limited", "unlimited"),
-                    labels = c("mutation limited", "mutation unlimited")) + 
-  xlab(expression(log[10](italic(P[strong])))) +
-  ylab(expression(hat(log[10](italic(P[strong])))))+
-  xlim(-7, 0) +
-  ylim(-7, 0) +
-  geom_abline(intercept = 0, slope = 1, color = "black") +
-  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
-                              panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
-                              legend.position = "right", axis.text = element_text(size = 12),
-                              axis.title=element_text(size=14))
-
-## Pstrong in logit scale - color code by the scenario
-ggplot(fixedpods_popstrongmsel_table, aes(x=obs_2 , y=est_2, color=scenario)) + 
-  geom_point(size=3, alpha=0.75) + 
-  scale_colour_manual(values = c("#ff7f00","#e31a1c"),
-                    name   = "Scenario",
-                    breaks = c("limited", "unlimited"),
-                    labels = c("mutation limited", "mutation unlimited")) + 
-  xlab(expression(logit(italic(P[strong])))) +
-  ylab(expression(hat(logit(italic(P[strong])))))+
-  xlim(-15, 2) +
-  ylim(-15, 2) +
-  geom_abline(intercept = 0, slope = 1, color = "black") +
-  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
-                              panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
-                              legend.position = "right", axis.text = element_text(size = 12),
-                              axis.title=element_text(size=14))
-
-## boxplot
-fixedpods_logitpopstrongmsel_data <- data.frame(model  = c(rep("A", 200), rep("B", 200)), 
-                                                type   = c(rep("a",100), rep("b",100), 
-                                                           rep("a",100), rep("b",100)),
-                                                 values = c(logit_fixedpods_popstrongmsel[101:200], posterior_fixedpods_logitpopstrongmsel$expectation[101:200], 
-                                                            logit_fixedpods_popstrongmsel[201:300], posterior_fixedpods_logitpopstrongmsel$expectation[201:300]))
-
-boxplot(fixedpods_logitpopstrongmsel_data$values ~ fixedpods_logitpopstrongmsel_data$type * fixedpods_logitpopstrongmsel_data$model,
-        lwd = 2,
-        ylim = c(-11,0),
-        ylab = expression(logit(P[strong])),
-        xlab = "",
-        xaxt = "n",
-        cex.axis = 0.8,
-        cex.lab  = 1,
-        col = c(rep("#ff7f00",2),rep("#e31a1c",2)))
-abline(h=c(-10.12411,-7.998965,-3.910197,-3.590937), col = c("blue","green3"), lty = 3)
-legend("topleft", legend = c("mutation limited", "mutation unlimited", "true lower limit","true upper limit"), 
-       col = c("#ff7f00","#e31a1c","blue","green3"), pch = c(15,15,26,26), lty = c(0,0,3,3), bty = "n")
-axis(side = 1, at = 1:4, labels = FALSE)
-text(x = 1:4, 
-     y = par()$usr[3]-0.03*(par()$usr[4]-par()$usr[3]), 
-     srt=90, 
-     adj=1, 
-     xpd=TRUE, 
-     labels = paste(rep(c("True", "ABC-RF"),2)),
-     cex = 1)
-
 ```
 
 #### FDR 5% of the FST hypothesis of Ns>1
