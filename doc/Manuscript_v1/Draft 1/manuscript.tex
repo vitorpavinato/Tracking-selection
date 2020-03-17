@@ -1,0 +1,227 @@
+\documentclass[12pt]{article}
+
+% basic package list
+\usepackage[T1]{fontenc}
+\usepackage{fontspec}
+\defaultfontfeatures{Mapping=tex-text}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+%\setmainfont{???}
+
+% other packages
+\usepackage{xunicode}
+\usepackage{xltxtra}
+\usepackage{hyperref}         % hyperlinks
+\usepackage{booktabs}         % professional-quality tables
+\usepackage{indentfirst}      % to indent section first paragraph
+\usepackage{url}              % simple URL typesetting
+\usepackage{natbib}
+\usepackage[modulo]{lineno}
+\usepackage{sectsty}          % to change section font size
+
+% set additional parameters
+\setcitestyle{authoryear,open={(},close={)}}
+\graphicspath {{Figures/}}
+
+% Keywords command
+\providecommand{\keywords}[1]
+{
+  \small	
+  \textbf{\textit{Keywords---}} #1
+}
+
+\sectionfont{\fontsize{16}{19}\selectfont}
+\subsectionfont{\fontsize{14}{17}\selectfont}
+
+%\newcommand{\beginsupplement}{%
+%        \setcounter{table}{0}
+%        \renewcommand{\thetable}{S\arabic{table}}%
+%       \setcounter{figure}{0}
+%        \renewcommand{\thefigure}{S\arabic{figure}}%
+%     }
+
+\title{Joint inference of adaptive and demographic history from temporal population genomic data}
+\author{Vitor A. C. Pavinato$^1$, Stéphane de Mita$^2$, Jean-Michel Marin$^3$, \\
+			Miguel Navascués$^1$$^*$}
+\font\myfont=cmr12 at 10pt
+\date{{\myfont %
+    $^1$UMR Centre de Biologie pour la Gestion des Populations, INRA, France\\%
+    $^2$UMR Interactions Arbres-Microorganismes, INRA, France \\%
+    $^3$UMR Institut Montpelliérain Alexander Grothendieck, Université de Montpellier, France\\%  
+    $^*$corresponding author: miguel.navascues@inra.fr\\[2ex]%
+    }
+    \today    
+}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+In evolutionary biology studies, there is a growing interest in using temporal genetic data (samples taken from many time-points) to understand how evolutionary forces interact in shaping the genetic diversity. Most of the methods available for analyzing temporal genomics data cannot completely address the interaction between demographic history and selection, while estimating parameters such as the effective population size $N_{e}$ and the selection coefficient $s$ of adaptive variation. None of them can characterize the genome-wide signature of selection and take into account the recurrent selective sweep on the inference of demography. Taking advantage of the new development in Approximate Bayesian Computation via random forests (ABC-RF), we were able to estimate genome-wide demographic and selection parameters. Our ABC-RF framework was able to produce an unbiased estimate of $N_{e}$ in a range of selection intensities, as well as provide estimates of selection dynamics, such as the average proportion of beneficial mutations and the rate at which each beneficial mutation arises in between sample time-points. These results demonstrate the potential of ABC-RF to address the joint inference of demography and selection in temporal population genomics.
+\end{abstract} \hspace{10pt}
+
+% keywords can be removed
+\keywords{Temporal data, Population genomics, Genetic load, Machine learning}
+
+\newpage
+\section*{Introduction}
+
+Population genetics studies generally make use of samples collected in one particular time-point  (in a variety of environmental conditions or locations) to infer the role of drift, selection, recombination and mutation in patterns of observed genetic diversity. These samples are used, for example, to infer the evolutionary history of populations \citep{Pool:2010eh} or to identify genetic variation under natural selection in so-called "genome scans" \citep{Nielsen:2005kx,Scheinfeldt:2013iz}. But, the information contained in the allele frequency changes in a particular locus, for example, is sufficient to infer whether the variation through time was determined by selection or by random drift. This simple idea has been explored in the past \citep{Fisher:1947jm,Wright:1948bt,Mueller:1985ug}, but with datasets with limited genetic information (morphological or/and few genetic markers). However, developments in the area of ancient DNA \citep{Racimo:2016ea} and the study of experimentally evolving populations (\textit{e.g.} Evolving and Re-sequencing - E\&R) \citep{Barghi:2019gw,Kofler:2014if} have popularized the use of temporal genomic data. These datasets are allowing us to better understand how evolutionary forces interact in shaping the genetic diversity \citep{Navascues:2010in} and to change our understanding of the pace and dynamics of evolution \citep{Feder:2016bc,Feder:2018ic}. 
+ 
+The popularity of temporal population genomics studies influenced the development of methods and frameworks that better handle time-spaced allele frequency data (for a review \citet{Malaspinas:2015do}). The conceptual idea of tracking allele frequency changes over time seems simple, but the implementation is challenging. For instance, for one-locus, if we observe allele frequencies changes over multiple time-points that deviate from the expected trajectory under neutrality, we can assume that this change was caused by selection. But, this ideal scenario neglects the impact of finite population size on allele frequency trajectories. Nor does it consider how selection affects the effective size of a population ($N_{e}$), reducing it, and thereby accelerating the randomness of the allele frequency changes. However, much progress has been made in the last decade to model the complex dynamics of selection and demography, especially with the use of diffusion approximation equations combined with maximum-likelihood or Bayesian approaches \citep{Malaspinas:2015do, FerrerAdmetlla:2016jc,Schraiber:2016ks}. Despite these advancements, the $N_{e}$ has always been considered a "nuisance parameter”—a parameter estimated by the model but not the main focus. For one-locus, advances have been made to estimate both the $N_{e}$ and the selection coefficient acting on the beneficial allele, however, these methods are limited to certain selection coefficient ranges and are robust for large population sizes \citep{Bollback:2008br, Malaspinas:2012dv,Feder:2014fe}.
+
+The one-locus case is also a simplification of the complex genomic evolution dynamics, as multiple loci can have their allele frequency changes determined by selection and, selection on multiple sites can affect the genome in complex ways, reducing the $N_{e}$. Several methods to infer the selection coefficient of multiple sites have been developed. In \cite{Nishino:2013if}, a list of reference neutral sites are necessary to infer the selection coefficients of non-neutral locus. In \cite{Foll:2014kv,Foll:2015ce}, the effective population size $N_{e}$ and the selection coefficients of each locus are calculated jointly in a 2-step Approximate Bayesian Computation (ABC) framework. In this ABC framework, $N_{e}$ is calculated in the first step and the values are used to simulate locus trajectories in order to estimate the selection coefficients. In this approach, however, loci are assumed to evolve independently, and the $N_{e}$ is actually computed with a summary statistic using all the loci, thus having an estimate of $N_{e}$ biased by the effect of selection. Advances have also been made to include the linked effect of selection, however replicated data of populations were necessary to rule out the effect of drift \citep{Terhorst:2015cg}, but new developments allowed the modeling of the joint forces of demography and selection, and selection acting in multiple sites, to more general cases \citep{Schraiber:2016ks, FerrerAdmetlla:2016jc}. Much progress has been made in identifying genetic variation targeted by selection and the strength of selection acting on these targets. Some methods were able to satisfactorily co-estimate the demographic parameter as a nuisance-parameter, but non of them could estimate the magnitude of selection acting across the genome and the impact on demographic inference.
+
+Separating the effects of demography from selection is a long standing problem in population genetics. The classic approach used to simplify this task is to assume that demography leaves a genome-wide footprint in the genome and that selection leaves a localized footprint, specific to the region that has mutation under selection. Under the classical sweep model, a mutation that has a positive effect will increase in frequency over time, sweeping through the populations. Not only will the beneficial mutation increase in frequency, but also the nearby neutral variation, because they hitchhike with the beneficial mutation \citep{Smith:1974cy,Kaplan:1989tm, Barton:2000fg}. A classic sign of hard selective sweeps is the lack or low variation in the selection target and the nearby neutral mutation. Most tests to detect the selection were developed to look for signals of low genetic variability in flanking neutral mutations \citep{Tajima:1989un, Fay:2000dl, Kim:2004ih, Nielsen:2005kx}. However, the classical approach has been challenged by recent discoveries of the pervasive role of selection in the evolution of genomes \citep{Sella:2009hs,Hernandez:2011dn, Harris:2018bm}, especially background selection \citep{Charlesworth:2012ix} and recurrent selective sweeps \citep{Lange:2018fl}. Background selection and recurrent selective sweeps, if not properly considered, can strongly bias the demographic inference \citep{Huber:2015cl, Pavlidis:2010bb, Ewing:2016gv}. At the same time, demographic history determines the strength of the effect of linked selection in the genome \citep{Jensen:2005ky, Jensen:2007jw, Schrider:2016gg}. These results highlight the need for inference methods that can take into account the multiple evolutionary processes acting on populations \citep{Lin:2011jv, Li:2012bh, Bank:2014hx}.
+
+Approximate Bayesian Computation (ABC) has been proposed as a potential approach for the joint inference of demography and selection \citep{Li:2012bh}. Initially, \citet{Bazin:2010dv} proposed using ABC to infer selection in a two-step process. The first step was used to narrow down the prior distribution of $N_{e}$, using the genome-wide summary statistics. The second step was used to define bounds for prior distributions, which included the estimated demographic parameter values, and to use this distribution to sample values for the second round of simulations to calculate locus-specific summary statistics and infer the selective process. Based on this original idea, \citet{Foll:2014kv, Foll:2015ce} formalized a framework that replaces the first ABC step with a calculation of a summary statistics directly on the data. However, the joint inference of demography and selection would be computationally expensive using traditional ABC approaches based on the regression algorithm. First, because forward-in-time simulations are required to simulate the complex dynamics of selection acting on multiple loci, and this simulations are computationally more expensive than coalescent ones; and second, because the ABC regression algorithm requires a large number of simulations to produce reliable estimates of target parameters. The introduction of random forests in ABC reduced the computational burden, allowing the study of complex dynamics with few simulations \citep{Pudlo:2016il, Raynal:2017wm}. The implementation of ABC Random Forests makes use of a machine learning tool, in which simulations are used to train a model that can predict the parameters of interest. It then removes the simplification that comes with choosing informative summary statistics, as it is possible to use as many summary statistics as necessary. 
+
+Here we present an Approximate Bayesian Computation - Random Forests (ABC-RF) framework developed to jointly characterize footprints of demography and selection. We were able to produce an unbiased estimator of demography that takes into account the effects of multiple recurrent sweeps. We show that our estimator is powerful not only when selection is strong, but also when it is quasi-neutral or weak. With our framework, we were able to characterize demography as the estimate of the effective population size $N_{e}$ and separate it from the population census size $N$. Selection was characterized globally by the genome-wide effect that it has on the genome. We were able for the first time to estimate the proportion of mutation under selection segregating in the population, as well the rate at which beneficial mutations arise. This information is complementary to the methods developed to identify the locus under selection and can be used in combination to better understand the evolutionary dynamics.
+
+\section*{Methods}
+
+\subsection*{Overview of ABC-RF}
+
+Approximate Bayesian Computation (ABC) is a likelihood-free framework that compares the similarities between the real and simulated data generated from a given model \citep{Beaumont:2002ue}. The similarities between the real and the simulated data is evaluated through the calculation of distance metric between a summary statistics that is obtained for each data. Usually a tolerance level is set and used to discriminate simulated data. Datasets and their associated values that are used to produce the simulations are kept if they fall within the tolerance level and discarded if not. Posterior distribution are constructed for each parameter using the values kept for selected simulations \citep{Beaumont:2010gg}. The ABC method is consistent in the sense of the estimation of the true parameter behind the data if the sample size and the number of simulations grow to infinity and the tolerance level decreases to zero  \citep{Frazier:2018kq}. In addition, even though with a large number of simulations , two sources of subjectivity are always present with the use of traditional ABCs algorithms: 1) the choice of a tolerance level to accept/reject prior values, and 2) the choice of the summary statistic to make the acceptance and rejection decisions. 
+
+A major advancement in ABC inference came with the introduction of Random Forests \citep{Pudlo:2016il,Raynal:2017wm}. RF is an algorithm that learns from a database (here referred to as \textit{reference table}) how to predict the value of a parameter $q$ of an independent dataset. The reference table is produced by combining the parameter values of the simulations and the values of summary statistics calculated on the simulated data. This reference table can be used to train an algorithm that is able to estimate parameters or to select which model could generate the patterns observed in the real data. The parameter estimation and model selection is done by comparing the summary statistics of the observed data with the simulated data using decision trees (for more information about ABC-RF \citet{Pudlo:2016il} and \citet{Raynal:2017wm}). The major advantages of using ABC-RF for the inference of demography and selection is that it requires less simulation for reliable classification \citep{Pudlo:2016il, Fraimout:2017jq} and posterior estimates \citep{Raynal:2017wm}. It is important to reduce the number of simulations because the complex dynamics of demography and selection can only be simulated with forward-in-time simulations, which is computationally expensive. The second advantage of the ABC-RF is that it reduces the subjectivity on the choice of the summary statistics and eliminates the definition of tolerance thresholds. 
+
+\subsection*{ABC-RF framework for joint inference of adaptive and demography history}
+
+For the joint inference of adaptive and demography history within ABC-RF framework, our model consisted of a single population of diploid individuals with constant size that was sampled in two time-points. In our model, beneficial mutations can originate in the population in any generation.  The model was divided in two phases 1) a "burn-in phase" which consisted of a number of generations that the simulations runs in order to minimize the effect of the initial conditions, and 2) a "sampling phase" which contains the time-interval (in generations) of the first and the second samples of individuals. The parameters of the model are the population census size of the burn-in phase (phase 1 from now on) $N_{CS_{1}}$, the population census size for the sampling phase (phase 2 from now on) $N_{CS_{2}}$, the mutation rate per generation $\mu$, the per base recombination rate per generation $r$, the proportion of selected mutations $P_{S} = P_{R}P_{B}$ (where $P_{R}$ is the proportion of non-neutral regions and $P_{B}$ is the probability of a beneficial mutations arise in a non-neutral region), and the mean of the gamma distribution $\kappa\theta$ that defines the values of the selection coefficients $s$ of beneficial mutations (it can also be called as the distribution of fitness effects - DFE) (supplementary Methods S2 has more details about the model).
+
+The objectives of the analysis ABC analysis would be to infer each of the above parameters of the model. However, except for $N_{CS_{1}}$, $N_{CS_{2}}$, and $\mu$, the parameters were treated as "nuisance parameters" that are used to generate allele frequency trajectories of neutral and beneficial mutations in evolution with recurrent sweep dynamics. In order to infer the overall effect of selection on demography, we calculated the harmonic mean of the effective population sizes $1/N_{e_{i}}$, and scaled population size  $\theta_{i}$ for each simulation period. Each $N_{e_{i,j}}$ was calculated as the average reproductive success of individuals in the population $N_{e_{i,j}} = (4N)/(2+var(gametes_{i}))$, where $gametes_{i}$ represents the number of times each individual of the $generation_{i-1}$ contributed as a parent. From the harmonic mean of the effective population size, we calculated $\theta_{i} = 4N_{e_{i}}\mu$. 
+The genome-wide signal of selection was obtained with the calculation of  i) the average genetic load $L$,  ii) the proportion of strongly selected mutations ($P_{S'}$),  iii) the scale population size of beneficial mutation $\theta_{2}*P_{S}$, and iv) the overall strength of selection $N_{e}s$. For every generation of the period 2, the genetic load was calculated as $L_{i} = \frac{W_{max_{i}} - \bar{W_{i}}}{W_{max_{i}}}$, where $W_{max_{i}}$ represents the individual with the highest fitness in the population and $\bar{W_{i}}$ represents the average fitness of the population in the generation $i$. As in our simulation we can track the selection coefficient $s$ of all mutations segregating in every generation, we can obtain the fraction of mutations strongly selected in the period 2 as $P_{S'} = $ number of mutations with $s > 1/N_{e_{2}}$ / all mutations. The rate at which beneficial mutations arise was calculated as $\theta_{2}P_{S} = 4N_{CS_{2}}\mu * P_{S}$ and scaled by the size of the genome. The overall strength of selection was calculated as $N_{s} = N_{e_{2}}\kappa\theta$. We also calculated the population-scaled recombination rate $\rho$ for the period 2 as $\rho = N_{e_{2}}r$. Except the census size and the mutation rate, these parameters were calculated within each simulation and we refer to them as latent variable, from now on. 
+
+Simulation with different values for the model parameters were used to make inferences about the parameters and latent variables that describe the overall pattern of demography and selection. For each simulation, values of the model parameters were sample from each parameter' prior distribution and used to simulate a forward-in-time dynamic of recurrent selective sweep. Simulations were performed with  the software SLiM v3.1 \citep{Haller:2017gm, Haller:2018gn} to simulate the model described above. SLiM is an efficient forward-in-time simulator that is based on the extended Wright-Fisher model, and it can simulate complex dynamics as non-neutral selection acting on linked sites \citep{Messer:2013ct}. We divided our simulations in two periods: the burn-in and the sampling phase to efficiently simulate the desired dynamics of recurrent selection. In the burn-in we tracked when all the mutations lineages present in the simulation coalesced (\textit{initializeTreeSeq(checkCoalescence=T)}). By using it, we reduced the computational time required to finish a simulation since the number of generations equal to 10*$N_{eq}$ was no longer required especially with the dynamics of strong selection. The second phase of the simulation outputs genotypic data of a sample of individuals as single nucleotide polymorphis (SNPs) in the vcf file in two time-points. This data is combined with bcftools v. 1.9 and converted to fit a custom egglib script that calculates the summary statistics (Supplementary Methods S1.3). For every simulation a reference table is produced by combining the model parameters, latent variable and the summary statistics. Derived values for the latent variable $\theta_{2}*P_{S}$ and $N_{s}$ are calculated in R from the reference table. The reference table was used to estimate the posterior distribution using the R package "abcrf" \citep{Pudlo:2016il,Raynal:2017wm}. We implemented this approach in suite of R scripts that we made it available at github (\url{https://github.com/vitorpavinato/Tracking-selection/}). 
+
+\subsection*{Simulations}
+
+\begin{table}[ht]
+ \caption{Simulation parameters and their prior distribution for the random PODs}
+  \centering
+  \label{table:table1}
+  \begin{tabular}{lll}
+   \cmidrule(r){1-3}
+    Parameter                                           & Prior distributions                   & Parameter space\\
+    \midrule
+    Population size for the equilibrium phase           & $N_{CS_{1}} \sim log_{10}(Uniform)$   & 1 to 2,000\\
+    Population size for the interval                    & $N_{CS_{2}}  \sim log_{10}(Uniform)$  & 1 to 2,000\\
+    Mutation rate                                       & $\mu \sim log_{10}(Uniform)$          & 1e-10 to 1e-6\\
+    Recombination rate                                  & $r \sim log_{10}(Uniform)$            & 5*1e-7 to 5*1e-10\\
+    Proportion of selected mutations $P_{S}$:           &                                       &                  \\
+        1) Proportion of non-neutral regions, $P_{R}$   & $P_{R} \sim Uniform$                  & 0 to 1\\
+        2) Probability of beneficial mutation, $P_{B}$  & $P_{S} \sim log_{10}(Uniform)$        & 1e-5 to 1\\ 
+    Mean of Gamma distribution $\kappa\theta$           & $\kappa\theta \sim log_{10}(Uniform)$ & (1e-3 to 1)\\
+    \bottomrule
+  \end{tabular}
+  \label{tab:tab1}
+\end{table}
+
+The method described above was evaluated on simulated data (pseudo observed data-set, POD) in scenarios of recurrent selection with varying degree selection (proportion of selected mutations, distribution of fitness effects and drift (controlled by the population census size). In the simulations, each individual had a genome of size 100 Mb that was divided in 2,000 fragments of 50,000 bps. A number of these fragments were defined as neutral or non-neutral based on the parameter $P_{R}$. Non-neutral regions harbored beneficial mutations given the probability $P_{B}$. Dominance coefficients were set 0.5 for all mutations throughout the simulation. In the period 2 (sampling period), 100 of individual genotypes were sampled in the first generation ($T_{S1}$), and 100 more after 10 generations. About 50,000 simulation were generated and used to train the ABC-RF. Table 1 shows the prior distribution set for each model parameter with the associated prior range that were used to produce the simulations. One thousand simulations produced with the same priors and range were used as PODs to evaluate the performance of the ABC-RF to infer demography and selection parameters. In addition to these PODs (for now on called "random PODs") 100 simulation for three scenarios were produced:  i) neutral scenario, ii) a scenario where adaptation was mutation limited, and iii) a scenario where adaptation was mutation unlimited (table 2). This type of PODs (from now on called \textit{"fixed PODs"})  mimicked three evolutionary scenarios possible for molecular adaptation. In a mutation limited scenario, a beneficial mutation take more time to appear (this lag is proportional to $s$) since it has values of $P_{S}\theta < 1$. On the other hand, in mutation unlimited scenario, in every generation a beneficial mutation can appear ($P_{S}\theta > 1$. In summary, the random PODs were used to ABC-RF in a range of possible combinations of parameters and parameter space to approximate what could happen when the degree of selection range from weak to strong. The fixed PODs, in contrast, allowed us to assess how the ABC-RF estimated the posterior values in fixed evolutionary scenarios of weak vs strong selection. Keeping the parameters fixed allowed us add random noise, since the number of mutations, and their trajectory to fixation or loss can vary given the stochastic nature of the simulation.
+
+\begin{table}[ht]
+ \caption{Simulation parameters for the fixed PODs}
+ \label{table:table2}
+  \centering
+  \begin{tabular}{llll}
+   \cmidrule(r){1-4}
+    Parameter                 & Neutral  & Mutation & Mutation    \\
+                              &          & limited  & unlimited \\
+    \midrule
+    $\mu$                     & $1e-8$   & $1e-8$   & $1e-8$      \\
+    $r$                       & $5.0e-8$ & $5.0e-8$ & $5.0e-8$    \\
+    $N_{CS_{1}}$              & 500      & 500      & 500         \\
+    $N_{CS_{2}}$              & 500      & 500      & 500         \\
+    DFE $mean=\kappa\theta$   & NA       & 0.1      & 0.1         \\
+    $P_{R}$                   & NA       & 0.25     & 0.25        \\
+    $P_{S}$                    & 0        & 0.001    & 0.20        \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:tab2}
+\end{table}
+
+\subsection*{Dataset}
+
+In addition to the PODs,  one data-set from the literature was re-analyzed with our ABC-RF method. The dataset consisted of whole-genomic sequencing data from museum and contemporary specimens of feral population of Apis mellifera collected in California from 1910 to 2011 \citep{Cridland:2018fx}. Our goal here was to evaluate the performance of our framework to infer demography and selection parameters in one real data-set, not re-analyzed the entire data-set. We selected one location that contained the most isolated population since our framework do not take into account the effects of gene flow and admixture. This population was collected in the Avalon site, that is located in Cataline Island, California. Two samples of two and five whole-genomes spans 104 years (or 104 generation assuming one generation/year). For the simulations, we set the genome of size of each individual as 250 Mb (similar to the most recent estimates of A. mellifera genome size \citep{Elsik:2014hf}. The genome was divided into 5,000 fragments of 50,000 bps. As with the PODs, a number of these fragments were defined as neutral or non-neutral based on the parameter $P_{R}$. Dominance coefficients were set 0.5 for all mutations throughout the simulation. In the period 2 (sampling period), 2 of individual genotypes were sampled in the first generation ($T_{S1}$), and 5 more after 104 generations. We produced 20,000 simulation to train the ABC-RF. We used a $log_{10}(Normal)$ distribution for the $\mu$ with mean 3.4e-9 with standard deviation of 0.5. The per base recombination rate was set as $log_{10}(Uniform)$ ranging from 1e-8 to 1e-4. The census size $N_{CS_{1}}$ and $N_{CS_{1}}$ were set with a $log_{10}(Uniform)$, ranging from 1 to 10,000 individuals. The other model parameters were set similarly to the PODs.
+
+\section*{Results}
+\section*{Discussion}
+
+%\section*{Results and Discussion}
+%\subsection{Evaluation of ABC-RF performance}
+%We evaluated the performance of our ABC-RF based framework to jointly characterize demography and selection. The framework ability to classify neutral/quasi-neutral from selection scenarios was tested by growing a ABC-RF classifier using the data contained in the reference table. The error rate associated with growing the predictive random forests was 19.4\% (out-of-bag error rate), which means that during the process of building the classifier, it misclassified either \textit{qNeutral} being \textit{sSel} or \textit{sSel} being \textit{qNeutral} on average almost 20\% of the times. We then applied the classifier to predict the classes of the random PODs. This time the global classification error was the same as the out-of-bag error rate, as showed in the table 3. 
+
+%\begin{table}[ht]
+% \caption{Error rate for the classification of fixed PODs}
+% \label{table:table3}
+%  \centering
+%  \begin{tabular}{lccc}
+%   \cmidrule(r){1-4}
+%    PODs                  & Global error  & Precision & Accuracy \\
+%    \midrule
+%    Random PODs           & 19.4\%        & 77.9\%    & 80.6\% \\
+%    Fixed PODS            &               &           &        \\
+%    1) Neutral            & 0\%           & 100\%     & 100\%  \\
+%    2) Mutation limited   & 8\%           & 100\%     & 92\%   \\
+%    3) Mutation unlimited & 0\%           & 100\%     & 100\%  \\
+%    \bottomrule
+%  \end{tabular}
+%  \label{tab:tab3}
+%\end{table}
+
+%The confusion matrix shows that the misclassification of \textit{qNeutral} scenarios were higher than the \textit{sSel} scenarios (Figure 2). We investigate it by cross-correlating windows of the true values of the parameter $\theta_{s}$ with classification error rate. Figure 2B shows that PODs with extreme values of $\theta_{s}$ were correctly classified, however when the values of $\theta_{s}$ were between -2 to 0 the misclassification increased. The distribution of the variable $\theta_{s}$ also confirms this pattern. The extremes of this distribution, representing the adaptation mutation unlimited  where $\theta_{s} > 1$ , and representing the adaptation that is mutation limited where $\theta_{s} \ll 1$ contains the values of $\theta_{s}$ associated with correctly classified PODs by the ABC-RF classifier.
+
+%For the fixed PODs the misclassification only happened for adaptation mutation limited (Table 3). All mutation limited simulations had the class defined as \textit{sSel}, because they had the $P_{strong} > 0$, and 8\% were misclassified as \textit{qNeutral}. Scenarios where beneficial mutations appears more frequently the signature of selection on the summary statistics were more evident. For adaptation mutation limited, fewer strongly selected mutations were present on the sampling period, however they genome-wide impact were not evident.
+
+%\begin{figure}[ht]
+%  \centering
+%  \label{fig:fig2}
+%  \includegraphics[width=0.9\textwidth]{classification_thetaS.pdf}
+%  \caption{ABC-RF for the classification as quasi-neutral (\textit{qNeutral}) and strong-selection (\textit{sSel}). \textbf{(A)} the confusion matrix of the classification of random PODs. It shows the number of correctly classified and misclassified PODs. The misclassiciation of quasi-neutral scenarios as being strong-selection was higher than the misclassification of strong-selection as being quasi-neutral. \textbf{(B)} the RF classification error rate calculated for windows of $\theta_{s}$. The cross-correlation of the error rates and $\theta_{s}$ showed that the misclassifications were higher for values of $\theta_{s}$ where adaptation was mutation limited ($\theta_{s}$ < 1). \textbf{(C)} ABC-RF's $\theta_{s}$ estimates for the Random PODs. For extreme values of $\theta_{s}$ the ABC-RF classifier was able to clearly discriminate between the quasi-neutral and strong-selection classes.}
+%\end{figure}
+
+%Demography was characterized by estimating the harmonic mean of the effective population size of the period 2 ($N_{e}$ for a simplification) and the population census size $N_{cs}$. On the random pods our ABC-RF estimates were unbiased and it outperformed the estimator implemented in WFABC (Figure 3A and 3B). Our ABC-RF estimator was insensitive to the increase on the amount and strength of selection, measured here with the genetic load. The impact of the increased selection was difficult to derive on the WFABC's estimator since there was no clear relationship between selection and $Ne_{e}$ on the random PODs. But, for both estimators simulations that produced great genetic load also had their $Ne_{e}$ over-estimated. The simulation that had the $N_{e}$ overestimate were affected by a great amount of selection on the equilibrium phase. This amount of selection heavily affected the $N_{e}$ of the period 1 and also the $Ne_{e}$ of period 2. 
+
+%With the analysis of the fixed PODs we were able to see how the increase of selection impacted the $N_{e}$ estimators. Here we also compared a third estimator that is based on the relationship between the mean of the intra-locus $F_{ST}$ calculated for pairs of temporal samples and the $N_{e}$. For more information on how this estimator was derived we suggest to look at \citet{Frachon:2017fw}. Both moment-based estimators were greatly impacted by the increase of selection, with the WFABC's estimator producing the most biased estimate (Figure 3C). When selection was low (similar to a neutral case) the WFABC's estimator overestimated the $N_{e}$. But when selection was high, it underestimated it. The $F_{ST}$-based estimator behave similarly to the ABC-RF estimator for the neutral/quasi-neutral case but was also impacted when selection increased. Our ABC-RF estimator produced the closest estimate for all scenarios.
+
+%\begin{figure}[ht]
+%  \centering
+%  \label{fig:fig3}
+%  \includegraphics[width=0.9\textwidth]{demography_pods.pdf}
+%  \caption{ABC-RF for demography inference. \textbf{(A)} ABC-RF's effective population size $N_{e}$ estimates for the random PODs. The true values (\textit{x} axis) against the estimated value (\textit{y} axis) show that the ABC-RF estimates were unbiased but overestimated for smaller values of $N_{e}$. The simulations that produced these small $N_{e}$ values also had higher values of genetic load. \textbf{(B)} WFABC's \citep{Foll:2015ce} $N_{e}$ estimates for the random PODs. The true values against the WFABC estimates show that this method produced biased estimates of $N_{e}$. It reproduced the same pattern observed with the ABC-RF on small values of $N_{e}$ but the magnitude of the biases were higher. \textbf{(C)} $N_{e}$ estimates for the fixed PODS. The comparison between the true $N_{e}$, the ABC-RF's estimates, the WFABC's estimates and the one obtained with a moment estimator based on the temporal $F_{ST}$ emphasis the differences between the methods. Our ABC-RF based method produced the closest estimates to the true $N_{e}$ value but the WFABC produced the furthest estimates. \textbf{(D)} population census size $N_{cs}$ estimates for the fixed PODS. The differences between the effective population size $N_{e}$ and the population census size $N_{cs}$ increases with the amount of selection. Our ABC-RF method was able to estimate $N_{e}$ regardless the amount of selection and independently estimate $N_{cs}$.}
+%\end{figure}
+
+%Our ABC-RF was able to recover the true value of the population census size for both the random PODs (Figure S1) and for the fixed PODs (Figure 3D). With the analysis of the fixed PODs it helped us not only see the impact of selection on the effective population size $N_{e}$ but see that our ABC-RF can produce independent estimates for both population size regarding the amount of selection.
+
+%The genome-wide signature of selection was characterized by three parameters that together describe different but complementary aspects of the selection dynamics. The first parameter was the population genetic load. In our models only selection acting on \textit{de novo} beneficial mutations was simulated and in this way when we speak about genetic load we are referring to the substitution load \citep{Haldane:1957ka}. The substitution load tell about the difference between the highest individual fitness and the average fitness of the population. Higher values of genetic load are associated with a great number of beneficial mutations and the strength of their selection coefficients. But this relationship is not linear as the figure 4A shows. Figure 4A shows the true against the ABC-RF estimated values of the average genetic load for the random PODs. The two plots shows the same results but color-coded differently. The first thing to not was that the estimation of PODs' $\overline{L}$ were biased, but the extreme higher values had the less biased estimates. It happened because selection at this level, produced unambiguous genome-wide signals. When we look at the figure 4A on top, the higher values of $\theta_{s}$ were clustered around the extreme values of genetic load. When we look at cross-correlation between the genetic load and the proportion of strongly selected mutations we see the same pattern. But, because of the complex interactions between effective population size, strength of selection and number of beneficial mutations, values of $\theta_{s}$ that indicate a mutation unlimited scenario and great number of strongly selected mutations were dispersed across the values of the average genetic load. 
+
+%\begin{figure}[ht]
+%  \centering
+%  \label{fig:fig4}
+%  \includegraphics[width=0.9\textwidth]{selection_randompods.pdf}
+%  \caption{ABC-RF for selection inference on the random PODs. \textbf{(A)} ABC-RF's estimates for the average genetic load $\overline{L}$. The upper and the lower plots shows the true values (\textit{x} axis) against the ABC-RF estimated values (\textit{y} axis) for the variable, but color coded differently. The upper graph shows the relationship between the average genetic load and the $log_{10}(\theta_{s})$. Extreme high values of $\theta_{s}$, on average, defined extreme values of genetic load, and $\theta_{s} < 1$ where associated with lower values of genetic load (near-neutral PODs). 
+%  The lower graph show how the genetic load changes with the proportion of strongly selected mutations $P_{strong}$. As expected, extreme high values of $P_{strong}$ produced high levels of genetic load, and a small number of selected strongly selected mutations, on average, produced lower genetic load. \textbf{(B)} ABC-RF's estimates for the $log_{10}(\theta_{s})$. It worth to point that not always a higher value of genetic load was associated with a higher values of $\theta_{s}$, but extreme values of $\theta_{s}$ had a higher chance to produce strongly selected mutations than smaller values. It happens because $\theta_{s}$ controls the amount of selected mutations that enters the simulations not their magnitude. \textbf{(C)} ABC-RF's estimates for the proportion of strongly selected mutations $logit(P_{strong})$. PODs that had selected and where correctly classified as being under a strong selection influence or misclassified as being a neutral/quasi-neutral dynamic, on average, had their $P_{strong}$ correctly estimated. But, the neutral/quasi-neutral PODs misclassified as being under strong selection had the values of $P_{strong}$ overestimated.}
+%\end{figure}
+
+%The parameter $\theta_{s}$ is very informative about the evolutionary dynamics. $\theta$ being defined as $\theta = 4N_{e}\mu$ defines the amount of genetic diversity found on a particular population. When only considering the mutation rate of beneficial mutation, $\theta$ tells us about its adaptive potential, in another words, it tell how much time a population should wait to another beneficial mutation arise in the population. If the value of $\theta_{s} << 1$ the population would wait a long time and in this way we can say that adaptation is mutation limited. But if $\theta_{s} > 1$ a great number of beneficial mutation would arise in a short amount o time; in this scenario we say that the adaptation is mutation unlimited.Our ABC-RF estimator was able to recover the values of $\theta_{s}$ but with bias on lower values. Higher values of $\theta_{s}$ were associated with higher values of genetic load (Figure 4B). We show for the first time a method to estimate both the genetic load and $theta_{s}$ that is not dependent on additional genomic information (\textit{e.g} genomic annotation).
+
+%The last parameter was the proportion of strongly selected mutations. In order to predict the random PODs' values, simulation correctly classified as quasi-neutral were removed. After the long transformation of the parameter, simulations that were wrongly classified as being under strong selection, but have no strongly selected mutations, had their values set to -15. The ABC-RF correclty estimated the parameter $P_{strong}$ of the random pods, but overestimated those values of neutral/quasi-neutral PODs misclassified as being under strong selection (Figure 4D).
+
+%The selection parameters, both the true and the estimated values, were more variable on the mutation limited scenarios. The figure 5A shows the same pattern observed for random PODs genetic load, that is for adaptation in mutation unlimited scenarios the estimates were clustered around the true value, however, for adaptation in mutation limite ones, they produced a wider range of values and their the estimates were more biased. For the other two parameters the same trend holds. For the $\theta_{s}$, the ABC-RF overestimate the parameter for the mutation limited scenario, but underestimated in for the mutation unlimited, but for the later the estimates felt between the minimum and the maximum true value (Figure 5B). The proportion of strongly selected mutation were overestimated only for the mutation limited case.  
+
+%\begin{figure}[ht]
+%  \centering
+%  \label{fig:fig5}
+%  \includegraphics[width=0.9\textwidth]{selection_fixedpods.pdf}
+%  \caption{ABC-RF for selection inference on the fixed PODs. \textbf{(A)} ABC-RF's estimates for the average genetic load $\overline{L}$. The \textit{x} axis contains the true values and \textit{y} has the ABC-RF estimates. The genetic load of the neutral (in light blue) scenario was always 0, but the ABC-RF method overestimated it. The range of the genetic load produced by the adaptation mutation limited scenario (in orange) was larger than the adaptation unlimited scenario (in red), but the ABC-RF on the later were more accurate. \textbf{(B)} ABC-RF's estimates for the $log_{10}(\theta_{s})$. \textbf{(C)} ABC-RF's estimates for the proportion of strongly selected mutations $logit(P_{strong})$. Only the results for the adaptation mutation limited and unlimited are shown. Dashed lines represents the true upper (in light green) and the true lower (in blue) values of each variable. The ABC-RF framework was able to produced unbiased estimates for both variables.}
+%\end{figure}
+
+\section*{Conclusion}
+As we showed, the use of ABC-RF as a framework, on temporal population genomics settings, is a way to achieve the jointly estimation of the genome-wide signature of demography and selection. As a consequence of it, we also showed how increasing selection affects the effective population size $N_{e}$ and how different can be the population census size $N_{cs}$ from $N_{e}$. For the first time both parameters can be estimated accurately and independently. For the first time, ways to characterize selection without additional information but the polymorphism are presented. This opens the characterization of global patterns of selection for non-model species and species that lack detailed genomic resources.
+
+\bibliographystyle{apalike}
+\bibliography{references}
+\end{document}
