@@ -3,9 +3,7 @@ doc
 results/*
 src/.DS_Store
 src/analysis/*
-src/HPC/sbatchSendJobs2ClusterTrackSelABC[muse]
-src/HPC/sbatchSendJobs2ClusterTrackSelABC[genotoul]
-src/HPC/qsubSendJobs2ClusterTrackSelABC[cbgp]
+src/HPC/*
 src/models/background_selection/*
 src/models/standing_variation/*
 src/stuff/*
