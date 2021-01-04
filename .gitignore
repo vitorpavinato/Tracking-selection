@@ -1,10 +1,5 @@
-data/*
-doc/Manuscript_v1
-doc/Manuscript_v2
-doc/Manuscript_v3
-doc/Manuscript_v4
-doc/Manuscript_v5
-doc/README.md
+data
+doc
 results/*
 src/.DS_Store
 src/analysis/*
