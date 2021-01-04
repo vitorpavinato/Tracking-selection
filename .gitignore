@@ -1,9 +1,9 @@
 data
 doc
-results/*
+results
 src/.DS_Store
-src/analysis/*
-src/HPC/*
+src/analysis
+src/HPC
 src/models/background_selection/*
 src/models/standing_variation/*
 src/stuff/*
