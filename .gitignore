@@ -1,6 +1,3 @@
-bin/bcftools
-bin/bgzip
-bin/tabix
 data/*
 doc/*
 results/*
