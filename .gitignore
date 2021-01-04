@@ -2,7 +2,6 @@ data
 doc
 results
 src/.DS_Store
-src/HPC
 src/models/background_selection/*
 src/models/standing_variation/*
 src/stuff/*
