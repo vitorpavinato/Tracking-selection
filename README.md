@@ -1,4 +1,4 @@
-## ** Tracking Selection using Temporal Population Genomics Data**
+## **Tracking Selection using Temporal Population Genomics Data**
 
 **Authors:**
 
@@ -9,14 +9,14 @@ This repository contains the pipeline to run the simulations for the ABC-RF infe
 **INSTALLATION**
 
 Dependencies:
-- R packages `moments` and `ROCR`;
-- For parallel computing you also should install: `foreach`, `doParallel` and `parallel`
+- R packages [`moments`](https://cran.r-project.org/web/packages/moments/index.html) and [`ROCR`](https://ipa-tys.github.io/ROCR/);
+- For parallel computing you also should install: `foreach`, `doParallel` and `parallel`;
 - [SLiM 3.x](https://messerlab.org/slim/)
 - [`bgzip 0.2.5 or higher`](http://www.htslib.org/download/)
 - [`tabix 0.2.5 or higher`](http://www.htslib.org/download/)
 - [`bcftools 1.6 or higher`](http://samtools.github.io/bcftools/)   
 - `Python 2.7`
-- `egglib`(https://egglib.org)
+- [`egglib`](https://egglib.org)
 
 **USAGE**
 ```
