@@ -1,2 +1,0 @@
-## **FUTURE IMPLEMENTATIONS**
-### **Pipeline**

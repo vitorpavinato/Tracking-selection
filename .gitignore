@@ -1,11 +1,4 @@
-data
-doc
-results
 src/.DS_Store
-src/models/background_selection/*
-src/models/standing_variation/*
-src/stuff/*
-src/tasmania_devil/*
 src/.Rhistory
 .DS_Store
 .Rproj.user
