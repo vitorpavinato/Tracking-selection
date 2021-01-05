@@ -2,7 +2,7 @@
 
 **Authors:**
 
-Vitor A. C. Pavinato & Miguel Navascués
+Vitor A. C. Pavinato, Stéphane de Mita &  Miguel Navascués
 
 This repository contains the pipeline to run the simulations for the ABC-RF inference of demography and selection.
 
