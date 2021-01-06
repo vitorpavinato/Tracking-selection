@@ -9,7 +9,7 @@ This repository contains the implementation of a pipeline to run the simulations
 **CITATION**
 ```
 @article{PAvinato:2021,
-author = {Pavinato, Pavinato and de Mita, S{\'e}phane and Marin, Jean-Michel and tNavascu{\'e}s, Miguel},
+author = {Pavinato, Vitor A.C. and de Mita, S{\'e}phane and Marin, Jean-Michel and tNavascu{\'e}s, Miguel},
 title = {{Joint inference of adaptive and demographic history from temporal population genomic data}},
 journal = {bioRxiv},
 year = {2021},
@@ -38,4 +38,4 @@ Rscript src/proof/main.R
 
 **CONFIGURATION**
 
-In the main script you should speficy the path of the above mentioned dependencies and other configurations that might be necessary (prior range, genome size, `$\tau$`, etc). 
+In the main script you should speficy the path of the above mentioned dependencies and other configurations that might be necessary (prior range, genome size, `\tau`, etc). 
