@@ -4,7 +4,20 @@
 
 Vitor A. C. Pavinato, Stéphane de Mita &  Miguel Navascués
 
-This repository contains the pipeline to run the simulations for the ABC-RF inference of demography and selection.
+This repository contains the implementation of a pipeline to run the simulations and to produce a reference table for the ABC-RF inference of demography and selection.
+
+**CITATION**
+```
+@article{PAvinato:2021,
+author = {Pavinato, Pavinato and de Mita, S{\'e}phane and Marin, Jean-Michel and tNavascu{\'e}s, Miguel},
+title = {{Joint inference of adaptive and demographic history from temporal population genomic data}},
+journal = {bioRxiv},
+year = {2021},
+volume = {},
+pages = {},
+month = jan
+}
+```
 
 **INSTALLATION**
 
@@ -16,7 +29,7 @@ Dependencies:
 - [`tabix 0.2.5 or higher`](http://www.htslib.org/download/)
 - [`bcftools 1.6 or higher`](http://samtools.github.io/bcftools/)   
 - `Python 2.7`
-- [`egglib`](https://egglib.org)
+- [`EggLib`](https://egglib.org)
 
 **USAGE**
 ```
@@ -25,4 +38,4 @@ Rscript src/proof/main.R
 
 **CONFIGURATION**
 
-In the main script you should speficy the path of the above mentioned dependencies. 
+In the main script you should speficy the path of the above mentioned dependencies and other configurations that might be necessary (prior range, genome size, `$\tau$`, etc). 
