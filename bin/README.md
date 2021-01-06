@@ -14,7 +14,7 @@
 
 [Stéphane de Mita](https://mycor.nancy.inra.fr/IAM/?page_id=738)
 
-In the pipeline, we calculated the summary statistics using an implementation of  [`EggLib`](https://egglib.org). Stéphane de Mita (EggLib's author) implemented a python script that calculates the summary statistics - locus-specific (SNP-by-SNP and in window) and global (for each population and for the combined populations). These summary statistics were included in the reference table with additional summary statistics calculated from the locus-specific summary statistics (see main manuscript).  The list and the description of the summary statistics can be found below (also in the manuscript Supplementary Material). The input file is describe below and an example can be found in the example folder. The ouput file is also described below and an example is also available in the example folder.
+In the pipeline, we calculated the summary statistics using this implementation of  [`EggLib`](https://egglib.org) wrote by Stéphane de Mita (EggLib's author). This python script calculates the following summary statistics: locus-specific (SNP-by-SNP and in window) and global (for each population and for the combined populations). These summary statistics were included in the reference table with additional summary statistics calculated from the locus-specific summary statistics (see main manuscript).  The list and the description of the summary statistics can be found below (also in the manuscript Supplementary Material). The input file is describe below and an example can be found in the example folder. The ouput file is also described below and an example is also available in the example folder.
 
 **Installation**
 
