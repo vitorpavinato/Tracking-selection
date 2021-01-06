@@ -20,7 +20,7 @@ Dependencies:
 
 **USAGE**
 ```
-Rscript main.R
+Rscript src/proof/main.R
 ```
 
 **CONFIGURATION**
