@@ -28,23 +28,24 @@ ls()
 # bcftools - https://github.com/samtools/bcftools
 # bgzip & tabix - https://github.com/TabakoffLab/General/wiki/Install-vcftools#Install_tabix
 # (usually bgzip and tabis come with bcftools installation)
+# egglib-3.0.0b22
 
 ###########################################
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
 nsim                    <- 20
-path_to_slim_model      <- "src/models/"
+path_to_slim_model      <- "src/models/proof/"
 slim_model_prefix       <- "model"
-path_to_slim            <- "/usr/local/bin/slim"     #cbgp-desktop "/home/pavinato/Softwares/slim3.1/slim" #cluster# "LD_LIBRARY_PATH=/home/bin/GCC/4.8.5/x64/lib64:$LD_LIBRARY_PATH ./bin/slim" #GENOTOUL# /usr/local/bioinfo/src/SLiM/SLiM-3.2/SLiM_build/slim
+path_to_slim            <- "/usr/local/bin/slim"
 slim_output_folder      <- "results/slim_output/"
-path_to_bgzip           <- "/usr/local/bin/bgzip"    #cbgp-desktop "/usr/local/bin/bgzip" #cluster# "./bin/bgzip" #GENOTOUL# "/usr/local/bioinfo/src/Tabix/tabix-0.2.5/bgzip"
-path_to_tabix           <- "/usr/local/bin/tabix"    #cbgp-desktop "/usr/local/bin/tabix" #cluster# "./bin/tabix" #GENOTOUL# "/usr/local/bioinfo/src/Tabix/tabix-0.2.5/tabix"
-path_to_bcftools        <- "/usr/local/bin/bcftools" #cbgp-desktop "/usr/local/bin/bcftools" #cluster# "./bin/bcftools" #GENOTOUL# "/usr/local/bioinfo/src/BCFtools/bcftools-1.6/bin/bcftools"
+path_to_bgzip           <- "/usr/local/bin/bgzip"    
+path_to_tabix           <- "/usr/local/bin/tabix"    
+path_to_bcftools        <- "/usr/local/bin/bcftools" 
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
-path_to_python          <- "/Users/vitorpavinato/myPython2venvs/python-egglib3.0.0b22/bin/python" #cbgp-desktop "/home/pavinato/py-egglib-3.0.0b22/bin/python" #cluster# "./bin/pyegglib22/bin/python"
-path_to_egglib_summstat <- "bin/summstats.py" # this version works with egglib-3.0.0b22
+path_to_python          <- "/Users/vitorpavinato/myPython2venvs/python-egglib3.0.0b22/bin/python"
+path_to_egglib_summstat <- "bin/summstats.py" 
 reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
 seed                    <- arg
@@ -199,7 +200,7 @@ if(parallel_sims){
 }
 
 # load other functions (from file distributed together with present file)
-source("src/fun.R")
+source("src/proof/fun.R")
 
 ###########################################
 ##              SIMULATION               ##
