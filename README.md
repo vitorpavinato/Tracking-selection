@@ -38,4 +38,4 @@ Rscript src/proof/main.R
 
 **CONFIGURATION**
 
-In the main script you should speficy the path of the above mentioned dependencies and other configurations that might be necessary (prior range, genome size, `\tau`, etc). 
+In the main script you should speficy the path of the above mentioned dependencies and other configurations that might be necessary (prior range, genome size, \tau, etc). 
