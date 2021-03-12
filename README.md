@@ -1,6 +1,7 @@
 ## **Tracking Selection using Temporal Population Genomics Data**
 
-[![DOI](https://zenodo.org/badge/114859807.svg)](https://zenodo.org/badge/latestdoi/114859807)
+[![DOI](https://zenodo.org/badge/113848735.svg)](https://zenodo.org/badge/latestdoi/113848735)
+
 
 **Authors:**
 
