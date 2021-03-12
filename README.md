@@ -8,7 +8,7 @@ This repository contains the implementation of a pipeline to run the simulations
 
 **CITATION**
 ```
-@article{PAvinato:2021,
+@article{Pavinato:2021,
 author = {Pavinato, Vitor A.C. and de Mita, S{\'e}phane and Marin, Jean-Michel and tNavascu{\'e}s, Miguel},
 title = {{Joint inference of adaptive and demographic history from temporal population genomic data}},
 journal = {bioRxiv},
