@@ -11,14 +11,16 @@ This repository contains the implementation of a pipeline to run the simulations
 
 **CITATION**
 ```
-@article{Pavinato:2021,
-author = {Pavinato, Vitor A.C. and de Mita, S{\'e}phane and Marin, Jean-Michel and tNavascu{\'e}s, Miguel},
-title = {{Joint inference of adaptive and demographic history from temporal population genomic data}},
-journal = {bioRxiv},
-year = {2021},
-volume = {},
-pages = {},
-month = jan
+@article {Pavinato2021.03.12.435133,
+	author = {Pavinato, Vitor A. C. and De Mita, St{\'e}phane and Marin, Jean-Michel and de Navascu{\'e}s, Miguel},
+	title = {Joint inference of adaptive and demographic history from temporal population genomic data},
+	elocation-id = {2021.03.12.435133},
+	year = {2021},
+	doi = {10.1101/2021.03.12.435133},
+	publisher = {Cold Spring Harbor Laboratory},
+	URL = {https://www.biorxiv.org/content/early/2021/03/12/2021.03.12.435133},
+	eprint = {https://www.biorxiv.org/content/early/2021/03/12/2021.03.12.435133.full.pdf},
+	journal = {bioRxiv}
 }
 ```
 
