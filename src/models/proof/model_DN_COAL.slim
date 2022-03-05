@@ -12,6 +12,7 @@ initialize() {
 	
 	// INITIALIZE SIMULATION PARAMETERS
 	
+	initializeSLiMOptions(keepPedigrees = T); //ADDED IN PROOF 25/FEB/22 FOR NEWER SLIM 3 VERSIONS > 3.2.1
 	initializeTreeSeq(checkCoalescence=T);
 	initializeMutationRate(mu);
 	
@@ -86,6 +87,29 @@ initialize() {
 		
 		 // Output a tree file
 		 sim.treeSeqOutput(path=paste0(outputpath + "slim_coalesced_DN_" + simID + ".tree"), simplify=F);
+		 
+		 /*
+		 //SANITY CHECKS ADDED ON 27/FEB/22
+		 catn("Genome size: " + genomeS);
+		 catn("Chr last position + 1 = " + (sim.chromosome.lastPosition + 1));
+		 
+		 // NUMBER OF MUTATIONS
+       catn("Actual number of m3 mutations = " + sim.countOfMutationsOfType(m3));
+       catn("Expected number of m3 mutations = " + (prbe*PrGWSel*mu)*(2*genomeS)*sim.generation);
+
+       catn("Actual number of m1 mutations = " + sim.countOfMutationsOfType(m1));
+       catn("Expected number of m1 mutations = " + (1*(1-PrGWSel)*mu)*(2*genomeS)*sim.generation);
+
+       catn("Actual number of m2 mutations = " + sim.countOfMutationsOfType(m2));
+       catn("Expected number of m2 mutations = " + ((1-prbe)*PrGWSel*mu)*(2*genomeS)*sim.generation);
+		 
+		 //MUTATION RATE
+		 catn("mutation rate of beneficial mutations = " + (prbe*PrGWSel*mu));
+       catn("mutation rate of neutral mutations = " + ((1*(1-PrGWSel)*mu) + (1-prbe)*PrGWSel*mu));
+
+       catn("Sum of mutation rates = " + (prbe*PrGWSel*mu + (1*(1-PrGWSel)*mu) + (1-prbe)*PrGWSel*mu)); 
+       catn("Simulation mutation rate = " + mu);
+       */
 			
 		 sim.simulationFinished();
 	}		
@@ -97,6 +121,29 @@ s1 late() {
 	
 	// Output a tree file
 	sim.treeSeqOutput(path=paste0(outputpath + "slim_coalesced_DN_" + simID + ".tree"), simplify=F);
+	
+   /*	
+	//SANITY CHECKS ADDED ON 27/FEB/22
+	catn("Genome size: " + genomeS);
+	catn("Chr last position + 1 = " + (sim.chromosome.lastPosition + 1));
+	
+	// NUMBER OF MUTATIONS
+   catn("Actual number of m3 mutations = " + sim.countOfMutationsOfType(m3));
+   catn("Expected number of m3 mutations = " + (prbe*PrGWSel*mu)*(2*genomeS)*sim.generation);
+
+   catn("Actual number of m1 mutations = " + sim.countOfMutationsOfType(m1));
+   catn("Expected number of m1 mutations = " + (1*(1-PrGWSel)*mu)*(2*genomeS)*sim.generation);
+
+   catn("Actual number of m2 mutations = " + sim.countOfMutationsOfType(m2));
+   catn("Expected number of m2 mutations = " + ((1-prbe)*PrGWSel*mu)*(2*genomeS)*sim.generation);
+		 
+	//MUTATION RATE
+	catn("mutation rate of beneficial mutations = " + (prbe*PrGWSel*mu));
+   catn("mutation rate of neutral mutations = " + ((1*(1-PrGWSel)*mu) + (1-prbe)*PrGWSel*mu));
+
+   catn("Sum of mutation rates = " + (prbe*PrGWSel*mu + (1*(1-PrGWSel)*mu) + (1-prbe)*PrGWSel*mu)); 
+   catn("Simulation mutation rate = " + mu);
+   */
 
 	sim.simulationFinished();
 }
