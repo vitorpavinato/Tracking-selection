@@ -34,7 +34,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 20
+nsim                    <- 1 #20
 path_to_slim_model      <- "src/models/proof/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "/usr/local/bin/slim"

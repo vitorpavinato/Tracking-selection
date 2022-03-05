@@ -266,12 +266,20 @@ do_sim <- function(sim, nsim,
   # The difference are the GenomicElementType G1
   g1_idx = setdiff(indexes, g2_idx)
   
+  ## DEFINE RANDOM VALUES OF RECOMBINATION RATE FOR RECOMBINATION HOTSPOTS
+  ## -- This take precedend over the rr_limits of one chromosome -- 
+  rr_hotspots <- 10^runif(length(e_ends), min = log10(rr)-1., max = log10(rr)+1.)
+  
+  ## Update rr_rates with rr_hotspots values
+  rr_rates = rr_hotspots
+  rr_limits = e_ends
+  
   ## RUNNING SLiM
   ##-------------------------------------------------------------------------------
   
   # check if the folder exists
   if (!file_test("-d", slim_output_folder)){
-    dir.create(file.path(slim_output_folder))
+    dir.create(file.path(slim_output_folder), recursive = T)
   }
   
   # generate text with slim command
@@ -288,6 +296,7 @@ do_sim <- function(sim, nsim,
   slim_gammaM    <- paste0("-d gammaM=", gammaM)          # p1 and p2 - DN and BS; p2 - SV
   slim_gammak    <- paste0("-d gammak=", gammak)          # p1 and p2 - DN and BS; p2 - SV
   slim_prbe      <- paste0("-d prbe=", prbe)
+  #slim_PrGWSel   <- paste0("-d PrGWSel=", PrGWSel) #debug only
   slim_dm1       <- paste0("-d dm1=", dm1)
   slim_dm2       <- paste0("-d dm2=", dm2)
   slim_dm3       <- paste0("-d dm3=", dm3)
@@ -314,6 +323,7 @@ do_sim <- function(sim, nsim,
                        slim_gammaM,                   # p1 and p2 - DN and BS; p2 - SV
                        slim_gammak,                   # p1 and p2 - DN and BS; p2 - SV
                        slim_prbe,
+                       #slim_PrGWSel, #debug only
                        slim_dm1,
                        slim_dm2,
                        slim_dm3,
