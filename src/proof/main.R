@@ -34,17 +34,17 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 1 #20
-path_to_slim_model      <- "src/models/proof/"
+nsim                    <- 10
+path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
-path_to_slim            <- "/usr/local/bin/slim"
+path_to_slim            <- "bin/slim" #SLiM v 3.1
 slim_output_folder      <- "results/slim_output/"
-path_to_bgzip           <- "/usr/local/bin/bgzip"    
-path_to_tabix           <- "/usr/local/bin/tabix"    
-path_to_bcftools        <- "/usr/local/bin/bcftools" 
+path_to_bgzip           <- "bin/bgzip"    
+path_to_tabix           <- "bin/tabix"    
+path_to_bcftools        <- "bin/bcftools" 
 egglib_input_folder     <- "results/egglib_input/"
 egglib_output_folder    <- "results/egglib_output/"
-path_to_python          <- "/Users/vitorpavinato/myPython2venvs/python-egglib3.0.0b22/bin/python"
+path_to_python          <- "bin/python"
 path_to_egglib_summstat <- "bin/summstats.py" 
 reftable_file           <- "results/reference_table"
 arg <- commandArgs(TRUE)
@@ -53,7 +53,7 @@ seed                    <- arg
 set.seed(seed,"Mersenne-Twister")
 parallel_sims           <- FALSE
 num_of_threads          <- 6
-remove_files            <- TRUE # it is not necessary to grow RF
+remove_files            <- FALSE # it is not necessary to grow RF
 debug_sim               <- TRUE
 debug_output_folder     <- "results/debug_output/"
 wfabc_input_file        <- FALSE # it is not necessary to grow RF
@@ -200,7 +200,8 @@ if(parallel_sims){
 }
 
 # load other functions (from file distributed together with present file)
-source("src/proof/fun.R")
+source("Tracking-selection/src/proof/fun.R")
+#source("src/fun.R")
 
 ###########################################
 ##              SIMULATION               ##
