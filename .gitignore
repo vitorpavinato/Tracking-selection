@@ -5,3 +5,10 @@ src/.Rhistory
 .DS_Store
 .Rproj.user
 .Rhistory
+.Rprofile
+bin
+renv.lock
+renv
+slurmoutput
+batch.*/
+trackingselsim.*.sh

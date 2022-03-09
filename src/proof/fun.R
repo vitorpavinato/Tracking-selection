@@ -268,7 +268,7 @@ do_sim <- function(sim, nsim,
   
   ## DEFINE RANDOM VALUES OF RECOMBINATION RATE FOR RECOMBINATION HOTSPOTS
   ## -- This take precedend over the rr_limits of one chromosome -- 
-  rr_hotspots <- 10^runif(length(e_ends), min = log10(rr)-1., max = log10(rr)+1.)
+  rr_hotspots <- 10^runif(length(e_ends), min = log10(rr)-.5, max = log10(rr)+.5)
   
   ## Update rr_rates with rr_hotspots values
   rr_rates = rr_hotspots
