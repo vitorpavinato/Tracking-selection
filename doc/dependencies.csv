@@ -1,0 +1,8 @@
+Server,Simulations,R,SLiM,Python ,htslib,bcftools,bgzip,tabix
+CBGP Cluster,Proof,3.4.2,3.1,2.7,1.9,1.9,1.9,1.9
+,,3.5.2,,,,,,
+CBGP Desktop,Proof,3.4.4,3.1,2.7,1.9,1.9,1.9,1.9
+,,3.5.2,,,,,,
+Genotoul,Proof,3.4.3,3.2,2.7,,1.6,0.2.5?,0.2.5?
+Muse,Bees,3.4.3,3.2.1,2.7.12,,1.9.97,1.9.97,1.9.97
+OSC,Bees,3.4.2,3.2.1,2.7,1.9.2,1.9.2,1.9.2,1.9.2
