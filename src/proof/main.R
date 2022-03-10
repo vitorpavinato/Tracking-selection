@@ -34,7 +34,7 @@ ls()
 ##           GLOBAL SETTINGS             ##
 ###########################################
 
-nsim                    <- 10
+nsim                    <- 1
 path_to_slim_model      <- "src/models/"
 slim_model_prefix       <- "model"
 path_to_slim            <- "bin/slim" #SLiM v 3.1
@@ -53,7 +53,7 @@ seed                    <- arg
 set.seed(seed,"Mersenne-Twister")
 parallel_sims           <- FALSE
 num_of_threads          <- 6
-remove_files            <- FALSE # it is not necessary to grow RF
+remove_files            <- TRUE # it is not necessary to grow RF
 debug_sim               <- TRUE
 debug_output_folder     <- "results/debug_output/"
 wfabc_input_file        <- FALSE # it is not necessary to grow RF
@@ -200,8 +200,8 @@ if(parallel_sims){
 }
 
 # load other functions (from file distributed together with present file)
-source("Tracking-selection/src/proof/fun.R")
-#source("src/fun.R")
+#source("Tracking-selection/src/proof/fun.R")
+source("src/fun.R")
 
 ###########################################
 ##              SIMULATION               ##
