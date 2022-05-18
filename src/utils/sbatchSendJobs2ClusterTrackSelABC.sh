@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for i in {2..10};
+for i in {1701..2000};
 do
   echo '#!/bin/bash'                                       > trackingselsim.$i.sh
   echo "#SBATCH -J selsim.$i"                             >> trackingselsim.$i.sh;
